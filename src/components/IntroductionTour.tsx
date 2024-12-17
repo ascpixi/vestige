@@ -42,8 +42,8 @@ const STEPS: TourStepFactory[] = [
   (() => ({
     content: <>
       Welcome to Vestige, an interactive generative music synthesizer! With Vestige,
-      you can create autonomous music compositions from basic building blocks. Let's
-      get started!
+      you can create autonomous music compositions by connecting basic building blocks.
+      Let's get started!
     </>
   })),
 
@@ -59,7 +59,7 @@ const STEPS: TourStepFactory[] = [
         initialPos = data.flowState.getViewport();
       },
       continueWhen(data) {
-        return distanceSqr(initialPos, data.viewport) > sqr(400);
+        return distanceSqr(initialPos, data.viewport) > sqr(300);
       },
     }
   }),
@@ -76,9 +76,10 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      This node is a <b>note generator</b> node. Think of it as a keyboard.
+      This is a <b>note generator</b> node. Think of it as a keyboard.
       You can move it around - try it! We now have to feed the nodes to an
-      instrument - try creating a <b>synth</b> node.
+      instrument. Just like you did with the <b>melody (pentatonic)</b> node,
+      now try creating a <b>synth</b> node by right-clicking.
     </>,
     continueWhen(data) {
       return data.nodes.some(x => x.type == "synth")
@@ -89,8 +90,9 @@ const STEPS: TourStepFactory[] = [
     content: <>
       Nice! Now, connect the <b>main output</b> of the <b>melody (pentatonic)</b> node
       with the <b>main input</b> of the <b>synth</b> node. You can do this by
-      clicking on the green circle of the melody node, and dragging it to the
-      green circle of the synth one.
+      clicking on the <b className="text-green-600">green circle</b> of the melody node,
+      and dragging it to the <b className="text-green-600">green circle</b> of
+      the synth one.
     </>,
     continueWhen(data) {
       return data.edges.some(x => {
@@ -104,9 +106,9 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      Great! We don't hear anything yet - connect the <b>main output</b> of
-      the <b>synth</b> to the <b>final output</b> node. Anything that comes
-      inside this node will be played through your speakers.
+      Great! We don't hear anything yet - connect the <span className="text-blue-600">blue</span> <b>main output</b> of
+      the <b>synth</b> to the <span className="text-blue-600">blue</span> <b>main input</b> of the <b>final output</b> node.
+      Anything that comes inside this node will be played through your speakers.
     </>,
     continueWhen(data) {
       return data.edges.some(x => {
@@ -116,6 +118,13 @@ const STEPS: TourStepFactory[] = [
         return src.type == "synth" && dst.type == "final";
       });
     }
+  })),
+
+  (() => ({
+    content: <>
+      Adjust your volume in the <b>final output</b> node to your liking, and
+      then click <b>Next</b> to continue.
+    </>
   })),
 
   (() => ({
