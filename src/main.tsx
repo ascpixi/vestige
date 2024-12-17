@@ -4,7 +4,6 @@ import * as tone from "tone";
 
 import "./index.css";
 
-import { AppWrapper } from "./AppWrapper.tsx";
 import App from "./App.tsx";
 
 tone.setContext(new tone.Context({

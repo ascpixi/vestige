@@ -1,5 +1,3 @@
-import React from "react";
-
 export function CheckboxField({ name, description, value, onChange }: {
   name: string,
   description: string,
