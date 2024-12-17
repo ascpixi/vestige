@@ -10,13 +10,14 @@ import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { NullNodeDataSerializer } from "../serializer";
+import { getPersistentData, mutatePersistentData } from "../persistent";
 
 class FinalNodeData implements BaseNodeData {
   [x: string]: unknown;
 
   nodeType = "FINAL" as const;
   limiter = new tone.Limiter(tone.gainToDb(0.8));
-  final = new tone.Gain(0.5);
+  final = new tone.Gain(getPersistentData().volume);
 
   /**
    * Gets the audio node to which other nodes can connect to direct
@@ -50,6 +51,7 @@ export const FinalNodeRenderer = memo(function FinalNodeRenderer(
   function setFinalVolume(x: number) {
     setFinalVolumeDisp(x);
     data.final.gain.value = x / 100;
+    mutatePersistentData({ volume: x / 100 });
   }
 
   return (

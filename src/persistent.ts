@@ -1,10 +1,12 @@
 export interface PersistentData {
     tourComplete: boolean;
+    volume: number;
 }
 
 function defaults(): PersistentData {
     return {
-        tourComplete: false
+        tourComplete: false,
+        volume: 0.5
     };
 }
 
@@ -16,7 +18,10 @@ export function getPersistentData() {
         return defaults();
     }
 
-    return JSON.parse(json) as PersistentData;
+    return {
+        ...defaults(),
+        ...JSON.parse(json)
+    } as PersistentData;
 }
 
 export function setPersistentData(data: PersistentData) {
