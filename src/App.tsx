@@ -449,6 +449,7 @@ export default function App() {
         defaultViewport={DEFAULT_VIEWPORT}
         onInit={setThisFlow}
         fitView={shouldLoadExisting}
+        translateExtent={inTour ? [[-1500, -500], [2000, 750]] : undefined}
       >
         <flow.Background variant={flow.BackgroundVariant.Dots}/>
         <flow.Controls />
