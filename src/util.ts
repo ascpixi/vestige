@@ -168,16 +168,28 @@ export function distanceSqr(a: Point, b: Point) {
  */
 export function match<TTarget extends string | number | symbol, TOutput>(
     against: TTarget,
-    cases: { [matchCase in TTarget]: TOutput }
+    cases: Partial<{ [matchCase in TTarget]: TOutput }>
 ) {
     if (!(against in cases)) {
         console.error("match(...) did not account for case", against, ". Cases:", cases);
         throw new Error(`Unhandled "${String(against)}" value in "match" block.`)
     }
 
-    return cases[against];
+    return cases[against]!;
 }
 
+/**
+ * Allows to use the `in` operator to check if an array includes an element -
+ * for example, `"example" in anyOf("one", "two")`.
+ */
+export function anyOf<T extends string | number>(...elements: T[]): { [k in typeof elements[number]]: never } {
+    const o: any = {};
+    for (const element of elements) {
+        o[element] = null;
+    }
+
+    return o;
+} 
 /**
  * Returns x², or `x * x`.
  */
