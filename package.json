@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@remixicon/react": "^4.5.0",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
     "@xyflow/react": "^12.3.6",
     "autoprefixer": "^10.4.20",
     "byte-base64": "^1.1.0",

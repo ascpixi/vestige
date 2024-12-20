@@ -141,13 +141,13 @@ function deserializeEdge(edge: SerializedEdge): flow.Edge {
 }
 
 /**
- * Serializes a Vestige project into a base-64 encoded string.
+ * Serializes a Vestige project into raw bytes.
  */
 export async function serialize(
     nodes: VestigeNode[],
     edges: flow.Edge[],
     serializers: NodeDataSerializer<any>[]
-): Promise<string> {
+): Promise<Uint8Array> {
     const srlNodes: SerializedNode[] = [
         // The "final" node is required to be first.
         serializeNode(nodes.find(x => x.type == "final")!, serializers),
@@ -176,7 +176,18 @@ export async function serialize(
         result = prefixData(0x00, data);
     }
 
-    return base64.bytesToBase64(result)
+    return result;
+}
+
+/**
+ * Serializes a Vestige project into a Base-64 encoded string.
+ */
+export async function serializeBase64(
+    nodes: VestigeNode[],
+    edges: flow.Edge[],
+    serializers: NodeDataSerializer<any>[]
+): Promise<string> {
+    return base64.bytesToBase64(await serialize(nodes, edges, serializers))
         .replace(/\//g, "_")
         .replace(/\+/g, "-");
 }
@@ -184,21 +195,17 @@ export async function serialize(
 /**
  * Deserializes a Vestige project.
  */
-export async function deserialize(data: string, serializers: NodeDataSerializer<any>[]): Promise<{
+export async function deserialize(data: Uint8Array, serializers: NodeDataSerializer<any>[]): Promise<{
     nodes: VestigeNode[],
     edges: flow.Edge[]
 }> {
-    const rawBytes = base64.base64ToBytes(
-        data.replace(/_/g, "/").replace(/-/g, "+")
-    );
-
     let bytes: Uint8Array;
-    if (rawBytes[0] == 0x00) {
-        bytes = rawBytes.subarray(1); // Uncompressed
-    } else if (rawBytes[0] == 0x01) {
-        bytes = await decompress(rawBytes.subarray(1)); // Compressed
+    if (data[0] == 0x00) {
+        bytes = data.subarray(1); // Uncompressed
+    } else if (data[0] == 0x01) {
+        bytes = await decompress(data.subarray(1)); // Compressed
     } else {
-        throw new Error(`Unknown data prefix ${rawBytes[0]}`);
+        throw new Error(`Unknown data prefix ${data[0]}`);
     }
 
     const project = cbor.decode(bytes) as SerializedProject;
@@ -218,6 +225,21 @@ export async function deserialize(data: string, serializers: NodeDataSerializer<
         nodes: project.nodes.map(x => deserializeNode(x, serializers)),
         edges: project.edges.map(x => deserializeEdge(x))
     };
+}
+
+/**
+ * Deserializes a Vestige project from its base-64 encoded form.
+ */
+export async function deserializeBase64(data: string, serializers: NodeDataSerializer<any>[]): Promise<{
+    nodes: VestigeNode[],
+    edges: flow.Edge[]
+}> {
+    return await deserialize(
+        base64.base64ToBytes(
+            data.replace(/_/g, "/").replace(/-/g, "+")
+        ),
+        serializers
+    );
 }
 
 function prefixData(prefix: number, data: Uint8Array) {
