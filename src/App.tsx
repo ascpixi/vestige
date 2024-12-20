@@ -11,15 +11,16 @@ import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
 import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
 import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
+import { PAN_NODE_DESCRIPTOR } from "./nodes/PanNode";
+import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
+import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
+import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
 
 import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
 import { createFinalNode } from "./nodes/FinalNode";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { assert } from "./util";
 import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
-import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
-import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
-import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
 import { deserialize, serialize } from "./serializer";
 import { IntroductionTour } from "./components/IntroductionTour";
 import { getPersistentData, mutatePersistentData } from "./persistent";
@@ -350,7 +351,8 @@ export default function App() {
               ]
             },
             getContextMenuEntry(LFO_NODE_DESCRIPTOR),
-            getContextMenuEntry(MIX_NODE_DESCRIPTOR)
+            getContextMenuEntry(MIX_NODE_DESCRIPTOR),
+            getContextMenuEntry(PAN_NODE_DESCRIPTOR)
         ]}/>
       </div>
 

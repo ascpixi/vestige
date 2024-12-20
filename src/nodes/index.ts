@@ -2,6 +2,7 @@ import { Node } from "@xyflow/react";
 
 import { NodeType } from "../graph";
 import { uniqueId } from "../util";
+import { NodeDataSerializer } from "../serializer";
 
 import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./PentatonicMelodyNode";
 import { PentatonicChordsNode, PentatonicChordsNodeRenderer, PentatonicChordsNodeSerializer } from "./PentatonicChordsNode";
@@ -12,7 +13,7 @@ import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./SynthNode";
 import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
-import { NodeDataSerializer } from "../serializer";
+import { PanNode, PanNodeRenderer, PanNodeSerializer } from "./PanNode";
 
 export type NodeData = {
     type: NodeType
@@ -28,6 +29,7 @@ export type VestigeNode =
     DelayNode |
     LfoNode |
     MixNode |
+    PanNode |
     FinalNode;
 
 /**
@@ -48,6 +50,7 @@ export const VESTIGE_NODE_TYPES = {
     "delay": DelayNodeRenderer,
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
+    "pan": PanNodeRenderer,
     "final": FinalNodeRenderer
 };
 
@@ -60,6 +63,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new DelayNodeSerializer(),
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
+    new PanNodeSerializer(),
     new FinalNodeSerializer()
 ];
 
