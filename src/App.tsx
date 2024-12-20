@@ -58,6 +58,7 @@ export default function App() {
   const tourDialogRef = useRef<HTMLDialogElement>(null);
 
   const aboutDialogRef = useRef<HTMLDialogElement>(null);
+  const resetDialogRef = useRef<HTMLDialogElement>(null);
 
   const [projLink, setProjLink] = useState<string>("");
   const projLinkDialogRef = useRef<HTMLDialogElement>(null);
@@ -193,10 +194,7 @@ export default function App() {
     location.hash = link.substring(linkHashIdx);
   }
 
-  function askReset() {
-    if (!confirm("Are you sure you want to reset this project? There's no undo!"))
-      return;
-
+  function reset() {
     location.hash = "";
     location.reload();
   }
@@ -442,6 +440,23 @@ export default function App() {
         </div>
       </dialog>
 
+      <dialog ref={resetDialogRef} className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm operation</h3>
+          <p className="py-4">
+            Are you sure you want to create a new project? If you did not save
+            this one before, it will be lost forever!
+          </p>
+
+          <div className="modal-action w-full">
+            <form method="dialog" className="flex gap-2 w-full">
+              <button onClick={reset} className="btn btn-primary w-1/2">Yes, create a new one</button>
+              <button className="btn w-1/2">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
       <dialog ref={tourDialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Interactive tour (tutorial)</h3>
@@ -537,7 +552,7 @@ export default function App() {
               </ul>
             </div>
 
-            <button onClick={askReset}
+            <button onClick={() => resetDialogRef.current!.showModal()}
               title="delete project" 
               className="btn btn-square bg-white"
               disabled={inTour}
