@@ -231,7 +231,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
   const [countour, setCountour] = useState<Countour>(data.contour);
   const [countourAmt, setCountourAmt] = useState<number>(data.countourAmt * 100);
 
-  const [waveform, setWaveform] = useState<Waveform>(data.generator.synth.get().oscillator.type as Waveform);
+  const [waveform, setWaveform] = useState<Waveform>(data.generator.waveform);
   const [fineTune, setFineTune] = useState(data.fineTune);
   const [octave, setOctave] = useState(data.octave);
   const [volume, setVolume] = useState(tone.dbToGain(data.generator.synth.volume.value) * 100);
