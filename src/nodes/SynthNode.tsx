@@ -179,6 +179,7 @@ export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
 
     return {
       pf: params["param-fineTune"].controlledBy,
+      ps: params["param-unisonDetune"].controlledBy,
       c: obj.contour,
       a: obj.countourAmt,
       o: obj.octave,
@@ -196,6 +197,7 @@ export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
     const params = data.parameters;
 
     params["param-fineTune"].controlledBy = serialized.pf;
+    params["param-unisonDetune"].controlledBy = serialized.ps;
     data.octave = serialized.o;
     data.fineTune = serialized.f;
     data.contour = serialized.c;
