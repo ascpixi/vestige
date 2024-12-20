@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RiDeleteBinFill, RiGraduationCapFill, RiInformation2Fill, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
+import { RiDeleteBinFill, RiFileFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
 import * as flow from "@xyflow/react";
 import * as tone from "tone";
 
@@ -21,7 +21,7 @@ import { createFinalNode } from "./nodes/FinalNode";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { assert } from "./util";
 import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
-import { deserialize, serialize } from "./serializer";
+import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
 import { IntroductionTour } from "./components/IntroductionTour";
 import { getPersistentData, mutatePersistentData } from "./persistent";
 import { AFTER_TOUR_PROJECT } from "./builtinProjects";
@@ -29,6 +29,7 @@ import { Link } from "./components/Link";
 
 import highSeasLogo from "./assets/highseas-logo.svg";
 import iconShadow from "./assets/icon-shadow.svg";
+import { isTauri, promptToSaveFile } from "./environment";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -70,35 +71,39 @@ export default function App() {
     });
   }, []);
 
+  const loadFromNodesAndEdges = useCallback((targetNodes: VestigeNode[], targetEdges: flow.Edge[]) => {
+    setNodes(targetNodes);
+    setEdges(targetEdges);
+
+    // Even if we call "setNodes" and "setEdges" here, the state of those
+    // variables are still what they were previously (i.e. empty arrays in our case)
+    // on this render. We need to explicitly assign them.
+
+    /* eslint-disable react-hooks/exhaustive-deps */
+    nodes = targetNodes;
+    edges = targetEdges;
+    /* eslint-enable react-hooks/exhaustive-deps */
+
+    // We also need to handle all of the connections
+    for (const edge of targetEdges) {
+      onConnectChange(edge as flow.Connection, "CONNECT");
+    }
+  }, []);
+
   useEffect(() => {
     if (!shouldLoadExisting) 
       return;
 
     (async () => {
       const data = location.hash.substring(3);
-      const result = await deserialize(data, VESTIGE_NODE_SERIALIZERS);
+      const result = await deserializeBase64(data, VESTIGE_NODE_SERIALIZERS);
   
-      setNodes(result.nodes);
-      setEdges(result.edges);
-  
-      // Even if we call "setNodes" and "setEdges" here, the state of those
-      // variables are still what they were previously (i.e. empty arrays in our case)
-      // on this render. We need to explicitly assign them.
-  
-      /* eslint-disable react-hooks/exhaustive-deps */
-      nodes = result.nodes;
-      edges = result.edges;
-      /* eslint-enable react-hooks/exhaustive-deps */
-  
-      // We also need to handle all of the connections
-      for (const edge of result.edges) {
-        onConnectChange(edge as flow.Connection, "CONNECT");
-      }
+      loadFromNodesAndEdges(result.nodes, result.edges);
   
       console.log("✅ Successfully loaded project from URL.", result);
       location.hash = "";
     })();
-  }, []);
+  }, [loadFromNodesAndEdges]);
 
   function getContextMenuEntry(descriptor: NodeTypeDescriptor): ContextMenuEntry {
     return {
@@ -131,15 +136,61 @@ export default function App() {
     ev.preventDefault();
   }
 
-  async function saveProject() {
-    const data = await serialize(nodes, edges, VESTIGE_NODE_SERIALIZERS);
-    setProjLink(location.origin + location.pathname + "#p:" + data);
+  async function saveAsLink() {
+    const data = await serializeBase64(nodes, edges, VESTIGE_NODE_SERIALIZERS);
+    const root = isTauri()
+      ? "https://vestige.ascpixi.dev/"
+      : location.origin + location.pathname;
+
+    setProjLink(root + "#p:" + data);
     projLinkDialogRef.current!.showModal();
 
     setTimeout(() => {
       projLinkTextRef.current!.focus();
       projLinkTextRef.current!.select();
     }, 50);
+  }
+
+  async function saveAsFile() {
+    await promptToSaveFile(
+      await serialize(nodes, edges, VESTIGE_NODE_SERIALIZERS),
+      "untitled",
+      "Vestige Project",
+      "vestigeproj"
+    );
+  }
+
+  async function loadFromFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".vestigeproj";
+    
+    const file = await new Promise<File>(resolve => {
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) resolve(file);
+      };
+
+      input.click();
+    });
+
+    const data = await new Promise<ArrayBuffer>(resolve => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
+      reader.readAsArrayBuffer(file);
+    });
+
+    const result = await deserialize(new Uint8Array(data), VESTIGE_NODE_SERIALIZERS);
+    loadFromNodesAndEdges(result.nodes, result.edges);
+  }
+
+  function loadFromLink() {
+    const link = prompt("Paste the link in the input box below.");
+    if (link == null)
+      return;
+
+    const linkHashIdx = link.indexOf("#");
+    location.hash = link.substring(linkHashIdx);
   }
 
   function askReset() {
@@ -370,7 +421,7 @@ export default function App() {
       }
 
       <dialog ref={projLinkDialogRef} className="modal">
-        <div className="modal-box">
+        <div className="modal-box max-w-none w-1/2">
           <h3 className="font-bold text-lg">Project link</h3>
           <p className="py-4">
             This is a link to your project - whenever you'll open it, this
@@ -378,7 +429,7 @@ export default function App() {
           </p>
 
           <textarea ref={projLinkTextRef}
-            className="textarea textarea-bordered w-full"
+            className="textarea textarea-bordered w-full h-full min-h-[200px]"
             value={projLink}
             readOnly
           />
@@ -464,13 +515,27 @@ export default function App() {
               { playing ? <RiStopFill/> : <RiPlayFill/> }
             </button>
 
-            <button onClick={saveProject}
-              title="save project"
-              className="btn btn-square bg-white"
-              disabled={inTour}
-            >
-              <RiSaveFill/>
-            </button>
+            <div className="dropdown">
+              <button
+                tabIndex={0}
+                role="button"
+                className="btn btn-square bg-white"
+                disabled={inTour}
+              >
+                <RiSaveFill/>
+              </button>
+
+              <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-[1] w-52 p-2 shadow">
+                <li><a onClick={saveAsFile}><RiFileMusicFill className="w-4"/> Save as file</a></li>
+                <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
+                <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
+                
+                {
+                  !isTauri() ? <></> :
+                  <li><a onClick={loadFromLink}><RiLinkUnlinkM className="w-4"/>Load from link</a></li>
+                }
+              </ul>
+            </div>
 
             <button onClick={askReset}
               title="delete project" 
