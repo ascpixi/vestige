@@ -86,7 +86,7 @@ export interface NodeTypeDescriptor {
      * Creates a new node object of the node type this `NodeTypeDescriptor`
      * describes at the given position.
      */
-    create(x: number, y: number): VestigeNode;
+    create(x: number, y: number): VestigeNode | Promise<VestigeNode>;
 }
 
 /**
@@ -108,6 +108,21 @@ export function makeNodeFactory<
 ) {
     return (x: number, y: number, additional?: Partial<VestigeNode>) => createNode(
         type, dataFactory(), x, y, additional
+    );
+}
+
+/**
+ * Similar to `makeNodeFactory`, but returns an asynchronous function instead.
+ */
+export function makeAsyncNodeFactory<
+    TData extends Record<string, unknown>,
+    TNodeType extends string
+>(
+    type: TNodeType,
+    dataFactory: () => Promise<TData>
+) {
+    return async (x: number, y: number, additional?: Partial<VestigeNode>) => createNode(
+        type, await dataFactory(), x, y, additional
     );
 }
 

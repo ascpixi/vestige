@@ -113,9 +113,9 @@ export default function App() {
         {descriptor.icon("w-4 h-4")}
         {descriptor.displayName}
       </div>,
-      onChoose: () => {
+      onChoose: async () => {
         const { x, y } = thisFlow!.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-        setNodes([...nodes, descriptor.create(x - 200, y - 200)]);
+        setNodes([...nodes, await descriptor.create(x - 200, y - 200)]);
         setShowCtxMenu(false);
       }
     }
