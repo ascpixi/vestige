@@ -14,6 +14,7 @@ import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { PanNode, PanNodeRenderer, PanNodeSerializer } from "./PanNode";
+import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
 
 export type NodeData = {
     type: NodeType
@@ -24,6 +25,7 @@ export type VestigeNode =
     PentatonicMelodyNode |
     PentatonicChordsNode |
     SynthNode |
+    SamplerNode |
     FilterNode |
     ReverbNode |
     DelayNode |
@@ -45,6 +47,7 @@ export const VESTIGE_NODE_TYPES = {
     "pentatonic-melody": PentatonicMelodyNodeRenderer,
     "pentatonic-chords": PentatonicChordsNodeRenderer,
     "synth": SynthNodeRenderer,
+    "sampler": SamplerNodeRenderer,
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
@@ -58,6 +61,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicMelodyNodeSerializer(),
     new PentatonicChordsNodeSerializer(),
     new SynthNodeSerializer(),
+    new SamplerNodeSerializer(),
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),

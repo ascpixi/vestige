@@ -9,6 +9,7 @@ import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type 
 import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "./nodes/PentatonicMelodyNode";
 import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
+import { SAMPLER_NODE_DESCRIPTOR } from "./nodes/SamplerNode";
 import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
 import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
 import { PAN_NODE_DESCRIPTOR } from "./nodes/PanNode";
@@ -389,7 +390,8 @@ export default function App() {
             },
             {
               type: "GROUP", content: "instruments", entries: [
-                getContextMenuEntry(SYNTH_NODE_DESCRIPTOR)
+                getContextMenuEntry(SYNTH_NODE_DESCRIPTOR),
+                getContextMenuEntry(SAMPLER_NODE_DESCRIPTOR)
               ]
             },
             {
