@@ -13,7 +13,7 @@ import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./SynthNode";
 import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
-import { PanNode, PanNodeRenderer, PanNodeSerializer } from "./PanNode";
+import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
 
 export type NodeData = {
@@ -31,7 +31,7 @@ export type VestigeNode =
     DelayNode |
     LfoNode |
     MixNode |
-    PanNode |
+    BalanceNode |
     FinalNode;
 
 /**
@@ -53,7 +53,7 @@ export const VESTIGE_NODE_TYPES = {
     "delay": DelayNodeRenderer,
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
-    "pan": PanNodeRenderer,
+    "balance": BalanceNodeRenderer,
     "final": FinalNodeRenderer
 };
 
@@ -67,7 +67,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new DelayNodeSerializer(),
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
-    new PanNodeSerializer(),
+    new BalanceNodeSerializer(),
     new FinalNodeSerializer()
 ];
 

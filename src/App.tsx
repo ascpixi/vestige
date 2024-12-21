@@ -12,7 +12,7 @@ import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
 import { SAMPLER_NODE_DESCRIPTOR } from "./nodes/SamplerNode";
 import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
 import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
-import { PAN_NODE_DESCRIPTOR } from "./nodes/PanNode";
+import { BALANCE_NODE_DESCRIPTOR } from "./nodes/BalanceNode";
 import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
 import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
@@ -403,7 +403,7 @@ export default function App() {
             },
             getContextMenuEntry(LFO_NODE_DESCRIPTOR),
             getContextMenuEntry(MIX_NODE_DESCRIPTOR),
-            getContextMenuEntry(PAN_NODE_DESCRIPTOR)
+            getContextMenuEntry(BALANCE_NODE_DESCRIPTOR)
         ]}/>
       </div>
 
