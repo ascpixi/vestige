@@ -35,7 +35,7 @@ export function ContextMenu({ title, entries, openSide, nestLevel }: {
   function onItemMouseEnter(ev: React.MouseEvent<HTMLDivElement>) {
     onItemMouseLeave();
 
-    setHoverTimeoutId(setTimeout(() => {
+    setHoverTimeoutId(window.setTimeout(() => {
       assert(ev.target instanceof HTMLElement, "ev.target was not an HTMLElement");
       ev.target.focus();
     }, 100));
