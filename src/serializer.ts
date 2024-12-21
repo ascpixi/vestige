@@ -17,7 +17,7 @@ export interface NodeDataSerializer<TIn> {
     serialize(obj: TIn): unknown;
 
     /** Deserializes the data of a node. */
-    deserialize(serialized: ReturnType<this["serialize"]>): TIn;
+    deserialize(serialized: ReturnType<this["serialize"]>): TIn | Promise<TIn>;
 }
 
 /**
@@ -105,10 +105,10 @@ function serializeNode(
     };
 }
 
-function deserializeNode(
+async function deserializeNode(
     node: SerializedNode,
     serializers: NodeDataSerializer<any>[]
-): VestigeNode {
+): Promise<VestigeNode> {
     const deserializer = serializers.find(x => x.type == node.t);
     assert(deserializer, `No (de)serializer for node type ${node.t}`);
 
@@ -116,7 +116,7 @@ function deserializeNode(
         id: node.i,
         type: node.t as any,
         position: { x: node.x, y: node.y },
-        data: deserializer.deserialize(node.d)
+        data: await deserializer.deserialize(node.d)
     }
 }
 
@@ -215,7 +215,7 @@ export async function deserialize(data: string, serializers: NodeDataSerializer<
         throw new Error(`Unsupported project schema version ${project.version}`);
 
     return {
-        nodes: project.nodes.map(x => deserializeNode(x, serializers)),
+        nodes: await Promise.all(project.nodes.map(x => deserializeNode(x, serializers))),
         edges: project.edges.map(x => deserializeEdge(x))
     };
 }
