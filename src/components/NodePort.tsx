@@ -1,25 +1,24 @@
-import { Connection, Edge, Handle, Position } from "@xyflow/react";
-import { PropsWithChildren, useEffect, useRef, useState } from "react";
+import { Connection, Edge, Handle, Position, useUpdateNodeInternals } from "@xyflow/react";
+import { PropsWithChildren, useRef } from "react";
 import { NOTE_INPUT_HID_PREFIX, SIGNAL_INPUT_HID_PREFIX, VALUE_INPUT_HID_PREFIX } from "../graph";
 import { match } from "../util";
 
 /**
  * Renders an input to or an output of a node, as represented by a React Flow handle.
  */
-export function NodePort({ offset, kind, type, handleId, children }: PropsWithChildren<{
-  offset: number,
+export function NodePort({ nodeId, kind, type, handleId, children }: PropsWithChildren<{
+  nodeId: string,
   handleId: string,
   kind: "input" | "output",
   type: "value" | "signal" | "notes"
 }>) {
-  const selfRef = useRef<HTMLDivElement>(null);
-  const [topOffset, setTopOffset] = useState<number>(offset);
+  const updateNodeInternals = useUpdateNodeInternals();
 
-  useEffect(() => {
-    if (selfRef.current) {
-      setTopOffset(selfRef.current.offsetTop + 8);
-    }
-  }, []);
+  const selfRef = useRef<HTMLDivElement>(null);
+
+  if (selfRef.current) {
+    updateNodeInternals(nodeId);
+  }
 
   const handleClass = match(type, {
     "value": "handle-value",
@@ -44,12 +43,12 @@ export function NodePort({ offset, kind, type, handleId, children }: PropsWithCh
       <div ref={selfRef}>{children}</div>
       
       {
-        topOffset == null ? <></> :
+        selfRef.current == null ? <></> :
         <Handle id={handleId}
           type={kind === "input" ? "target" : "source"}
           position={kind === "input" ? Position.Left : Position.Right}
           className={handleClass}
-          style={{ top: topOffset }}
+          style={{ top: selfRef.current.offsetTop + 8 }}
           isValidConnection={checkValidConnection}
         />
       }

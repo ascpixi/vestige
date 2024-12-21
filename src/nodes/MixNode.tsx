@@ -83,15 +83,15 @@ export const MixNodeRenderer = memo(function MixNodeRenderer(
     >
       <div className="w-full">
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={INPUT_A} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={INPUT_A} kind="input" type="signal">
             <PlainField name="input A" description="the first audio signal" />
           </NodePort>
 
-          <NodePort offset={80} handleId={INPUT_B} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={INPUT_B} kind="input" type="signal">
             <PlainField name="input B" description="the second audio signal" />
           </NodePort>
 
-          <NodePort offset={140} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="input A and B combined into one signal"

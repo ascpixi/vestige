@@ -155,7 +155,7 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
+          <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
             <PlainField align="right"
               name="main output"
               description="the currently held down notes"

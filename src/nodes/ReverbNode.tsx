@@ -162,18 +162,18 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to add the reverb to" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio, with the reverb"
             />
           </NodePort>
 
-          <NodePort offset={140} handleId={paramHandleId("decay")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("decay")} kind="input" type="value">
             <SliderField
               name="decay"
               description="how fast the reverb trail fades out"
@@ -185,7 +185,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={220} handleId={paramHandleId("predelay")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("predelay")} kind="input" type="value">
             <SliderField
               name="pre-delay"
               description="amount of delay before the reverb"
@@ -197,7 +197,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={300} handleId={paramHandleId("wet")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
               name="wetness (mix)"
               description="the percentage of the resulting audio that is the reverb"

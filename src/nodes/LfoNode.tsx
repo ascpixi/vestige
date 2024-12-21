@@ -160,7 +160,7 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={VALUE_OUTPUT_HID} kind="output" type="value">
+          <NodePort nodeId={id} handleId={VALUE_OUTPUT_HID} kind="output" type="value">
             <PlainField name="value" description="the current value of the LFO" align="right" />
           </NodePort>
 

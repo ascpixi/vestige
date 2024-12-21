@@ -217,14 +217,14 @@ export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
       </>}
     >
       <div className="flex flex-col gap-6 w-full">
-        <NodePort offset={20} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
+        <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
           <PlainField
             name="main input"
             description="the notes to play with the sampler"
           />
         </NodePort>
 
-        <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+        <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
           <PlainField align="right"
             name="main output"
             description="the audio coming out of the sampler"

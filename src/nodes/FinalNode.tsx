@@ -73,7 +73,7 @@ export const FinalNodeRenderer = memo(function FinalNodeRenderer(
           onChange={setFinalVolume}
         />
 
-        <NodePort offset={156} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+        <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
           <PlainField
             name="main input"
             description="the audio to forward to your output device"

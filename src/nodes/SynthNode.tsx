@@ -285,14 +285,14 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
+          <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
             <PlainField
               name="main input"
               description="the notes to hold down on the synthesizer"
             />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio coming out of the synthesizer"
@@ -343,7 +343,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
             onChange={setOctave}
           />
 
-          <NodePort offset={540} handleId={paramHandleId("fineTune")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("fineTune")} kind="input" type="value">
             <SliderField
               name="fine-tune"
               description="the tiny pitch offset of the oscillator. useful for detuning. negative values pitch it down, positive pitch it up."
@@ -368,7 +368,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
             onChange={setUnisonVoices}
           />
 
-          <NodePort offset={844} handleId={paramHandleId("unisonDetune")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("unisonDetune")} kind="input" type="value">
             <SliderField
               name="unison spread"
               description="if there is more than 1 unison voice, sets how much different in pitch the different voices are."

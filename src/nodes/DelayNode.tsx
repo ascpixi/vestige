@@ -157,18 +157,18 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to add the reverb to" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio, with the reverb"
             />
           </NodePort>
 
-          <NodePort offset={140} handleId={paramHandleId("time")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("time")} kind="input" type="value">
             <SliderField
               name="delay time"
               description="amount of time between repeats (echoes)"
@@ -180,7 +180,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={220} handleId={paramHandleId("feedback")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("feedback")} kind="input" type="value">
             <SliderField
               name="feedback"
               description="how much signal strength consecutive echoes have. larger values = longer echoes."
@@ -191,7 +191,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={300} handleId={paramHandleId("wet")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
               name="wetness (mix)"
               description="the percentage of the resulting audio that is the delay (echo)"

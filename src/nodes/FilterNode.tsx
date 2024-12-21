@@ -191,11 +191,11 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to filter" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the filtered audio"
@@ -213,7 +213,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
             <option value="highpass">high-pass (crisps audio, removes bass and mids)</option>
           </SelectField>
 
-          <NodePort offset={236} handleId={paramHandleId("cutoff")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("cutoff")} kind="input" type="value">
             <SliderField
               name="cutoff"
               description="where the filter ends (low-pass), begins (high-pass) or its center (band-pass)"
@@ -233,7 +233,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
             onChange={setIntensity}
           />
 
-          <NodePort offset={428} handleId={paramHandleId("resonance")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("resonance")} kind="input" type="value">
             <SliderField
               name="resonance (sharpness)"
               description="also known as the 'Q' value. high values cause a 'laser' effect."

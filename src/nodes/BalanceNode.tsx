@@ -125,18 +125,18 @@ export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to adjust" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the adjusted audio"
             />
           </NodePort>
 
-          <NodePort offset={140} handleId={paramHandleId("pan")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("pan")} kind="input" type="value">
             <SliderField
               name="pan balance"
               description="-100% = left, 0% = no change, and 100% = right."
@@ -147,7 +147,7 @@ export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={220} handleId={paramHandleId("volume")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("volume")} kind="input" type="value">
             <SliderField
               name="volume"
               description="how much of the original volume the signal should have"
