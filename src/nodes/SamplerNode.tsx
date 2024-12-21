@@ -8,7 +8,7 @@ import { SelectField } from "../components/SelectField";
 import { SliderField } from "../components/SliderField";
 
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
-import { makeAsyncNodeFactory, makeNodeFactory, NodeTypeDescriptor } from ".";
+import { makeAsyncNodeFactory, NodeTypeDescriptor } from ".";
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { Automatable } from "../parameters";

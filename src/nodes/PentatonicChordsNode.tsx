@@ -3,7 +3,7 @@ import { Node, NodeProps } from "@xyflow/react";
 import { RiMusic2Fill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { AlwaysEmptyNoteInputs, NoNoteInputs, NOTE_OUTPUT_HID, NoteGenerator, NoteGeneratorNodeData } from "../graph";
+import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 
 import { pickRandom, randInt, seedRng } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
@@ -15,8 +15,8 @@ import { PlainField } from "../components/PlainField";
 import { SelectField } from "../components/SelectField";
 import { NodeDataSerializer } from "../serializer";
 
-export class PentatonicChordsGenerator implements NoteGenerator<NoNoteInputs> {
-  inputs: number;
+export class PentatonicChordsGenerator implements PlainNoteGenerator {
+  inputs = 0 as const;
   offset: number;
   seedOffset: number;
 
@@ -29,12 +29,11 @@ export class PentatonicChordsGenerator implements NoteGenerator<NoNoteInputs> {
     public rootNote: number = MIDI_NOTES.Cs,
     public mode: ScaleMode = "MINOR"
   ) {
-    this.inputs = 0;
     this.offset = Math.random() * 100;
     this.seedOffset = Math.floor(Math.random() * 10000);
   }
 
-  generate(time: number, _: AlwaysEmptyNoteInputs): number[] {
+  generate(time: number): number[] {
     time = time + this.offset;
 
     // "available" contains all the notes we can play.
@@ -56,7 +55,7 @@ export class PentatonicChordsGenerator implements NoteGenerator<NoNoteInputs> {
   }
 }
 
-export class PentatonicChordsNodeData extends NoteGeneratorNodeData<NoNoteInputs> {
+export class PentatonicChordsNodeData extends NoteGeneratorNodeData {
   generator: PentatonicChordsGenerator;
 
   constructor () {
@@ -102,8 +101,8 @@ export type PentatonicChordsNode = Node<PentatonicChordsNodeData, "pentatonic-ch
 
 /** Creates a new `PentatonicChordsNode` with a random ID. */
 export const createPentatonicChordsNode = makeNodeFactory(
-    "pentatonic-chords",
-    () => new PentatonicChordsNodeData()
+  "pentatonic-chords",
+  () => new PentatonicChordsNodeData()
 );
 
 /** Provides a `NodeTypeDescriptor` which describes pentatonic chord generator nodes. */

@@ -12,7 +12,7 @@ import { SliderField } from "../components/SliderField";
 import { NullNodeDataSerializer } from "../serializer";
 import { getPersistentData, mutatePersistentData } from "../persistent";
 
-class FinalNodeData implements BaseNodeData {
+export class FinalNodeData implements BaseNodeData {
   [x: string]: unknown;
 
   nodeType = "FINAL" as const;

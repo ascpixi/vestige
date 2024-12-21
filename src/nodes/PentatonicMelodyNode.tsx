@@ -3,7 +3,7 @@ import { Node, NodeProps } from "@xyflow/react";
 import { RiMusicFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { AlwaysEmptyNoteInputs, NoNoteInputs, NOTE_OUTPUT_HID, NoteGenerator, NoteGeneratorNodeData } from "../graph";
+import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 
 import { hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
@@ -15,8 +15,8 @@ import { PlainField } from "../components/PlainField";
 import { SelectField } from "../components/SelectField";
 import { NodeDataSerializer } from "../serializer";
 
-export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
-  inputs: number;
+export class PentatonicMelodyGenerator implements PlainNoteGenerator {
+  inputs = 0 as const;
   offset: number;
 
   constructor(
@@ -27,11 +27,10 @@ export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
     public rootNote: number = MIDI_NOTES.Cs,
     public mode: ScaleMode = "MINOR"
   ) {
-    this.inputs = 0;
     this.offset = Math.random() * 100;
   }
 
-  generate(time: number, _: AlwaysEmptyNoteInputs): number[] {
+  generate(time: number): number[] {
     time = time + this.offset;
 
     // "available" contains all the notes we can play.
@@ -68,7 +67,7 @@ export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
   }
 }
 
-export class PentatonicMelodyNodeData extends NoteGeneratorNodeData<NoNoteInputs> {
+export class PentatonicMelodyNodeData extends NoteGeneratorNodeData {
   generator: PentatonicMelodyGenerator;
 
   constructor () {
@@ -110,8 +109,8 @@ export type PentatonicMelodyNode = Node<PentatonicMelodyNodeData, "pentatonic-me
 
 /** Creates a new `PentatonicMelodyNode` with a random ID. */
 export const createPentatonicMelodyNode = makeNodeFactory(
-    "pentatonic-melody",
-    () => new PentatonicMelodyNodeData()
+  "pentatonic-melody",
+  () => new PentatonicMelodyNodeData()
 );
 
 /** Provides a `NodeTypeDescriptor` which describes pentatonic melody generator nodes. */

@@ -1,10 +1,11 @@
 import * as tone from "tone";
-import { Edge } from "@xyflow/react";
+import * as flow from "@xyflow/react";
 
 import { VestigeNode, VestigeNodeOfType } from "./nodes";
 import { midiToName } from "./audioUtil";
 import { Automatable } from "./parameters";
 import { assert, mapFromSingle as mapFromOne } from "./util";
+import { FinalNodeData } from "./nodes/FinalNode";
 
 export type NoteEventType = "NOTE_ON" | "NOTE_OFF";
 
@@ -39,11 +40,11 @@ export type BaseNodeData = Record<string, unknown> & {
  * Represents the data of a node that can generate notes. Such nodes
  * participate in the note-to-instrument graph.
  */
-export abstract class NoteGeneratorNodeData<TParams> implements BaseNodeData {
+export abstract class NoteGeneratorNodeData<TParamType extends string = string> implements BaseNodeData {
     [x: string]: unknown;
 
     nodeType: "NOTES";
-    abstract generator: NoteGenerator<TParams>;
+    abstract generator: PlainNoteGenerator | ParametricNoteGenerator<TParamType>;
 
     constructor () {
         this.nodeType = "NOTES";
@@ -116,11 +117,11 @@ export type AlwaysEmptyNoteInputs = Map<keyof NoNoteInputs, number[]>;
 /**
  * Represents an object capable of generating note events based on time.
  */
-export interface NoteGenerator<TParams> {
+export interface PlainNoteGenerator {
     /**
      * The amount of inputs the generator accepts.
      */
-    inputs: number;
+    inputs: 0;
 
     /**
      * Generates a list of notes (as represented by their MIDI pitches) that
@@ -128,7 +129,30 @@ export interface NoteGenerator<TParams> {
      * implemented as a pure one - that is, it should never modify any non-temporary
      * data, and should always return the exact same output for the same parameters.
      */
-    generate(time: number, inputs: Map<keyof TParams, number[]>): number[];
+    generate(time: number): number[];
+}
+
+/**
+ * Represents an object capable of generating note events based on time and other
+ * note inputs.
+ */
+export interface ParametricNoteGenerator<TParamType extends string> {
+    /**
+     * The amount of inputs the generator accepts.
+     */
+    // We probably won't ever need more than 8 note inputs. We can't use
+    // `number` because TypeScript immidiately assumes that every single implementation
+    // is a ParametricNoteGenerator (since 0 is also a number), and we can't exclude
+    // a single number.
+    inputs: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+    /**
+     * Generates a list of notes (as represented by their MIDI pitches) that
+     * should be active at the given `time`. This function should always be
+     * implemented as a pure one - that is, it should never modify any non-temporary
+     * data, and should always return the exact same output for the same parameters.
+     */
+    generate(time: number, inputs: Map<TParamType, number[]>): number[];
 }
 
 /**
@@ -207,6 +231,16 @@ export interface ValueGenerator {
     generate(time: number): number;
 }
 
+/**
+ * Represents an abstract Vestige node. The difference between `VestigeNode` and
+ * `AbstractVestigeNode` is that `VestigeNode` will perform type narrowing to
+ * actual implemented node types.
+ */
+export type AbstractVestigeNode = flow.Node<
+    NoteGeneratorNodeData | InstrumentNodeData | EffectNodeData | ValueNodeData | FinalNodeData,
+    string
+>;
+
 /** The handle prefix ID for signal inputs. */
 export const SIGNAL_INPUT_HID_PREFIX = "in-signal";
 
@@ -273,12 +307,12 @@ export function signalInHandleId(id: string) {
  * given `nodes` and `edges` arrays.
  */
 function getRootNodes<T extends NodeType>(
-    nodes: VestigeNode[],
-    edges: Edge[],
+    nodes: AbstractVestigeNode[],
+    edges: flow.Edge[],
     type: T
 ) {
     return nodes.filter(
-        x => x.data.nodeType == type && edges.some(y => y.target != x.id)
+        x => x.data.nodeType == type && !edges.some(y => y.target == x.id)
     ) as VestigeNodeOfType<T>[];
 }
 
@@ -286,7 +320,7 @@ function getRootNodes<T extends NodeType>(
  * Gets all nodes that have incoming connections from `targetNodeId`, given
  * the specified `nodes` and `edges` arrays.
  */
-function getConnected(targetNodeId: string, nodes: VestigeNode[], edges: Edge[]) {
+function getConnected(targetNodeId: string, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
     return edges
         .filter(x => x.source == targetNodeId)
         .map(x => ({
@@ -319,13 +353,13 @@ export class GraphForwarder {
      * Traces the given graph, forwarding Vestige-generated data to out-of-graph
      * nodes, e.g. `INSTRUMENT` nodes.
      */
-    traceGraph(time: number, nodes: VestigeNode[], edges: Edge[]) {
+    traceGraph(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
        this.traceValues(time, nodes, edges);
        this.traceNotes(time, nodes, edges);
     }
 
     /** Forwards outputs from `VALUE` nodes to their final destinations. */
-    private traceValues(time: number, nodes: VestigeNode[], edges: Edge[]) {
+    private traceValues(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
         // Maps node IDs of `VALUE` generators to the number of inputs they have
         // received so far. A VALUE generator that has `valueNodeConnCount[keyof awaitingNodes]`
         // inputs is considered fulfilled.
@@ -345,7 +379,7 @@ export class GraphForwarder {
                 return map;
             }, new Map<string, number>());
 
-        const traceOne = (node: VestigeNode, value: number) => {
+        const traceOne = (node: AbstractVestigeNode, value: number) => {
             for (const { subNode, subEdge } of getConnected(node.id, nodes, edges)) {
                 if (subNode.data.nodeType == "VALUE") {
                     // If this is another VALUE node, the flow continues.
@@ -392,11 +426,11 @@ export class GraphForwarder {
     }
 
     /** Forwards outputs from `NOTES` nodes to their final destinations. */
-    private traceNotes(time: number, nodes: VestigeNode[], edges: Edge[]) {
+    private traceNotes(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
         // Maps node IDs of `NOTES` generators to the inputs they received so far. 
         const awaitingNodes = new Map<string, Map<string, number[]>>();
             
-        const traceOne = (node: VestigeNode, notes: number[]) => {
+        const traceOne = (node: AbstractVestigeNode, notes: number[]) => {
             for (const { subNode, subEdge } of getConnected(node.id, nodes, edges)) {
                 if (subNode.data.nodeType == "INSTRUMENT") {
                     // This is the last node in the chain! Just supply the
@@ -439,7 +473,7 @@ export class GraphForwarder {
                         // `notes` array, and continue traversal.
                         traceOne(subNode, subNode.data.generator.generate(
                             time,
-                            mapFromOne(subEdge.targetHandle!, notes)
+                            mapFromOne(subEdge.targetHandle! as any, notes)
                         ));
                     } else {
                         const existingInputs = awaitingNodes.get(subNode.id);
@@ -456,13 +490,17 @@ export class GraphForwarder {
                         } else {
                             // We have enough inputs for this note if we provide the notes
                             // we already have!
-                            traceOne(
-                                subNode,
-                                subNode.data.generator.generate(time, new Map([
-                                    ...existingInputs.entries(),
-                                    [subEdge.targetHandle!, notes]
-                                ]))
-                            );
+                            if (subNode.data.generator.inputs == 0) {
+                                traceOne(subNode, subNode.data.generator.generate(time));
+                            } else {
+                                traceOne(
+                                    subNode,
+                                    subNode.data.generator.generate(time, new Map([
+                                        ...existingInputs.entries(),
+                                        [subEdge.targetHandle!, notes]
+                                    ]))
+                                );
+                            }
                         }
                     }
                 } else {
@@ -472,7 +510,10 @@ export class GraphForwarder {
         }
 
         for (const node of getRootNodes(nodes, edges, "NOTES")) {
-            traceOne(node, node.data.generator.generate(time, new Map<never, number[]>()));
+            if (node.data.generator.inputs != 0)
+                continue;
+
+            traceOne(node, node.data.generator.generate(time));
         }
     }
 }
