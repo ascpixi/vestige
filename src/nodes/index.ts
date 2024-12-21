@@ -15,6 +15,7 @@ import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
+import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
 
 export type NodeData = {
     type: NodeType
@@ -32,6 +33,7 @@ export type VestigeNode =
     LfoNode |
     MixNode |
     BalanceNode |
+    PickNoteNode |
     FinalNode;
 
 /**
@@ -54,6 +56,7 @@ export const VESTIGE_NODE_TYPES = {
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
+    "pick-note": PickNoteNodeRenderer,
     "final": FinalNodeRenderer
 };
 
@@ -68,6 +71,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
+    new PickNoteNodeSerializer(),
     new FinalNodeSerializer()
 ];
 

@@ -16,6 +16,7 @@ import { BALANCE_NODE_DESCRIPTOR } from "./nodes/BalanceNode";
 import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
 import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
+import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
 
 import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
 import { createFinalNode } from "./nodes/FinalNode";
@@ -385,7 +386,8 @@ export default function App() {
             {
               type: "GROUP", content: "melodies & chords", entries: [
                 getContextMenuEntry(PENTATONIC_MELODY_NODE_DESCRIPTOR),
-                getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR)
+                getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
+                getContextMenuEntry(PICK_NOTE_DESCRIPTOR)
               ]
             },
             {
