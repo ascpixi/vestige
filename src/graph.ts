@@ -4,7 +4,7 @@ import * as flow from "@xyflow/react";
 import { VestigeNode, VestigeNodeOfType } from "./nodes";
 import { midiToName } from "./audioUtil";
 import { Automatable } from "./parameters";
-import { assert, mapFromSingle as mapFromOne } from "./util";
+import { assert, mapFromSingle } from "./util";
 import { FinalNodeData } from "./nodes/FinalNode";
 
 export type NoteEventType = "NOTE_ON" | "NOTE_OFF";
@@ -473,7 +473,7 @@ export class GraphForwarder {
                         // `notes` array, and continue traversal.
                         traceOne(subNode, subNode.data.generator.generate(
                             time,
-                            mapFromOne(subEdge.targetHandle! as any, notes)
+                            mapFromSingle(subEdge.targetHandle!, notes)
                         ));
                     } else {
                         const existingInputs = awaitingNodes.get(subNode.id);
@@ -485,7 +485,7 @@ export class GraphForwarder {
                                     [subEdge.targetHandle!, notes]
                                 ]));
                             } else {
-                                awaitingNodes.set(subNode.id, mapFromOne(subEdge.targetHandle!, notes));
+                                awaitingNodes.set(subNode.id, mapFromSingle(subEdge.targetHandle!, notes));
                             }
                         } else {
                             // We have enough inputs for this note if we provide the notes
