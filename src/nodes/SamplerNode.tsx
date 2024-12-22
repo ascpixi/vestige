@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiVoiceprintFill } from "@remixicon/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiVoiceprintFill } from "@remixicon/react";
 
 import { makeAsyncNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
@@ -171,7 +171,7 @@ export class SamplerNodeSerializer implements NodeDataSerializer<SamplerNodeData
   }
 }
 
-export type SamplerNode = Node<SamplerNodeData, "sampler">;
+export type SamplerNode = flow.Node<SamplerNodeData, "sampler">;
 
 /** Creates a new `SamplerNode` with a random ID. */
 export const createSamplerNode = makeAsyncNodeFactory(
@@ -187,7 +187,7 @@ export const SAMPLER_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
-  { id, data }: NodeProps<Node<SamplerNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<SamplerNodeData>>
 ) {
   const [sampleSet, setSampleSet] = useState<KnownSampleSet>(data.generator.set);
   const [attack, setAttack] = useState<number>(tone.Time(data.generator.sampler.attack).toSeconds());

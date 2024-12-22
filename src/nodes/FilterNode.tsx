@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiEqualizerFill } from "@remixicon/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiEqualizerFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
@@ -100,7 +100,7 @@ export class FilterNodeSerializer implements NodeDataSerializer<FilterNodeData> 
   }
 }
 
-export type FilterNode = Node<FilterNodeData, "filter">
+export type FilterNode = flow.Node<FilterNodeData, "filter">
 
 /** Creates a new `FilterNode` with a random ID. */
 export const createFilterNode = makeNodeFactory("filter", () => new FilterNodeData());
@@ -128,7 +128,7 @@ const scalarToResonance = (x: number) => x * MAX_Q;
 const resonanceToScalar = (x: number) => x / MAX_Q;
 
 export const FilterNodeRenderer = memo(function FilterNodeRenderer(
-  { id, data }: NodeProps<Node<FilterNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<FilterNodeData>>
 ) {
   const [type, setType] = useState<FilterType>(data.effect.filter.type as FilterType);
 

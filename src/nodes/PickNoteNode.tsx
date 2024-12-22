@@ -1,5 +1,5 @@
+import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import { RiDropperFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
@@ -52,7 +52,7 @@ export class PickNoteNodeSerializer implements NodeDataSerializer<PickNoteNodeDa
   }
 }
 
-export type PickNoteNode = Node<PickNoteNodeData, "pick-note">;
+export type PickNoteNode = flow.Node<PickNoteNodeData, "pick-note">;
 
 /** Creates a new `PickNoteNode` with a random ID. */
 export const createPickNoteNode = makeNodeFactory("pick-note", () => new PickNoteNodeData());
@@ -65,7 +65,7 @@ export const PICK_NOTE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const PickNoteNodeRenderer = memo(function PickNoteNodeRenderer(
-  { id, data }: NodeProps<Node<PickNoteNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<PickNoteNodeData>>
 ) {
   const [mode, setMode] = useState<Mode>(data.generator.mode);
 

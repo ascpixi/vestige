@@ -1,4 +1,4 @@
-import { Node } from "@xyflow/react";
+import * as flow from "@xyflow/react";
 
 import { NodeType } from "../graph";
 import { uniqueId } from "../util";
@@ -144,7 +144,7 @@ export function createNode<TData extends Record<string, unknown>, TNodeType exte
     x: number,
     y: number,
     additional?: Partial<VestigeNode>,
-): Node<TData, TNodeType> {
+): flow.Node<TData, TNodeType> {
     return {
         id: uniqueId(),
         position: { x, y },

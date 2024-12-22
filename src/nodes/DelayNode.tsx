@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiRepeatLine } from "@remixicon/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiRepeatLine } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
@@ -108,7 +108,7 @@ export class DelayNodeSerializer implements NodeDataSerializer<DelayNodeData> {
   }
 }
 
-export type DelayNode = Node<DelayNodeData, "delay">
+export type DelayNode = flow.Node<DelayNodeData, "delay">
 
 /** Creates a new `DelayNode` with a random ID. */
 export const createDelayNode = makeNodeFactory("delay", () => new DelayNodeData());
@@ -121,7 +121,7 @@ export const DELAY_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const DelayNodeRenderer = memo(function DelayNodeRenderer(
-  { id, data }: NodeProps<Node<DelayNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<DelayNodeData>>
 ) {
   const [time, setTime] = useState(tone.Time(data.effect.delay.delayTime.value).toSeconds());
   const [feedback, setFeedback] = useState(data.effect.delay.feedback.value * 100);

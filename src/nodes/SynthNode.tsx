@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiVolumeVibrateFill } from "@remixicon/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiVolumeVibrateFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
@@ -213,7 +213,7 @@ export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
   }
 }
 
-export type SynthNode = Node<SynthNodeData, "synth">;
+export type SynthNode = flow.Node<SynthNodeData, "synth">;
 
 /** Creates a new `SynthNode` with a random ID. */
 export const createSynthNode = makeNodeFactory("synth", () => new SynthNodeData());
@@ -226,7 +226,7 @@ export const SYNTH_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const SynthNodeRenderer = memo(function SynthNodeRenderer(
-  { id, data }: NodeProps<Node<SynthNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<SynthNodeData>>
 ) {
   const [countour, setCountour] = useState<Countour>(data.contour);
   const [countourAmt, setCountourAmt] = useState<number>(data.countourAmt * 100);

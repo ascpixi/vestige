@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiSchoolFill } from "@remixicon/react";
+import * as flow from "@xyflow/react";
 import * as tone from "tone";
+import { memo, useEffect, useState } from "react";
+import { RiSchoolFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
@@ -108,7 +108,7 @@ export class ReverbNodeSerializer implements NodeDataSerializer<ReverbNodeData> 
   }
 }
 
-export type ReverbNode = Node<ReverbNodeData, "reverb">
+export type ReverbNode = flow.Node<ReverbNodeData, "reverb">
 
 /** Creates a new `ReverbNode` with a random ID. */
 export const createReverbNode = makeNodeFactory("reverb", () => new ReverbNodeData());
@@ -121,7 +121,7 @@ export const REVERB_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
-  { id, data }: NodeProps<Node<ReverbNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<ReverbNodeData>>
 ) {
   const [decay, setDecay] = useState(tone.Time(data.effect.reverb.decay).toSeconds());
   const [preDelay, setPreDelay] = useState(tone.Time(data.effect.reverb.preDelay).toSeconds());

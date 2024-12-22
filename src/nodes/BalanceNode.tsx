@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
-import { RiEqualizer2Fill } from "@remixicon/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiEqualizer2Fill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
@@ -82,7 +82,7 @@ export class BalanceNodeSerializer implements NodeDataSerializer<BalanceNodeData
   }
 }
 
-export type BalanceNode = Node<BalanceNodeData, "balance">
+export type BalanceNode = flow.Node<BalanceNodeData, "balance">
 
 /** Creates a new `BalanceNode` with a random ID. */
 export const createBalanceNode = makeNodeFactory("balance", () => new BalanceNodeData());
@@ -95,7 +95,7 @@ export const BALANCE_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
-  { id, data }: NodeProps<Node<BalanceNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<BalanceNodeData>>
 ) {
   const [pan, setPan] = useState(data.effect.panVol.pan.value * 100);
   const [volume, setVolume] = useState(tone.dbToGain(data.effect.panVol.volume.value) * 100);

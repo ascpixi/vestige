@@ -1,5 +1,5 @@
+import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import { RiPulseFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
@@ -95,7 +95,7 @@ export class LfoNodeSerializer implements NodeDataSerializer<LfoNodeData> {
   }
 }
 
-export type LfoNode = Node<LfoNodeData, "lfo">
+export type LfoNode = flow.Node<LfoNodeData, "lfo">
 
 /** Creates a new `LfoNode` with a random ID. */
 export const createLfoNode = makeNodeFactory("lfo", () => new LfoNodeData());
@@ -111,7 +111,7 @@ const MAX_LFO_SPEED_HZ = 20; // 20 Hz is pretty darn fast for an LFO
 const MAX_LOG_SPEED_HZ_LOG10 = Math.log10(MAX_LFO_SPEED_HZ);
 
 export const LfoNodeRenderer = memo(function LfoNodeRenderer(
-  { id, data }: NodeProps<Node<LfoNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<LfoNodeData>>
 ) {
   const [shape, setShape] = useState<LfoShape>("sine");
   const [frequency, setFrequency] = useState<number>(data.generator.frequency);

@@ -1,6 +1,6 @@
-import { memo } from "react";
 import * as tone from "tone";
-import { Node, NodeProps } from "@xyflow/react";
+import * as flow from "@xyflow/react";
+import { memo } from "react";
 import { RiGitMergeFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
@@ -57,7 +57,7 @@ export class MixNodeSerializer extends NullNodeDataSerializer<MixNodeData> {
   make() { return new MixNodeData() }
 }
 
-export type MixNode = Node<MixNodeData, "mix">
+export type MixNode = flow.Node<MixNodeData, "mix">
 
 /** Creates a new `MixNode` with a random ID. */
 export const createMixNode = makeNodeFactory("mix", () => new MixNodeData());
@@ -70,7 +70,7 @@ export const MIX_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const MixNodeRenderer = memo(function MixNodeRenderer(
-  { id, data }: NodeProps<Node<MixNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<MixNodeData>>
 ) {
   return (
     <VestigeNodeBase

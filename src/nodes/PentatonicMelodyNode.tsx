@@ -1,5 +1,5 @@
+import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import { RiMusicFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
@@ -104,7 +104,7 @@ export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<Pentat
   }
 }
 
-export type PentatonicMelodyNode = Node<PentatonicMelodyNodeData, "pentatonic-melody">;
+export type PentatonicMelodyNode = flow.Node<PentatonicMelodyNodeData, "pentatonic-melody">;
 
 /** Creates a new `PentatonicMelodyNode` with a random ID. */
 export const createPentatonicMelodyNode = makeNodeFactory(
@@ -120,7 +120,7 @@ export const PENTATONIC_MELODY_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRenderer(
-  { id, data }: NodeProps<Node<PentatonicMelodyNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<PentatonicMelodyNodeData>>
 ) {
   const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
   const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
