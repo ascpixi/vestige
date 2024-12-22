@@ -100,6 +100,7 @@ export function SliderField({
         onMouseDownCapture={handleMouseDown}
         className={`range range-xs ${automated ? "" : "range-primary"}`}
         disabled={automated}
+        aria-label={`${name}: ${description}`}
       />
     </div>
   );

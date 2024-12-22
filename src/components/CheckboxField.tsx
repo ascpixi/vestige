@@ -11,6 +11,7 @@ export function CheckboxField({ name, description, value, onChange }: {
           checked={value}
           onChange={ev => onChange(ev.target.checked)}
           className="range range-primary range-xs"
+          aria-label={`${name}: ${description}`}
         />
 
         <span className="font-semibold">{name}</span>

@@ -433,6 +433,7 @@ export default function App() {
 
           <textarea ref={projLinkTextRef}
             className="textarea textarea-bordered w-full h-full min-h-[200px]"
+            aria-label="Project link"
             value={projLink}
             readOnly
           />
@@ -496,8 +497,8 @@ export default function App() {
               </p>
             </div>
 
-            <Link isContainer href="https://highseas.hackclub.com" className="w-1/2">
-              <img src={highSeasLogo} alt="Hack Club High Seas logo" aria-hidden/>
+            <Link isContainer href="https://highseas.hackclub.com" className="w-1/2" ariaLabel="Hack Club High Seas">
+              <img src={highSeasLogo} alt="" aria-hidden/>
             </Link>
           </div>
 
@@ -537,6 +538,7 @@ export default function App() {
 
             <div className="dropdown">
               <button
+                title="save or load project"
                 tabIndex={0}
                 role="button"
                 className="btn btn-square bg-white"
