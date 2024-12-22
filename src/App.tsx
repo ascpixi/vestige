@@ -334,6 +334,8 @@ export default function App() {
 
   async function togglePlay() {
     if (!playing) {
+      setStartTimeMs(performance.now());
+
       if (!wasStarted) {
         console.log("▶️ Playing (performing first time initialization)");
         await tone.start();
@@ -341,7 +343,6 @@ export default function App() {
       } else {
         console.log("▶️ Playing");
         tone.getDestination().volume.rampTo(prevVolume, 0.25);
-        setStartTimeMs(performance.now());
       }
     } else {
       console.log("⏹️ Stopping");
