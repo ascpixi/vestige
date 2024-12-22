@@ -168,19 +168,66 @@ export function distanceSqr(a: Point, b: Point) {
  */
 export function match<TTarget extends string | number | symbol, TOutput>(
     against: TTarget,
-    cases: { [matchCase in TTarget]: TOutput }
+    cases: Partial<{ [matchCase in TTarget]: TOutput }>
 ) {
     if (!(against in cases)) {
         console.error("match(...) did not account for case", against, ". Cases:", cases);
         throw new Error(`Unhandled "${String(against)}" value in "match" block.`)
     }
 
-    return cases[against];
+    return cases[against]!;
 }
 
+/**
+ * Allows to use the `in` operator to check if an array includes an element -
+ * for example, `"example" in anyOf("one", "two")`.
+ */
+export function anyOf<T extends string | number>(...elements: T[]): { [k in typeof elements[number]]: never } {
+    const o: any = {};
+    for (const element of elements) {
+        o[element] = null;
+    }
+
+    return o;
+} 
 /**
  * Returns x², or `x * x`.
  */
 export function sqr(x: number) {
     return x * x;
+}
+
+/**
+ * Represents an object that has a value that is computed in the background.
+ */
+export class Deferred<T> {
+    private value: T | null = null;
+    private promise: Promise<T> | null;
+
+    /**
+     * @param fn A function that performs the asynchronous background task. It will be immidiately executed when the object is created.
+     */
+    constructor(fn: () => Promise<T>) {
+        this.promise = (async () => {
+            const startedAt = Date.now();
+            this.value = await fn();
+            console.debug(`(deferred task completed in ${(Date.now() - startedAt) / 1000})`, this.value);
+
+            this.promise = null;
+            return this.value;
+        })();
+    }
+
+    async get(): Promise<T> {
+        if (this.promise) {
+            await this.promise;
+        }
+
+        return this.value!; // if this is null, that means that the wrapping function explicitly returned null
+    }
+
+    getSync(): T {
+        assert(this.promise === null, "attempted to get a deferred value before it's finished");
+        return this.value!;
+    }
 }

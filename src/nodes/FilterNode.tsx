@@ -1,19 +1,20 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiEqualizerFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, invLogLerp, logLerp, match } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { toneFreq } from "../audioUtil";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { toneFreq } from "../audioUtil";
-import { RiEqualizerFill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SelectField } from "../components/SelectField";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 type FilterType = "lowpass" | "bandpass" | "highpass";
 
@@ -99,7 +100,7 @@ export class FilterNodeSerializer implements NodeDataSerializer<FilterNodeData> 
   }
 }
 
-export type FilterNode = Node<FilterNodeData, "filter">
+export type FilterNode = flow.Node<FilterNodeData, "filter">
 
 /** Creates a new `FilterNode` with a random ID. */
 export const createFilterNode = makeNodeFactory("filter", () => new FilterNodeData());
@@ -127,7 +128,7 @@ const scalarToResonance = (x: number) => x * MAX_Q;
 const resonanceToScalar = (x: number) => x / MAX_Q;
 
 export const FilterNodeRenderer = memo(function FilterNodeRenderer(
-  { id, data }: NodeProps<Node<FilterNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<FilterNodeData>>
 ) {
   const [type, setType] = useState<FilterType>(data.effect.filter.type as FilterType);
 
@@ -191,11 +192,11 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to filter" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the filtered audio"
@@ -213,7 +214,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
             <option value="highpass">high-pass (crisps audio, removes bass and mids)</option>
           </SelectField>
 
-          <NodePort offset={236} handleId={paramHandleId("cutoff")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("cutoff")} kind="input" type="value">
             <SliderField
               name="cutoff"
               description="where the filter ends (low-pass), begins (high-pass) or its center (band-pass)"
@@ -233,7 +234,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
             onChange={setIntensity}
           />
 
-          <NodePort offset={428} handleId={paramHandleId("resonance")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("resonance")} kind="input" type="value">
             <SliderField
               name="resonance (sharpness)"
               description="also known as the 'Q' value. high values cause a 'laser' effect."

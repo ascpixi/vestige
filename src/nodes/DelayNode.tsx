@@ -1,17 +1,18 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiRepeatLine } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiRepeatLine } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const MIN_DELAY_TIME = 1 / 1000;
 const MAX_DELAY_TIME = 1000 / 1000;
@@ -107,7 +108,7 @@ export class DelayNodeSerializer implements NodeDataSerializer<DelayNodeData> {
   }
 }
 
-export type DelayNode = Node<DelayNodeData, "delay">
+export type DelayNode = flow.Node<DelayNodeData, "delay">
 
 /** Creates a new `DelayNode` with a random ID. */
 export const createDelayNode = makeNodeFactory("delay", () => new DelayNodeData());
@@ -120,7 +121,7 @@ export const DELAY_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const DelayNodeRenderer = memo(function DelayNodeRenderer(
-  { id, data }: NodeProps<Node<DelayNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<DelayNodeData>>
 ) {
   const [time, setTime] = useState(tone.Time(data.effect.delay.delayTime.value).toSeconds());
   const [feedback, setFeedback] = useState(data.effect.delay.feedback.value * 100);
@@ -157,18 +158,18 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to add the reverb to" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio, with the reverb"
             />
           </NodePort>
 
-          <NodePort offset={140} handleId={paramHandleId("time")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("time")} kind="input" type="value">
             <SliderField
               name="delay time"
               description="amount of time between repeats (echoes)"
@@ -180,7 +181,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={220} handleId={paramHandleId("feedback")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("feedback")} kind="input" type="value">
             <SliderField
               name="feedback"
               description="how much signal strength consecutive echoes have. larger values = longer echoes."
@@ -191,7 +192,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={300} handleId={paramHandleId("wet")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
               name="wetness (mix)"
               description="the percentage of the resulting audio that is the delay (echo)"

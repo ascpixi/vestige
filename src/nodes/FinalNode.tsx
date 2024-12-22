@@ -1,18 +1,18 @@
 import * as tone from "tone";
-
+import * as flow from "@xyflow/react";
 import { memo, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
 import { makeNodeFactory } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
+import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { getPersistentData, mutatePersistentData } from "../persistent";
 
-class FinalNodeData implements BaseNodeData {
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
+
+export class FinalNodeData implements BaseNodeData {
   [x: string]: unknown;
 
   nodeType = "FINAL" as const;
@@ -33,7 +33,7 @@ class FinalNodeData implements BaseNodeData {
   }
 }
 
-export type FinalNode = Node<FinalNodeData, "final">
+export type FinalNode = flow.Node<FinalNodeData, "final">
 
 /** Creates a new `FinalNode` with a random ID. */
 export const createFinalNode = makeNodeFactory("final", () => new FinalNodeData());
@@ -44,7 +44,7 @@ export class FinalNodeSerializer extends NullNodeDataSerializer<FinalNodeData> {
 }
 
 export const FinalNodeRenderer = memo(function FinalNodeRenderer(
-  { id, data }: NodeProps<Node<FinalNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<FinalNodeData>>
 ) {
   const [finalVolumeDisp, setFinalVolumeDisp] = useState(data.final.gain.value * 100);
 
@@ -73,7 +73,7 @@ export const FinalNodeRenderer = memo(function FinalNodeRenderer(
           onChange={setFinalVolume}
         />
 
-        <NodePort offset={156} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+        <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
           <PlainField
             name="main input"
             description="the audio to forward to your output device"

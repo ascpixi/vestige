@@ -1,16 +1,16 @@
-import { memo } from "react";
 import * as tone from "tone";
-
-import { Node, NodeProps } from "@xyflow/react";
+import * as flow from "@xyflow/react";
+import { memo } from "react";
 import { RiGitMergeFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { AudioDestination, AudioEffect, EffectNodeData, SIGNAL_OUTPUT_HID, signalInHandleId, unaryAudioDestination } from "../graph";
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
+import { AudioDestination, AudioEffect, EffectNodeData, SIGNAL_OUTPUT_HID, signalInHandleId, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { assert } from "../util";
+
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const INPUT_A = signalInHandleId("a");
 const INPUT_B = signalInHandleId("b");
@@ -57,7 +57,7 @@ export class MixNodeSerializer extends NullNodeDataSerializer<MixNodeData> {
   make() { return new MixNodeData() }
 }
 
-export type MixNode = Node<MixNodeData, "mix">
+export type MixNode = flow.Node<MixNodeData, "mix">
 
 /** Creates a new `MixNode` with a random ID. */
 export const createMixNode = makeNodeFactory("mix", () => new MixNodeData());
@@ -70,7 +70,7 @@ export const MIX_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const MixNodeRenderer = memo(function MixNodeRenderer(
-  { id, data }: NodeProps<Node<MixNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<MixNodeData>>
 ) {
   return (
     <VestigeNodeBase
@@ -83,15 +83,15 @@ export const MixNodeRenderer = memo(function MixNodeRenderer(
     >
       <div className="w-full">
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={INPUT_A} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={INPUT_A} kind="input" type="signal">
             <PlainField name="input A" description="the first audio signal" />
           </NodePort>
 
-          <NodePort offset={80} handleId={INPUT_B} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={INPUT_B} kind="input" type="signal">
             <PlainField name="input B" description="the second audio signal" />
           </NodePort>
 
-          <NodePort offset={140} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="input A and B combined into one signal"

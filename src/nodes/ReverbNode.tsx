@@ -1,17 +1,18 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
+import * as flow from "@xyflow/react";
 import * as tone from "tone";
+import { memo, useEffect, useState } from "react";
+import { RiSchoolFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiSchoolFill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const MIN_DECAY = 0.1;
 const MAX_DECAY = 10;
@@ -107,7 +108,7 @@ export class ReverbNodeSerializer implements NodeDataSerializer<ReverbNodeData> 
   }
 }
 
-export type ReverbNode = Node<ReverbNodeData, "reverb">
+export type ReverbNode = flow.Node<ReverbNodeData, "reverb">
 
 /** Creates a new `ReverbNode` with a random ID. */
 export const createReverbNode = makeNodeFactory("reverb", () => new ReverbNodeData());
@@ -120,7 +121,7 @@ export const REVERB_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
-  { id, data }: NodeProps<Node<ReverbNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<ReverbNodeData>>
 ) {
   const [decay, setDecay] = useState(tone.Time(data.effect.reverb.decay).toSeconds());
   const [preDelay, setPreDelay] = useState(tone.Time(data.effect.reverb.preDelay).toSeconds());
@@ -162,18 +163,18 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
             <PlainField name="main input" description="the audio to add the reverb to" />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio, with the reverb"
             />
           </NodePort>
 
-          <NodePort offset={140} handleId={paramHandleId("decay")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("decay")} kind="input" type="value">
             <SliderField
               name="decay"
               description="how fast the reverb trail fades out"
@@ -185,7 +186,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={220} handleId={paramHandleId("predelay")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("predelay")} kind="input" type="value">
             <SliderField
               name="pre-delay"
               description="amount of delay before the reverb"
@@ -197,7 +198,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
             />
           </NodePort>
 
-          <NodePort offset={300} handleId={paramHandleId("wet")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
               name="wetness (mix)"
               description="the percentage of the resulting audio that is the reverb"

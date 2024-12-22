@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { assert } from "../util";
 import { RiArrowDropRightLine } from "@remixicon/react";
+
+import { assert } from "../util";
 
 export type ContextMenuEntry = ContextMenuItem | ContextMenuGroup;
 
@@ -35,7 +36,7 @@ export function ContextMenu({ title, entries, openSide, nestLevel }: {
   function onItemMouseEnter(ev: React.MouseEvent<HTMLDivElement>) {
     onItemMouseLeave();
 
-    setHoverTimeoutId(setTimeout(() => {
+    setHoverTimeoutId(window.setTimeout(() => {
       assert(ev.target instanceof HTMLElement, "ev.target was not an HTMLElement");
       ev.target.focus();
     }, 100));

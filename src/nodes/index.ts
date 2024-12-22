@@ -1,7 +1,8 @@
-import { Node } from "@xyflow/react";
+import * as flow from "@xyflow/react";
 
 import { NodeType } from "../graph";
 import { uniqueId } from "../util";
+import { NodeDataSerializer } from "../serializer";
 
 import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./PentatonicMelodyNode";
 import { PentatonicChordsNode, PentatonicChordsNodeRenderer, PentatonicChordsNodeSerializer } from "./PentatonicChordsNode";
@@ -12,7 +13,9 @@ import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./SynthNode";
 import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
-import { NodeDataSerializer } from "../serializer";
+import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
+import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
+import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
 
 export type NodeData = {
     type: NodeType
@@ -23,11 +26,14 @@ export type VestigeNode =
     PentatonicMelodyNode |
     PentatonicChordsNode |
     SynthNode |
+    SamplerNode |
     FilterNode |
     ReverbNode |
     DelayNode |
     LfoNode |
     MixNode |
+    BalanceNode |
+    PickNoteNode |
     FinalNode;
 
 /**
@@ -43,11 +49,14 @@ export const VESTIGE_NODE_TYPES = {
     "pentatonic-melody": PentatonicMelodyNodeRenderer,
     "pentatonic-chords": PentatonicChordsNodeRenderer,
     "synth": SynthNodeRenderer,
+    "sampler": SamplerNodeRenderer,
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
+    "balance": BalanceNodeRenderer,
+    "pick-note": PickNoteNodeRenderer,
     "final": FinalNodeRenderer
 };
 
@@ -55,11 +64,14 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicMelodyNodeSerializer(),
     new PentatonicChordsNodeSerializer(),
     new SynthNodeSerializer(),
+    new SamplerNodeSerializer(),
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
+    new BalanceNodeSerializer(),
+    new PickNoteNodeSerializer(),
     new FinalNodeSerializer()
 ];
 
@@ -82,7 +94,7 @@ export interface NodeTypeDescriptor {
      * Creates a new node object of the node type this `NodeTypeDescriptor`
      * describes at the given position.
      */
-    create(x: number, y: number): VestigeNode;
+    create(x: number, y: number): VestigeNode | Promise<VestigeNode>;
 }
 
 /**
@@ -108,6 +120,21 @@ export function makeNodeFactory<
 }
 
 /**
+ * Similar to `makeNodeFactory`, but returns an asynchronous function instead.
+ */
+export function makeAsyncNodeFactory<
+    TData extends Record<string, unknown>,
+    TNodeType extends string
+>(
+    type: TNodeType,
+    dataFactory: () => Promise<TData>
+) {
+    return async (x: number, y: number, additional?: Partial<VestigeNode>) => createNode(
+        type, await dataFactory(), x, y, additional
+    );
+}
+
+/**
  * Creates a new arbitrary node with a random ID. This function is meant to
  * be called from wrappers which provide known values for `type` and `data`.
  */
@@ -117,7 +144,7 @@ export function createNode<TData extends Record<string, unknown>, TNodeType exte
     x: number,
     y: number,
     additional?: Partial<VestigeNode>,
-): Node<TData, TNodeType> {
+): flow.Node<TData, TNodeType> {
     return {
         id: uniqueId(),
         position: { x, y },

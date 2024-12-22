@@ -1,20 +1,23 @@
-import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import * as tone from "tone";
+import * as flow from "@xyflow/react";
+import { memo, useEffect, useState } from "react";
+import { RiVolumeVibrateFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
 import { octToCents } from "../audioUtil";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { RiVolumeVibrateFill } from "@remixicon/react";
 import { Automatable } from "../parameters";
 import { NodeDataSerializer } from "../serializer";
-import { lerp, match } from "../util";
+import { anyOf, lerp, match } from "../util";
+
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { SliderField } from "../components/SliderField";
+import { SelectField } from "../components/SelectField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
+
+const MIN_UNISON_DETUNE = 1; // cents
+const MAX_UNISON_DETUNE = 100; // cents
 
 type Countour = "pluck" | "smooth" | "sudden";
 type Waveform = "square" | "sawtooth" | "sine";
@@ -26,7 +29,8 @@ export class SynthNodeData extends InstrumentNodeData {
   contour: Countour = "pluck";
   countourAmt: number = 0.5;
   parameters: {
-    "param-fineTune": Automatable
+    "param-fineTune": Automatable,
+    "param-unisonDetune": Automatable
   } & Record<string, Automatable>
 
   applyContour() {
@@ -72,20 +76,72 @@ export class SynthNodeData extends InstrumentNodeData {
 
     const synth = this.generator.synth;
     this.parameters = {
-      "param-fineTune": new Automatable(x => synth.set({ detune: (this.octave * 1200) + ((x * 200) - 100) }))
+      "param-fineTune": new Automatable(x => synth.set({ detune: (this.octave * 1200) + ((x * 200) - 100) })),
+      "param-unisonDetune": new Automatable(x => this.generator.unisonSpread = lerp(MIN_UNISON_DETUNE, MAX_UNISON_DETUNE, x))
     }
   }
 };
 
 export class SynthAudioGenerator implements AudioGenerator {
   synth: tone.PolySynth;
+  private _waveform: Waveform = "sine";
+  private _unisonSpread: number = 20;
+  private _unisonCount: number = 1;
 
   constructor() {
-    this.synth = new tone.PolySynth(tone.Synth, {
-      oscillator: {
-        type: "sine"
-      }
-    });
+    this.synth = new tone.PolySynth(tone.Synth, { oscillator: { type: this.waveform} });
+  }
+
+  /** Fully applies oscillator settings, changing its type. May produce audible clicks.  */
+  private fullyApplyOsc() {
+    if (this._unisonCount > 1) {
+      this.synth.set({
+        oscillator: {
+          count: this._unisonCount,
+          spread: this._unisonSpread,
+          type: match(this._waveform, {
+            sawtooth: "fatsawtooth",
+            sine: "fatsine",
+            square: "fatsquare"
+          })
+        }
+      });
+    } else {
+      this.synth.set({ oscillator: { type: this._waveform } });
+    }
+  }
+
+  get waveform() { return this._waveform; }
+  set waveform(value: Waveform) {
+    this._waveform = value;
+    this.fullyApplyOsc();
+  }
+
+  get unisonCount() { return this._unisonCount; }
+  set unisonCount(value: number) {
+    const prev = this._unisonCount;
+    const next = value;
+
+    this._unisonCount = value;
+
+    if (
+      (prev <= 1 && next > 1) || // wasn't unisono before, but now it is
+      (prev > 1 && next <= 1)    // was unisono before, but now it isn't
+    ) {
+      this.fullyApplyOsc();
+    } else if (next > 1) {
+      // The unison state itself doesn't change, but the count does.
+      this.synth.set({ oscillator: { count: value } });
+    }
+  }
+
+  get unisonSpread() { return this._unisonSpread; }
+  set unisonSpread(value: number)  {
+    this._unisonSpread = value;
+
+    if (this._unisonCount > 1) {
+      this.synth.set({ oscillator: { spread: value } })
+    }
   }
 
   connectTo(dst: AudioDestination): void {
@@ -123,12 +179,15 @@ export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
 
     return {
       pf: params["param-fineTune"].controlledBy,
+      ps: params["param-unisonDetune"].controlledBy,
       c: obj.contour,
       a: obj.countourAmt,
       o: obj.octave,
       f: obj.fineTune,
-      w: synth.get().oscillator.type,
-      v: synth.volume.value
+      w: obj.generator.waveform,
+      v: synth.volume.value,
+      s: obj.generator.unisonSpread, // since Vestige 0.2.0
+      u: obj.generator.unisonCount // since Vestige 0.2.0
     };
   }
 
@@ -138,20 +197,23 @@ export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
     const params = data.parameters;
 
     params["param-fineTune"].controlledBy = serialized.pf;
+    params["param-unisonDetune"].controlledBy = serialized.ps;
     data.octave = serialized.o;
     data.fineTune = serialized.f;
     data.contour = serialized.c;
     data.countourAmt = serialized.a;
     synth.volume.value = serialized.v;
+    data.generator.unisonCount = serialized.u ?? 1; // since Vestige 0.2.0
+    data.generator.unisonSpread = serialized.s ?? 0; // since Vestige 0.2.0
+    data.generator.waveform = serialized.w;
 
-    synth.set({ oscillator: { type: serialized.w as any } });
     data.applyContour();
 
     return data;
   }
 }
 
-export type SynthNode = Node<SynthNodeData, "synth">;
+export type SynthNode = flow.Node<SynthNodeData, "synth">;
 
 /** Creates a new `SynthNode` with a random ID. */
 export const createSynthNode = makeNodeFactory("synth", () => new SynthNodeData());
@@ -164,22 +226,21 @@ export const SYNTH_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const SynthNodeRenderer = memo(function SynthNodeRenderer(
-  { id, data }: NodeProps<Node<SynthNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<SynthNodeData>>
 ) {
   const [countour, setCountour] = useState<Countour>(data.contour);
   const [countourAmt, setCountourAmt] = useState<number>(data.countourAmt * 100);
 
-  const [waveform, setWaveform] = useState<Waveform>(data.generator.synth.get().oscillator.type as Waveform);
+  const [waveform, setWaveform] = useState<Waveform>(data.generator.waveform);
   const [fineTune, setFineTune] = useState(data.fineTune);
   const [octave, setOctave] = useState(data.octave);
   const [volume, setVolume] = useState(tone.dbToGain(data.generator.synth.volume.value) * 100);
 
+  const [unisonVoices, setUnisonVoices] = useState(data.generator.unisonCount);
+  const [unisonSpread, setUnisonSpread] = useState(data.generator.unisonSpread);
+
   useEffect(() => {
-    data.generator.synth.set({
-      oscillator: {
-        type: waveform
-      }
-    });
+    data.generator.waveform = waveform;
   }, [data.generator, waveform]);
 
   useEffect(() => {
@@ -197,6 +258,14 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
     data.countourAmt = countourAmt / 100;
     data.applyContour();
   }, [data, countour, countourAmt]);
+
+  useEffect(() => {
+    data.generator.unisonCount = unisonVoices;
+  }, [data, unisonVoices]);
+
+  useEffect(() => {
+    data.generator.unisonSpread = unisonSpread;
+  }, [data, unisonSpread]);
 
   return (
     <VestigeNodeBase
@@ -216,14 +285,14 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
+          <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
             <PlainField
               name="main input"
               description="the notes to hold down on the synthesizer"
             />
           </NodePort>
 
-          <NodePort offset={80} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
             <PlainField align="right"
               name="main output"
               description="the audio coming out of the synthesizer"
@@ -241,7 +310,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
             <option>sudden</option>
           </SelectField>
 
-          {!["pluck", "smooth"].includes(countour) ? <></>
+          {!(countour in anyOf("pluck", "smooth")) ? <></>
             : (
               <SliderField
                 name={countour == "pluck" ? "pluckiness" : "fade"}
@@ -274,7 +343,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
             onChange={setOctave}
           />
 
-          <NodePort offset={540} handleId={paramHandleId("fineTune")} kind="input" type="value">
+          <NodePort nodeId={id} handleId={paramHandleId("fineTune")} kind="input" type="value">
             <SliderField
               name="fine-tune"
               description="the tiny pitch offset of the oscillator. useful for detuning. negative values pitch it down, positive pitch it up."
@@ -291,6 +360,25 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
             min={0} max={100} value={volume} isPercentage
             onChange={setVolume}
           />
+
+          <SliderField
+            name="unison voices"
+            description="values larger than 1 play multiple version of the synth in unison, slightly detuned. creates a 'fuller', more complex sound."
+            min={1} max={16} value={unisonVoices}
+            onChange={setUnisonVoices}
+          />
+
+          <NodePort nodeId={id} handleId={paramHandleId("unisonDetune")} kind="input" type="value">
+            <SliderField
+              name="unison spread"
+              description="if there is more than 1 unison voice, sets how much different in pitch the different voices are."
+              min={MIN_UNISON_DETUNE} max={MAX_UNISON_DETUNE} value={unisonSpread}
+              onChange={setUnisonSpread}
+              valueStringifier={x => `${Math.round(x)} cents`}
+              automatable={data.parameters["param-unisonDetune"]}
+              automatableDisplay={() => data.generator.unisonSpread}
+            />
+          </NodePort>
         </div>
       </div>
     </VestigeNodeBase>

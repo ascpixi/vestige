@@ -1,33 +1,37 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { RiDeleteBinFill, RiGraduationCapFill, RiInformation2Fill, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
 import * as flow from "@xyflow/react";
 import * as tone from "tone";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RiDeleteBinFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
 
 import "@xyflow/react/dist/style.css";
-import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
+import iconShadow from "./assets/icon-shadow.svg";
+import highSeasLogo from "./assets/highseas-logo.svg";
 
+import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
 import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "./nodes/PentatonicMelodyNode";
 import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
+import { SAMPLER_NODE_DESCRIPTOR } from "./nodes/SamplerNode";
 import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
 import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
-
-import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
-import { createFinalNode } from "./nodes/FinalNode";
-import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
-import { assert } from "./util";
-import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
+import { BALANCE_NODE_DESCRIPTOR } from "./nodes/BalanceNode";
 import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
 import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
-import { deserialize, serialize } from "./serializer";
-import { IntroductionTour } from "./components/IntroductionTour";
+import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
+import { createFinalNode } from "./nodes/FinalNode";
+
+import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
+import { assert } from "./util";
+import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
 import { getPersistentData, mutatePersistentData } from "./persistent";
 import { AFTER_TOUR_PROJECT } from "./builtinProjects";
-import { Link } from "./components/Link";
+import { isTauri, promptToSaveFile } from "./environment";
 
-import highSeasLogo from "./assets/highseas-logo.svg";
-import iconShadow from "./assets/icon-shadow.svg";
+import { Link } from "./components/Link";
+import { IntroductionTour } from "./components/IntroductionTour";
+import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
+import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -56,6 +60,7 @@ export default function App() {
   const tourDialogRef = useRef<HTMLDialogElement>(null);
 
   const aboutDialogRef = useRef<HTMLDialogElement>(null);
+  const resetDialogRef = useRef<HTMLDialogElement>(null);
 
   const [projLink, setProjLink] = useState<string>("");
   const projLinkDialogRef = useRef<HTMLDialogElement>(null);
@@ -69,35 +74,39 @@ export default function App() {
     });
   }, []);
 
+  const loadFromNodesAndEdges = useCallback((targetNodes: VestigeNode[], targetEdges: flow.Edge[]) => {
+    setNodes(targetNodes);
+    setEdges(targetEdges);
+
+    // Even if we call "setNodes" and "setEdges" here, the state of those
+    // variables are still what they were previously (i.e. empty arrays in our case)
+    // on this render. We need to explicitly assign them.
+
+    /* eslint-disable react-hooks/exhaustive-deps */
+    nodes = targetNodes;
+    edges = targetEdges;
+    /* eslint-enable react-hooks/exhaustive-deps */
+
+    // We also need to handle all of the connections
+    for (const edge of targetEdges) {
+      onConnectChange(edge as flow.Connection, "CONNECT");
+    }
+  }, []);
+
   useEffect(() => {
     if (!shouldLoadExisting) 
       return;
 
     (async () => {
       const data = location.hash.substring(3);
-      const result = await deserialize(data, VESTIGE_NODE_SERIALIZERS);
+      const result = await deserializeBase64(data, VESTIGE_NODE_SERIALIZERS);
   
-      setNodes(result.nodes);
-      setEdges(result.edges);
-  
-      // Even if we call "setNodes" and "setEdges" here, the state of those
-      // variables are still what they were previously (i.e. empty arrays in our case)
-      // on this render. We need to explicitly assign them.
-  
-      /* eslint-disable react-hooks/exhaustive-deps */
-      nodes = result.nodes;
-      edges = result.edges;
-      /* eslint-enable react-hooks/exhaustive-deps */
-  
-      // We also need to handle all of the connections
-      for (const edge of result.edges) {
-        onConnectChange(edge as flow.Connection, "CONNECT");
-      }
+      loadFromNodesAndEdges(result.nodes, result.edges);
   
       console.log("✅ Successfully loaded project from URL.", result);
       location.hash = "";
     })();
-  }, []);
+  }, [loadFromNodesAndEdges]);
 
   function getContextMenuEntry(descriptor: NodeTypeDescriptor): ContextMenuEntry {
     return {
@@ -106,9 +115,9 @@ export default function App() {
         {descriptor.icon("w-4 h-4")}
         {descriptor.displayName}
       </div>,
-      onChoose: () => {
+      onChoose: async () => {
         const { x, y } = thisFlow!.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-        setNodes([...nodes, descriptor.create(x - 200, y - 200)]);
+        setNodes([...nodes, await descriptor.create(x - 200, y - 200)]);
         setShowCtxMenu(false);
       }
     }
@@ -130,9 +139,13 @@ export default function App() {
     ev.preventDefault();
   }
 
-  async function saveProject() {
-    const data = await serialize(nodes, edges, VESTIGE_NODE_SERIALIZERS);
-    setProjLink(location.origin + location.pathname + "#p:" + data);
+  async function saveAsLink() {
+    const data = await serializeBase64(nodes, edges, VESTIGE_NODE_SERIALIZERS);
+    const root = isTauri()
+      ? "https://vestige.ascpixi.dev/"
+      : location.origin + location.pathname;
+
+    setProjLink(root + "#p:" + data);
     projLinkDialogRef.current!.showModal();
 
     setTimeout(() => {
@@ -141,10 +154,49 @@ export default function App() {
     }, 50);
   }
 
-  function askReset() {
-    if (!confirm("Are you sure you want to reset this project? There's no undo!"))
+  async function saveAsFile() {
+    await promptToSaveFile(
+      await serialize(nodes, edges, VESTIGE_NODE_SERIALIZERS),
+      "untitled",
+      "Vestige Project",
+      "vestigeproj"
+    );
+  }
+
+  async function loadFromFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".vestigeproj";
+    
+    const file = await new Promise<File>(resolve => {
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) resolve(file);
+      };
+
+      input.click();
+    });
+
+    const data = await new Promise<ArrayBuffer>(resolve => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
+      reader.readAsArrayBuffer(file);
+    });
+
+    const result = await deserialize(new Uint8Array(data), VESTIGE_NODE_SERIALIZERS);
+    loadFromNodesAndEdges(result.nodes, result.edges);
+  }
+
+  function loadFromLink() {
+    const link = prompt("Paste the link in the input box below.");
+    if (link == null)
       return;
 
+    const linkHashIdx = link.indexOf("#");
+    location.hash = link.substring(linkHashIdx);
+  }
+
+  function reset() {
     location.hash = "";
     location.reload();
   }
@@ -282,6 +334,8 @@ export default function App() {
 
   async function togglePlay() {
     if (!playing) {
+      setStartTimeMs(performance.now());
+
       if (!wasStarted) {
         console.log("▶️ Playing (performing first time initialization)");
         await tone.start();
@@ -289,7 +343,6 @@ export default function App() {
       } else {
         console.log("▶️ Playing");
         tone.getDestination().volume.rampTo(prevVolume, 0.25);
-        setStartTimeMs(performance.now());
       }
     } else {
       console.log("⏹️ Stopping");
@@ -334,12 +387,14 @@ export default function App() {
             {
               type: "GROUP", content: "melodies & chords", entries: [
                 getContextMenuEntry(PENTATONIC_MELODY_NODE_DESCRIPTOR),
-                getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR)
+                getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
+                getContextMenuEntry(PICK_NOTE_DESCRIPTOR)
               ]
             },
             {
               type: "GROUP", content: "instruments", entries: [
-                getContextMenuEntry(SYNTH_NODE_DESCRIPTOR)
+                getContextMenuEntry(SYNTH_NODE_DESCRIPTOR),
+                getContextMenuEntry(SAMPLER_NODE_DESCRIPTOR)
               ]
             },
             {
@@ -350,7 +405,8 @@ export default function App() {
               ]
             },
             getContextMenuEntry(LFO_NODE_DESCRIPTOR),
-            getContextMenuEntry(MIX_NODE_DESCRIPTOR)
+            getContextMenuEntry(MIX_NODE_DESCRIPTOR),
+            getContextMenuEntry(BALANCE_NODE_DESCRIPTOR)
         ]}/>
       </div>
 
@@ -368,7 +424,7 @@ export default function App() {
       }
 
       <dialog ref={projLinkDialogRef} className="modal">
-        <div className="modal-box">
+        <div className="modal-box max-w-none w-1/2">
           <h3 className="font-bold text-lg">Project link</h3>
           <p className="py-4">
             This is a link to your project - whenever you'll open it, this
@@ -376,7 +432,7 @@ export default function App() {
           </p>
 
           <textarea ref={projLinkTextRef}
-            className="textarea textarea-bordered w-full"
+            className="textarea textarea-bordered w-full h-full min-h-[200px]"
             value={projLink}
             readOnly
           />
@@ -384,6 +440,23 @@ export default function App() {
           <div className="modal-action">
             <form method="dialog">
               <button className="btn">Close</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog ref={resetDialogRef} className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm operation</h3>
+          <p className="py-4">
+            Are you sure you want to create a new project? If you did not save
+            this one before, it will be lost forever!
+          </p>
+
+          <div className="modal-action w-full">
+            <form method="dialog" className="flex gap-2 w-full">
+              <button onClick={reset} className="btn btn-primary w-1/2">Yes, create a new one</button>
+              <button className="btn w-1/2">Cancel</button>
             </form>
           </div>
         </div>
@@ -462,15 +535,29 @@ export default function App() {
               { playing ? <RiStopFill/> : <RiPlayFill/> }
             </button>
 
-            <button onClick={saveProject}
-              title="save project"
-              className="btn btn-square bg-white"
-              disabled={inTour}
-            >
-              <RiSaveFill/>
-            </button>
+            <div className="dropdown">
+              <button
+                tabIndex={0}
+                role="button"
+                className="btn btn-square bg-white"
+                disabled={inTour}
+              >
+                <RiSaveFill/>
+              </button>
 
-            <button onClick={askReset}
+              <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-[1] w-52 p-2 shadow">
+                <li><a onClick={saveAsFile}><RiFileMusicFill className="w-4"/> Save as file</a></li>
+                <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
+                <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
+                
+                {
+                  !isTauri() ? <></> :
+                  <li><a onClick={loadFromLink}><RiLinkUnlinkM className="w-4"/>Load from link</a></li>
+                }
+              </ul>
+            </div>
+
+            <button onClick={() => resetDialogRef.current!.showModal()}
               title="delete project" 
               className="btn btn-square bg-white"
               disabled={inTour}

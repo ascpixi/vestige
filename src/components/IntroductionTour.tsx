@@ -1,9 +1,9 @@
 import * as flow from "@xyflow/react";
+import { RiGraduationCapFill } from "@remixicon/react";
+import { useCallback, useEffect, useState } from "react";
 
 import { VestigeNode } from "../nodes";
 import { distanceSqr, sqr } from "../util";
-import { RiGraduationCapFill } from "@remixicon/react";
-import { useCallback, useEffect, useState } from "react";
 
 interface ExternalTourData {
   flowState: flow.ReactFlowInstance<VestigeNode, flow.Edge>;

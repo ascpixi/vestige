@@ -1,16 +1,17 @@
+import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
+import { RiPulseFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
-import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
 import { logLerp } from "../util";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiPulseFill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { SelectField } from "../components/SelectField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 type LfoShape = "sine" | "square" | "saw";
 
@@ -94,7 +95,7 @@ export class LfoNodeSerializer implements NodeDataSerializer<LfoNodeData> {
   }
 }
 
-export type LfoNode = Node<LfoNodeData, "lfo">
+export type LfoNode = flow.Node<LfoNodeData, "lfo">
 
 /** Creates a new `LfoNode` with a random ID. */
 export const createLfoNode = makeNodeFactory("lfo", () => new LfoNodeData());
@@ -110,7 +111,7 @@ const MAX_LFO_SPEED_HZ = 20; // 20 Hz is pretty darn fast for an LFO
 const MAX_LOG_SPEED_HZ_LOG10 = Math.log10(MAX_LFO_SPEED_HZ);
 
 export const LfoNodeRenderer = memo(function LfoNodeRenderer(
-  { id, data }: NodeProps<Node<LfoNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<LfoNodeData>>
 ) {
   const [shape, setShape] = useState<LfoShape>("sine");
   const [frequency, setFrequency] = useState<number>(data.generator.frequency);
@@ -160,7 +161,7 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={VALUE_OUTPUT_HID} kind="output" type="value">
+          <NodePort nodeId={id} handleId={VALUE_OUTPUT_HID} kind="output" type="value">
             <PlainField name="value" description="the current value of the LFO" align="right" />
           </NodePort>
 

@@ -1,22 +1,21 @@
+import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { Node, NodeProps } from "@xyflow/react";
 import { RiMusicFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { AlwaysEmptyNoteInputs, NoNoteInputs, NOTE_OUTPUT_HID, NoteGenerator, NoteGeneratorNodeData } from "../graph";
-
+import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 import { hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
-
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
 import { NodeDataSerializer } from "../serializer";
 
-export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
-  inputs: number;
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { SliderField } from "../components/SliderField";
+import { SelectField } from "../components/SelectField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
+
+export class PentatonicMelodyGenerator implements PlainNoteGenerator {
+  inputs = 0 as const;
   offset: number;
 
   constructor(
@@ -27,11 +26,10 @@ export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
     public rootNote: number = MIDI_NOTES.Cs,
     public mode: ScaleMode = "MINOR"
   ) {
-    this.inputs = 0;
     this.offset = Math.random() * 100;
   }
 
-  generate(time: number, _: AlwaysEmptyNoteInputs): number[] {
+  generate(time: number): number[] {
     time = time + this.offset;
 
     // "available" contains all the notes we can play.
@@ -68,7 +66,7 @@ export class PentatonicMelodyGenerator implements NoteGenerator<NoNoteInputs> {
   }
 }
 
-export class PentatonicMelodyNodeData extends NoteGeneratorNodeData<NoNoteInputs> {
+export class PentatonicMelodyNodeData extends NoteGeneratorNodeData {
   generator: PentatonicMelodyGenerator;
 
   constructor () {
@@ -106,12 +104,12 @@ export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<Pentat
   }
 }
 
-export type PentatonicMelodyNode = Node<PentatonicMelodyNodeData, "pentatonic-melody">;
+export type PentatonicMelodyNode = flow.Node<PentatonicMelodyNodeData, "pentatonic-melody">;
 
 /** Creates a new `PentatonicMelodyNode` with a random ID. */
 export const createPentatonicMelodyNode = makeNodeFactory(
-    "pentatonic-melody",
-    () => new PentatonicMelodyNodeData()
+  "pentatonic-melody",
+  () => new PentatonicMelodyNodeData()
 );
 
 /** Provides a `NodeTypeDescriptor` which describes pentatonic melody generator nodes. */
@@ -122,7 +120,7 @@ export const PENTATONIC_MELODY_NODE_DESCRIPTOR = {
 } satisfies NodeTypeDescriptor;
 
 export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRenderer(
-  { id, data }: NodeProps<Node<PentatonicMelodyNodeData>>
+  { id, data }: flow.NodeProps<flow.Node<PentatonicMelodyNodeData>>
 ) {
   const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
   const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
@@ -155,7 +153,7 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort offset={20} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
+          <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
             <PlainField align="right"
               name="main output"
               description="the currently held down notes"

@@ -1,7 +1,7 @@
 {
   "name": "vestige",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@remixicon/react": "^4.5.0",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
     "@xyflow/react": "^12.3.6",
     "autoprefixer": "^10.4.20",
     "byte-base64": "^1.1.0",
@@ -24,6 +26,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@tauri-apps/cli": "^2.1.0",
+    "@types/node": "^22.10.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
