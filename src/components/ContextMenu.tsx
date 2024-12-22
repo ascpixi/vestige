@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { assert } from "../util";
 import { RiArrowDropRightLine } from "@remixicon/react";
+
+import { assert } from "../util";
 
 export type ContextMenuEntry = ContextMenuItem | ContextMenuGroup;
 

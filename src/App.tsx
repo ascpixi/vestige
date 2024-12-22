@@ -4,8 +4,10 @@ import * as flow from "@xyflow/react";
 import * as tone from "tone";
 
 import "@xyflow/react/dist/style.css";
-import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
+import iconShadow from "./assets/icon-shadow.svg";
+import highSeasLogo from "./assets/highseas-logo.svg";
 
+import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
 import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "./nodes/PentatonicMelodyNode";
 import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
@@ -17,21 +19,19 @@ import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
 import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
 import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
+import { createFinalNode } from "./nodes/FinalNode";
 
 import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
-import { createFinalNode } from "./nodes/FinalNode";
-import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { assert } from "./util";
-import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
-import { IntroductionTour } from "./components/IntroductionTour";
 import { getPersistentData, mutatePersistentData } from "./persistent";
 import { AFTER_TOUR_PROJECT } from "./builtinProjects";
-import { Link } from "./components/Link";
-
-import highSeasLogo from "./assets/highseas-logo.svg";
-import iconShadow from "./assets/icon-shadow.svg";
 import { isTauri, promptToSaveFile } from "./environment";
+
+import { Link } from "./components/Link";
+import { IntroductionTour } from "./components/IntroductionTour";
+import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
+import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");

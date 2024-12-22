@@ -1,5 +1,5 @@
-import { defineConfig, UserConfig } from "vite"
-import react from "@vitejs/plugin-react"
+import { defineConfig, UserConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
   // https://v2.tauri.app/start/frontend/vite/

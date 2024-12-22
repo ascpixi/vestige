@@ -1,16 +1,17 @@
 import { memo, useEffect, useState } from "react";
 import { Node, NodeProps } from "@xyflow/react";
+import { RiPulseFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
-import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
 import { logLerp } from "../util";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiPulseFill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { SelectField } from "../components/SelectField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 type LfoShape = "sine" | "square" | "saw";
 

@@ -3,18 +3,18 @@ import { Node, NodeProps } from "@xyflow/react";
 import { RiVolumeVibrateFill } from "@remixicon/react";
 import * as tone from "tone";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
 import { octToCents } from "../audioUtil";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
 import { Automatable } from "../parameters";
 import { NodeDataSerializer } from "../serializer";
 import { anyOf, lerp, match } from "../util";
+
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { SliderField } from "../components/SliderField";
+import { SelectField } from "../components/SelectField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const MIN_UNISON_DETUNE = 1; // cents
 const MAX_UNISON_DETUNE = 100; // cents

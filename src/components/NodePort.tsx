@@ -1,5 +1,6 @@
 import { Connection, Edge, Handle, Position, useUpdateNodeInternals } from "@xyflow/react";
 import { PropsWithChildren, useRef } from "react";
+
 import { NOTE_INPUT_HID_PREFIX, SIGNAL_INPUT_HID_PREFIX, VALUE_INPUT_HID_PREFIX } from "../graph";
 import { match } from "../util";
 

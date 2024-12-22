@@ -1,19 +1,20 @@
 import { memo, useEffect, useState } from "react";
 import { Node, NodeProps } from "@xyflow/react";
+import { RiEqualizerFill } from "@remixicon/react";
 import * as tone from "tone";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, invLogLerp, logLerp, match } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { toneFreq } from "../audioUtil";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { toneFreq } from "../audioUtil";
-import { RiEqualizerFill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SelectField } from "../components/SelectField";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 type FilterType = "lowpass" | "bandpass" | "highpass";
 

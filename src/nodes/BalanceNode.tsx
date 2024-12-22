@@ -1,17 +1,18 @@
 import { memo, useEffect, useState } from "react";
 import { Node, NodeProps } from "@xyflow/react";
+import { RiEqualizer2Fill } from "@remixicon/react";
 import * as tone from "tone";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiEqualizer2Fill } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 export class BalanceNodeData extends EffectNodeData {
   effect: BalanceAudioEffect;

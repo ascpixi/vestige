@@ -4,16 +4,15 @@ import { RiMusicFill } from "@remixicon/react";
 
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
-
 import { hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
+import { NodeDataSerializer } from "../serializer";
 
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
+import { SliderField } from "../components/SliderField";
 import { SelectField } from "../components/SelectField";
-import { NodeDataSerializer } from "../serializer";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   inputs = 0 as const;

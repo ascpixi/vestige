@@ -1,17 +1,18 @@
 import { memo, useEffect, useState } from "react";
 import { Node, NodeProps } from "@xyflow/react";
+import { RiRepeatLine } from "@remixicon/react";
 import * as tone from "tone";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { makeNodeFactory, NodeTypeDescriptor } from ".";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { SliderField } from "../components/SliderField";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import { NodeDataSerializer } from "../serializer";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
-import { RiRepeatLine } from "@remixicon/react";
-import { NodeDataSerializer } from "../serializer";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const MIN_DELAY_TIME = 1 / 1000;
 const MAX_DELAY_TIME = 1000 / 1000;

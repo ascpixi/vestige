@@ -3,17 +3,17 @@ import { Node, NodeProps } from "@xyflow/react";
 import { RiVoiceprintFill } from "@remixicon/react";
 import * as tone from "tone";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
 import { makeAsyncNodeFactory, NodeTypeDescriptor } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { NodeDataSerializer } from "../serializer";
 import { Deferred } from "../util";
+
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { SelectField } from "../components/SelectField";
+import { SliderField } from "../components/SliderField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 /**
  * Represents the types of all built-in sample sets.

@@ -1,16 +1,16 @@
 import * as tone from "tone";
-
 import { memo, useState } from "react";
 import { Node, NodeProps } from "@xyflow/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
 import { makeNodeFactory } from ".";
+import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
+import { NullNodeDataSerializer } from "../serializer";
+import { getPersistentData, mutatePersistentData } from "../persistent";
+
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
-import { NullNodeDataSerializer } from "../serializer";
-import { getPersistentData, mutatePersistentData } from "../persistent";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 export class FinalNodeData implements BaseNodeData {
   [x: string]: unknown;

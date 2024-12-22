@@ -1,16 +1,16 @@
 import { memo } from "react";
 import * as tone from "tone";
-
 import { Node, NodeProps } from "@xyflow/react";
 import { RiGitMergeFill } from "@remixicon/react";
 
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { AudioDestination, AudioEffect, EffectNodeData, SIGNAL_OUTPUT_HID, signalInHandleId, unaryAudioDestination } from "../graph";
 import { makeNodeFactory, NodeTypeDescriptor } from ".";
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
+import { AudioDestination, AudioEffect, EffectNodeData, SIGNAL_OUTPUT_HID, signalInHandleId, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { assert } from "../util";
+
+import { NodePort } from "../components/NodePort";
+import { PlainField } from "../components/PlainField";
+import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
 const INPUT_A = signalInHandleId("a");
 const INPUT_B = signalInHandleId("b");
