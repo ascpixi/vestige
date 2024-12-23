@@ -5,7 +5,7 @@ import { RiMusicFill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
-import { hashify } from "../util";
+import { allEqualUnordered, hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
 import { NodeDataSerializer } from "../serializer";
 
@@ -14,10 +14,12 @@ import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { SelectField } from "../components/SelectField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { MusicalKeyboard } from "../components/MusicalKeyboard";
 
 export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   inputs = 0 as const;
   offset: number;
+  lastNotes: number[] = [];
 
   constructor(
     public density: number = 50,
@@ -63,7 +65,7 @@ export class PentatonicMelodyGenerator implements PlainNoteGenerator {
         break;
     }
 
-    return played;
+    return this.lastNotes = played;
   }
 }
 
@@ -133,6 +135,13 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
   const [pitchRange, setPitchRange] = useState(data.generator.pitchRange);
   const [polyphony, setPolyphony] = useState(data.generator.polyphony);
 
+  const [notes, setNotes] = useState<number[]>([]);
+
+  const semitonePitchRange = (mode == "MAJOR" ?
+    MAJOR_PENTATONIC[pitchRange % 5] :
+    MINOR_PENTATONIC[pitchRange % 5]
+  ) + (12 * Math.floor(pitchRange / 5));
+
   useEffect(() => {
     const gen = data.generator;
 
@@ -142,7 +151,17 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
     gen.octave = octave;
     gen.pitchRange = pitchRange;
     gen.polyphony = polyphony;
-  }, [data.generator, rootNote, mode, density, octave, pitchRange, polyphony])
+  }, [data.generator, rootNote, mode, density, octave, pitchRange, polyphony]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
+        setNotes(data.generator.lastNotes);
+      }
+    }, 100);
+
+    return () => clearInterval(id);
+  }, [data, notes]);
 
   return (
     <VestigeNodeBase
@@ -217,6 +236,11 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
             description="amount of notes that can be played at the same time"
             min={1} max={4} value={polyphony}
             onChange={setPolyphony}
+          />
+
+          <MusicalKeyboard
+            octaves={Math.ceil((semitonePitchRange + rootNote) / 12)}
+            notes={notes.map(x => x - (octave * 12))}
           />
         </div>
       </div>
