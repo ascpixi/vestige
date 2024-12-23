@@ -15,9 +15,9 @@ import { SelectField } from "../components/SelectField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
-import HARP_DATA from "../../public/samples/harp/data.json";
-import PIANO_DATA from "../../public/samples/piano/data.json";
-import VIOLIN_SUS_DATA from "../../public/samples/violin-sustained/data.json";
+import HARP_DATA from "../assets/sample-sets/harp.json";
+import PIANO_DATA from "../assets/sample-sets/piano.json";
+import VIOLIN_SUS_DATA from "../assets/sample-sets/violin-sustained.json";
 
 /**
  * Represents the types of all built-in sample sets.
