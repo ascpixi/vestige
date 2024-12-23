@@ -43,16 +43,13 @@ export function NodePort({ nodeId, kind, type, handleId, children }: PropsWithCh
     <>
       <div ref={selfRef}>{children}</div>
       
-      {
-        selfRef.current == null ? <></> :
-        <Handle id={handleId}
-          type={kind === "input" ? "target" : "source"}
-          position={kind === "input" ? Position.Left : Position.Right}
-          className={handleClass}
-          style={{ top: selfRef.current.offsetTop + 8 }}
-          isValidConnection={checkValidConnection}
-        />
-      }
+      <Handle id={handleId}
+        type={kind === "input" ? "target" : "source"}
+        position={kind === "input" ? Position.Left : Position.Right}
+        className={handleClass}
+        style={{ top: selfRef.current ? selfRef.current.offsetTop + 8 : 8 }}
+        isValidConnection={checkValidConnection}
+      />
     </>
   );
 }
