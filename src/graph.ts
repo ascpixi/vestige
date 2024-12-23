@@ -1,7 +1,7 @@
 import * as tone from "tone";
 import * as flow from "@xyflow/react";
 
-import { VestigeNode, VestigeNodeOfType } from "./nodes";
+import { VestigeNodeOfType } from "./nodes";
 import { midiToName } from "./audioUtil";
 import { Automatable } from "./parameters";
 import { assert, mapFromSingle } from "./util";
@@ -353,13 +353,13 @@ export class GraphForwarder {
      * Traces the given graph, forwarding Vestige-generated data to out-of-graph
      * nodes, e.g. `INSTRUMENT` nodes.
      */
-    traceGraph(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
+    traceGraph(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
        this.traceValues(time, nodes, edges);
        this.traceNotes(time, nodes, edges);
     }
 
     /** Forwards outputs from `VALUE` nodes to their final destinations. */
-    private traceValues(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
+    private traceValues(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
         // Maps node IDs of `VALUE` generators to the number of inputs they have
         // received so far. A VALUE generator that has `valueNodeConnCount[keyof awaitingNodes]`
         // inputs is considered fulfilled.

@@ -1,4 +1,5 @@
-import { defineConfig, UserConfig } from "vite";
+import * as vite from "vite";
+import * as vitest from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
@@ -16,19 +17,30 @@ const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
   envPrefix: ["VITE_", "TAURI_ENV_*"],
   build: {
     // Tauri uses Chromium on Windows and WebKit on macOS and Linux
-    target:
-      process.env.TAURI_ENV_PLATFORM == "windows"
-        ? "chrome105"
-        : "safari13",
+    target: process.env.TAURI_ENV_PLATFORM == "windows" ? "chrome105" : "safari14",
+
     // don't minify for debug builds
     minify: !process.env.TAURI_ENV_DEBUG ? "esbuild" : false,
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
   }
-} satisfies Partial<UserConfig>;
+} satisfies Partial<vite.UserConfig>;
 
-export default defineConfig({
+const viteCfg = vite.defineConfig({
   plugins: [react()],
   base: "/",
   ...tauriCfg
 });
+
+const vitestCfg = vitest.defineConfig({
+  test: {
+    browser: {
+      enabled: true,
+      headless: true,
+      name: "chrome",
+      provider: "webdriverio"
+    }
+  }
+})
+
+export default vite.mergeConfig(viteCfg, vitestCfg); 

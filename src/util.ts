@@ -18,9 +18,13 @@ export function mapFromSingle<TKey, TValue>(key: TKey, value: TValue) {
     return new Map<TKey, TValue>([[key, value]]);
 }
 
-export function assert(condition: any, msg: string): asserts condition {
+export function assert(condition: any, msg?: string): asserts condition {
     if (!condition) {
-        throw new Error(`Assertion failed: ${msg}`);
+        if (msg) {
+            throw new Error(`Assertion failed: ${msg}`);
+        } else {
+            throw new Error("Assertion failed.");
+        }
     }
 }
 
