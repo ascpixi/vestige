@@ -87,7 +87,8 @@ export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<Pentat
       o: gen.octave,
       r: gen.pitchRange,
       n: gen.rootNote,
-      m: gen.mode
+      m: gen.mode,
+      p: gen.polyphony // since Vestige 0.3.0
     };
   }
 
@@ -100,6 +101,7 @@ export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<Pentat
     gen.pitchRange = serialized.r;
     gen.rootNote = serialized.n;
     gen.mode = serialized.m;
+    gen.polyphony = serialized.p ?? 1; // since Vestige 0.3.0
 
     return data;
   }
