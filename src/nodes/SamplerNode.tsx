@@ -3,19 +3,21 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVoiceprintFill } from "@remixicon/react";
 
-import { makeAsyncNodeFactory, NodeTypeDescriptor } from ".";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { NodeDataSerializer } from "../serializer";
-import { Deferred } from "../util";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SelectField } from "../components/SelectField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+
+import HARP_DATA from "../../public/samples/harp/data.json";
+import PIANO_DATA from "../../public/samples/piano/data.json";
+import VIOLIN_SUS_DATA from "../../public/samples/violin-sustained/data.json";
 
 /**
  * Represents the types of all built-in sample sets.
@@ -26,41 +28,27 @@ export type KnownSampleSet =
   "HARP" |
   "VIOLIN_SUS";
 
-function getSampleSetFetcher(name: string) {
-  return new Deferred(async () => {
-    const resp = await fetch(`/samples/${name}/data.json`);
-    const data = await resp.json();
-
-    return {
-      urls: data,
-      baseUrl: `/samples/${name}/`,
-      release: 2
-    };
-  });
+function getSamplerOptions(data: any, name: string) {
+  return {
+    urls: data,
+    baseUrl: `/samples/${name}/`,
+    release: 2
+  };
 }
 
-const SAMPLE_SETS: { [key in KnownSampleSet]: Deferred<Partial<tone.SamplerOptions>> } = {
-  "HARP": getSampleSetFetcher("harp"),
-  "PIANO": getSampleSetFetcher("piano"),
-  "VIOLIN_SUS": getSampleSetFetcher("violin-sustained")
+const SAMPLE_SETS: { [key in KnownSampleSet]: Partial<tone.SamplerOptions> } = {
+  "HARP": getSamplerOptions(HARP_DATA, "harp"),
+  "PIANO": getSamplerOptions(PIANO_DATA, "piano"),
+  "VIOLIN_SUS": getSamplerOptions(VIOLIN_SUS_DATA, "violin-sustained")
 };
 
 export class SamplerNodeData extends InstrumentNodeData {
-  generator: SamplerAudioGenerator;
+  generator: SamplerAudioGenerator = new SamplerAudioGenerator();
   parameters: Record<string, Automatable> = {};
-
-  private constructor(generator: SamplerAudioGenerator) {
-    super();
-    this.generator = generator;
-  }
-
-  static async create(set: KnownSampleSet = "PIANO") {
-    return new SamplerNodeData(await SamplerAudioGenerator.create(set));
-  }
 };
 
 export class SamplerAudioGenerator implements AudioGenerator {
-  sampler: tone.Sampler;
+  sampler: tone.Sampler = new tone.Sampler(SAMPLE_SETS["PIANO"]);
   out: tone.Gain = new tone.Gain();
   awaiting: NoteEvent[] = [];
 
@@ -74,7 +62,7 @@ export class SamplerAudioGenerator implements AudioGenerator {
     this.sampler.dispose();
 
     this.sampler = new tone.Sampler({
-      ...SAMPLE_SETS[value].getSync(),
+      ...SAMPLE_SETS[value],
       attack: this.sampler.attack,
       release: this.sampler.release
     });
@@ -82,13 +70,8 @@ export class SamplerAudioGenerator implements AudioGenerator {
     this.sampler.connect(this.out);
   }
 
-  private constructor (sampler: tone.Sampler) {
-    this.sampler = sampler;
+  constructor () {
     this.sampler.connect(this.out);
-  }
-
-  static async create(set: KnownSampleSet = "PIANO") {
-    return new SamplerAudioGenerator(new tone.Sampler(await SAMPLE_SETS[set].get()));
   }
 
   connectTo(dst: AudioDestination): void {
@@ -162,7 +145,7 @@ export class SamplerNodeSerializer implements NodeDataSerializer<SamplerNodeData
   }
 
   async deserialize(serialized: ReturnType<this["serialize"]>): Promise<SamplerNodeData> {
-    const data = await SamplerNodeData.create(serialized.s);
+    const data = new SamplerNodeData();
     const gen = data.generator;
 
     gen.sampler.attack = serialized.a;
@@ -176,10 +159,7 @@ export class SamplerNodeSerializer implements NodeDataSerializer<SamplerNodeData
 export type SamplerNode = flow.Node<SamplerNodeData, "sampler">;
 
 /** Creates a new `SamplerNode` with a random ID. */
-export const createSamplerNode = makeAsyncNodeFactory(
-  "sampler",
-  async () => await SamplerNodeData.create()
-);
+export const createSamplerNode = makeNodeFactory("sampler", () => new SamplerNodeData());
 
 /** Provides a `NodeTypeDescriptor` which describes sampler nodes. */
 export const SAMPLER_NODE_DESCRIPTOR = {
