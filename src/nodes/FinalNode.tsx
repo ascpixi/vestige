@@ -2,7 +2,7 @@ import * as tone from "tone";
 import * as flow from "@xyflow/react";
 import { memo, useState } from "react";
 
-import { makeNodeFactory } from ".";
+import { makeNodeFactory } from "./basis";
 import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { getPersistentData, mutatePersistentData } from "../persistent";

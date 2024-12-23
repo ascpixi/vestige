@@ -2,7 +2,8 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiPulseFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
 import { logLerp } from "../util";
 import { NodeDataSerializer } from "../serializer";

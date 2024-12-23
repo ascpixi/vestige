@@ -2,7 +2,8 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiMusic2Fill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 import { NodeDataSerializer } from "../serializer";
 import { pickRandom, randInt, seedRng } from "../util";

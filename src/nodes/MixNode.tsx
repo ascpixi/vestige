@@ -3,7 +3,8 @@ import * as flow from "@xyflow/react";
 import { memo } from "react";
 import { RiGitMergeFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, SIGNAL_OUTPUT_HID, signalInHandleId, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { assert } from "../util";
