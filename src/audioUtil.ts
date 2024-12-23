@@ -27,14 +27,13 @@ export const MIDI_NOTES = {
     /** D  */ D : 2,
     /** D# */ Ds: 3,
     /** E  */ E : 4,
-    /** E# */ Es: 5,
-    /** F  */ F : 6,
-    /** F# */ Fs: 7,
-    /** G  */ G : 8,
-    /** G# */ Gs: 9,
-    /** A  */ A : 10,
-    /** A# */ As: 11,
-    /** B  */ B : 12
+    /** F  */ F : 5,
+    /** F# */ Fs: 6,
+    /** G  */ G : 7,
+    /** G# */ Gs: 8,
+    /** A  */ A : 9,
+    /** A# */ As: 10,
+    /** B  */ B : 11
 } as const;
 
 /** Represents all notes in the chromatic scale. */
