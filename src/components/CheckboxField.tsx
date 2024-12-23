@@ -6,11 +6,11 @@ export function CheckboxField({ name, description, value, onChange }: {
 }) {
   return (
     <div className="flex flex-col gap-1 align-middle">
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <input type="checkbox"
           checked={value}
           onChange={ev => onChange(ev.target.checked)}
-          className="range range-primary range-xs"
+          className="checkbox checkbox-primary checkbox-sm"
           aria-label={`${name}: ${description}`}
         />
 

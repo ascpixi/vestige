@@ -13,6 +13,7 @@ import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { CheckboxField } from "../components/CheckboxField";
 
 const MIN_DELAY_TIME = 1 / 1000;
 const MAX_DELAY_TIME = 1000 / 1000;
@@ -46,32 +47,69 @@ export class DelayNodeData extends EffectNodeData {
 };
 
 export class DelayAudioEffect implements AudioEffect {
-  delay: tone.FeedbackDelay;
+  in: tone.Gain = new tone.Gain();
+  delay: tone.FeedbackDelay | tone.PingPongDelay;
+  out: tone.Gain = new tone.Gain();
+  private _isPingPong = false;
+
+  get isPingPong() { return this._isPingPong; }
+  set isPingPong(value: boolean) {
+    if (this._isPingPong == value)
+      return; // no change
+
+    const options = {
+      delayTime: this.delay.delayTime.value,
+      feedback: this.delay.feedback.value,
+      wet: this.delay.wet.value
+    };
+
+    this.in.disconnect();
+    this.delay.disconnect();
+    this.delay.dispose();
+
+    this.delay = value
+      ? new tone.PingPongDelay(options)
+      : new tone.FeedbackDelay(options);
+
+    this.in.connect(this.delay);
+    this.delay.connect(this.out);
+    this._isPingPong = value;
+
+    console.log("Ping pong is now", value);
+  }
 
   connectTo(dst: AudioDestination): void {
-    dst.accept(this.delay);
+    dst.accept(this.out);
   }
 
   disconnect() {
-    this.delay.disconnect();
+    this.out.disconnect();
   }
 
   dispose() {
-    this.disconnect();
+    this.in.disconnect();
+    this.delay.disconnect();
+    this.out.disconnect();
+
+    this.in.dispose();
     this.delay.dispose();
+    this.out.dispose();
   }
 
   getConnectDestination(handleId: string) {
     assert(handleId == SIGNAL_INPUT_HID_MAIN, `Unknown signal input handle ID ${handleId}`);
-    return unaryAudioDestination(this.delay);
+    return unaryAudioDestination(this.in);
   }
 
   constructor() {
     this.delay = new tone.FeedbackDelay({
-        delayTime: 0.4,
-        feedback: 0.35,
-        wet: 0.5
+      delayTime: 0.4,
+      feedback: 0.35,
+      wet: 0.5
     });
+
+    this.in.connect(this.delay);
+    this.delay.connect(this.out);
   }
 }
 
@@ -88,7 +126,8 @@ export class DelayNodeSerializer implements NodeDataSerializer<DelayNodeData> {
       pw: params["param-wet"].controlledBy,
       t: delay.delayTime.value,
       f: delay.feedback.value,
-      w: delay.wet.value
+      w: delay.wet.value,
+      p: obj.effect.isPingPong // since Vestige 0.3.0
     };
   }
 
@@ -96,19 +135,20 @@ export class DelayNodeSerializer implements NodeDataSerializer<DelayNodeData> {
     const data = new DelayNodeData();
     const params = data.parameters;
     const delay = data.effect.delay;
-
+    
     params["param-time"].controlledBy = serialized.pt;
     params["param-feedback"].controlledBy = serialized.pf;
     params["param-wet"].controlledBy = serialized.pw;
     delay.delayTime.value = serialized.t;
     delay.feedback.value = serialized.f;
     delay.wet.value = serialized.w;
+    data.effect.isPingPong = serialized.p ?? false; // since Vestige 0.3.0
 
     return data;
   }
 }
 
-export type DelayNode = flow.Node<DelayNodeData, "delay">
+export type DelayNode = flow.Node<DelayNodeData, "delay">;
 
 /** Creates a new `DelayNode` with a random ID. */
 export const createDelayNode = makeNodeFactory("delay", () => new DelayNodeData());
@@ -126,6 +166,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
   const [time, setTime] = useState(tone.Time(data.effect.delay.delayTime.value).toSeconds());
   const [feedback, setFeedback] = useState(data.effect.delay.feedback.value * 100);
   const [wet, setWet] = useState(data.effect.delay.wet.value * 100);
+  const [isPingPong, setIsPingPong] = useState(data.effect.isPingPong);
 
   useEffect(() => {
     if (!data.parameters["param-time"].isAutomated()) {
@@ -144,6 +185,10 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
       data.effect.delay.wet.value = wet / 100;
     }
   }, [data, wet]);
+
+  useEffect(() => {
+    data.effect.isPingPong = isPingPong;
+  }, [data, isPingPong])
 
   return (
     <VestigeNodeBase
@@ -202,6 +247,13 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
               automatableDisplay={() => data.effect.delay.wet.value * 100}
             />
           </NodePort>
+
+          <CheckboxField
+            name="ping-pong (stereo)"
+            description="the delay will first be heard in one speaker, then the opposite, and so on..."
+            value={isPingPong}
+            onChange={setIsPingPong}
+          />
         </div>
       </div>
     </VestigeNodeBase>
