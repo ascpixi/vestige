@@ -95,6 +95,8 @@ export class SynthAudioGenerator implements AudioGenerator {
 
   /** Fully applies oscillator settings, changing its type. May produce audible clicks.  */
   private fullyApplyOsc() {
+    this.synth.releaseAll();
+
     if (this._unisonCount > 1) {
       this.synth.set({
         oscillator: {
