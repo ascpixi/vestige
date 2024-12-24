@@ -8,6 +8,7 @@ import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../g
 import { FlatNodeDataSerializer } from "../serializer";
 import { allEqualUnordered, pickRandom, randInt, seedRng } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -96,14 +97,14 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
 ) {
   const gen = data.generator;
 
-  const [rootNote, setRootNote] = useState<number>(gen.rootNote);
-  const [mode, setMode] = useState<ScaleMode>(gen.mode);
+  const [rootNote, setRootNote] = useBoundState(gen, "rootNote");
+  const [mode, setMode] = useBoundState(gen, "mode");
 
-  const [chordLength, setChordLength] = useState(gen.chordLength);
-  const [minNotes, setMinNotes] = useState(gen.minNotes);
-  const [maxNotes, setMaxNotes] = useState(gen.maxNotes);
-  const [octave, setOctave] = useState(gen.octave);
-  const [pitchRange, setPitchRange] = useState(gen.pitchRange);
+  const [chordLength, setChordLength] = useBoundState(gen, "chordLength");
+  const [minNotes, setMinNotes] = useBoundState(gen, "minNotes");
+  const [maxNotes, setMaxNotes] = useBoundState(gen, "maxNotes");
+  const [octave, setOctave] = useBoundState(gen, "octave");
+  const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
 
   const [notes, setNotes] = useState<number[]>([]);
 
@@ -122,39 +123,19 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
     return () => clearInterval(id);
   }, [gen, notes]);
 
-  useEffect(() => {
-    gen.chordLength = chordLength;
-    gen.minNotes = minNotes;
-    gen.maxNotes = maxNotes;
-    gen.rootNote = rootNote;
-    gen.mode = mode;
-    gen.octave = octave;
-    gen.pitchRange = pitchRange;
-  }, [gen, rootNote, mode, chordLength, minNotes, maxNotes, octave, pitchRange]);
-
   function onMaxNotesChange(x: number) {
-    if (x < minNotes)
-      return;
-
+    if (x < minNotes) return;
     setMaxNotes(x);
   }
 
   function onMinNotesChange(x: number) {
-    if (x > maxNotes)
-      return;
-
+    if (x > maxNotes)  return;
     setMinNotes(x);
   }
 
   function onPitchRangeChange(x: number) {
-    if (maxNotes > x) {
-      setMaxNotes(x);
-    }
-
-    if (minNotes > x) {
-      setMinNotes(x);
-    }
-
+    if (maxNotes > x) { setMaxNotes(x); }
+    if (minNotes > x) { setMinNotes(x); }
     setPitchRange(x);
   }
 

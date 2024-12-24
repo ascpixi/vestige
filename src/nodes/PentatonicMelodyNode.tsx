@@ -8,6 +8,7 @@ import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../g
 import { allEqualUnordered, hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
 import { FlatNodeDataSerializer } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -105,13 +106,15 @@ export const PENTATONIC_MELODY_NODE_DESCRIPTOR = {
 export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<PentatonicMelodyNodeData>>
 ) {
-  const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
-  const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
+  const gen = data.generator;
+  
+  const [rootNote, setRootNote] = useBoundState(gen, "rootNote");
+  const [mode, setMode] = useBoundState(gen, "mode");
 
-  const [density, setDensity] = useState(data.generator.density);
-  const [octave, setOctave] = useState(data.generator.octave);
-  const [pitchRange, setPitchRange] = useState(data.generator.pitchRange);
-  const [polyphony, setPolyphony] = useState(data.generator.polyphony);
+  const [density, setDensity] = useBoundState(gen, "density");
+  const [octave, setOctave] = useBoundState(gen, "octave");
+  const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
+  const [polyphony, setPolyphony] = useBoundState(gen, "polyphony");
 
   const [notes, setNotes] = useState<number[]>([]);
 
@@ -121,25 +124,14 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
   ) + (12 * Math.floor(pitchRange / 5));
 
   useEffect(() => {
-    const gen = data.generator;
-
-    gen.rootNote = rootNote;
-    gen.mode = mode;
-    gen.density = density;
-    gen.octave = octave;
-    gen.pitchRange = pitchRange;
-    gen.polyphony = polyphony;
-  }, [data.generator, rootNote, mode, density, octave, pitchRange, polyphony]);
-
-  useEffect(() => {
     const id = setInterval(() => {
-      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
-        setNotes(data.generator.lastNotes);
+      if (!allEqualUnordered(notes, gen.lastNotes)) {
+        setNotes(gen.lastNotes);
       }
     }, 100);
 
     return () => clearInterval(id);
-  }, [data, notes]);
+  }, [gen, notes]);
 
   return (
     <VestigeNodeBase

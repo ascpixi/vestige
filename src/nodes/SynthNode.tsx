@@ -10,6 +10,7 @@ import { octToCents } from "../audioUtil";
 import { Automatable } from "../parameters";
 import { FlatNodeDataSerializer } from "../serializer";
 import { anyOf, lerp, match } from "../util";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -210,30 +211,28 @@ export const SYNTH_NODE_DESCRIPTOR = {
 export const SynthNodeRenderer = memo(function SynthNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<SynthNodeData>>
 ) {
+  const gen = data.generator;
+
   const [countour, setCountour] = useState<Countour>(data.contour);
   const [countourAmt, setCountourAmt] = useState<number>(data.countourAmt * 100);
 
-  const [waveform, setWaveform] = useState<Waveform>(data.generator.waveform);
+  const [waveform, setWaveform] = useBoundState(gen, "waveform");
   const [fineTune, setFineTune] = useState(data.fineTune);
   const [octave, setOctave] = useState(data.octave);
-  const [volume, setVolume] = useState(tone.dbToGain(data.generator.synth.volume.value) * 100);
+  const [volume, setVolume] = useState(tone.dbToGain(gen.synth.volume.value) * 100);
 
-  const [unisonVoices, setUnisonVoices] = useState(data.generator.unisonCount);
-  const [unisonSpread, setUnisonSpread] = useState(data.generator.unisonSpread);
-
-  useEffect(() => {
-    data.generator.waveform = waveform;
-  }, [data.generator, waveform]);
+  const [unisonVoices, setUnisonVoices] = useBoundState(gen, "unisonCount");
+  const [unisonSpread, setUnisonSpread] = useBoundState(gen, "unisonSpread");
 
   useEffect(() => {
-    data.generator.synth.volume.value = tone.gainToDb(volume / 100);
-  }, [data.generator, volume]);
+    gen.synth.volume.value = tone.gainToDb(volume / 100);
+  }, [gen, volume]);
 
   useEffect(() => {
     data.fineTune = fineTune;
     data.octave = octave;
-    data.generator.synth.set({ detune: octToCents(octave + 1) + fineTune });
-  }, [data, octave, fineTune]);
+    gen.synth.set({ detune: octToCents(octave + 1) + fineTune });
+  }, [data, gen, octave, fineTune]);
 
   useEffect(() => {
     data.contour = countour;
@@ -241,17 +240,9 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
     data.applyContour();
   }, [data, countour, countourAmt]);
 
-  useEffect(() => {
-    data.generator.unisonCount = unisonVoices;
-  }, [data, unisonVoices]);
-
-  useEffect(() => {
-    data.generator.unisonSpread = unisonSpread;
-  }, [data, unisonSpread]);
-
   return (
     <VestigeNodeBase
-      id={id} onRemove={() => data.generator.dispose()}
+      id={id} onRemove={() => gen.dispose()}
       name="synth"
       help={<>
         The <b>synth</b> module takes in notes, and outputs audio - more specifically,
@@ -332,7 +323,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
               min={-100} max={100} value={fineTune} isPercentage
               onChange={setFineTune}
               automatable={data.parameters["param-fineTune"]}
-              automatableDisplay={() => data.generator.synth.get().detune - (octave * 1200)}
+              automatableDisplay={() => gen.synth.get().detune - (octave * 1200)}
             />
           </NodePort>
 
@@ -358,7 +349,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
               onChange={setUnisonSpread}
               valueStringifier={x => `${Math.round(x)} cents`}
               automatable={data.parameters["param-unisonDetune"]}
-              automatableDisplay={() => data.generator.unisonSpread}
+              automatableDisplay={() => gen.unisonSpread}
             />
           </NodePort>
         </div>

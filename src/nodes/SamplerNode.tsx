@@ -8,6 +8,7 @@ import { makeNodeFactory } from "./basis";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { FlatNodeDataSerializer } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -161,21 +162,12 @@ export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
 ) {
   const gen = data.generator;
 
-  const [sampleSet, setSampleSet] = useState<KnownSampleSet>(gen.set);
+  const [sampleSet, setSampleSet] = useBoundState(gen, "set");
   const [attack, setAttack] = useState<number>(tone.Time(gen.sampler.attack).toSeconds());
   const [release, setRelease] = useState<number>(tone.Time(gen.sampler.release).toSeconds());
 
-  useEffect(() => {
-    gen.set = sampleSet;
-  }, [gen, sampleSet]);
-
-  useEffect(() => {
-    gen.sampler.attack = attack;
-  }, [gen, attack]);
-
-  useEffect(() => {
-    gen.sampler.release = release;
-  }, [gen, release]);
+  useEffect(() => { gen.sampler.attack = attack }, [gen, attack]);
+  useEffect(() => { gen.sampler.release = release }, [gen, release]);
 
   return (
     <VestigeNodeBase

@@ -94,16 +94,12 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   const [max, setMax] = useState(lfo.max * 100);
 
   function onMinChange(newMin: number) {
-    if (newMin > max)
-      return;
-
+    if (newMin > max) return;
     setMin(newMin);
   }
 
   function onMaxChange(newMax: number) {
-    if (newMax < min)
-      return;
-
+    if (newMax < min) return;
     setMax(newMax);
   }
 

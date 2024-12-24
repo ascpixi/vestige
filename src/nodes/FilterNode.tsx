@@ -10,6 +10,7 @@ import { Automatable } from "../parameters";
 import { assert, invLogLerp, logLerp, match } from "../util";
 import { toneFreq } from "../audioUtil";
 import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -114,7 +115,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
 ) {
   const filter = data.effect.filter;
 
-  const [type, setType] = useState<FilterType>(filter.type as FilterType);
+  const [type, setType] = useBoundState(filter, "type");
 
   const [cutoff, setCutoff] = useState(hzToCutoffScalar(tone.Frequency(filter.frequency.value).toFrequency()) * 100);
   const [resonance, setResonance] = useState(resonanceToScalar(filter.Q.value) * 100);
@@ -134,10 +135,6 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
     2: -48,
     3: -96
   });
-
-  useEffect(() => {
-    filter.type = type;
-  }, [filter, type]);
 
   useEffect(() => {
     filter.rolloff = rolloffDbPerOct;

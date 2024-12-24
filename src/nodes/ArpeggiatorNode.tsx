@@ -1,12 +1,13 @@
 import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
-import { RiDice3Fill, RiDropperFill } from "@remixicon/react";
+import { RiDice3Fill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
 import { allEqualUnordered, assert, match } from "../util";
 import { FlatNodeDataSerializer } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -76,30 +77,20 @@ export const ARPEGGIATOR_NOTE_DESCRIPTOR = {
 export const ArpeggiatorNodeRenderer = memo(function ArpeggiatorNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<ArpeggiatorNodeData>>
 ) {
-  const generator = data.generator;
-
-  const [style, setStyle] = useState(generator.style);
-  const [speed, setSpeed] = useState(generator.speed);
+  const [style, setStyle] = useBoundState(data.generator, "style");
+  const [speed, setSpeed] = useBoundState(data.generator, "speed");
 
   const [notes, setNotes] = useState<number[]>([]);
 
   useEffect(() => {
-    generator.style = style;
-  }, [generator, style]);
-
-  useEffect(() => {
-    generator.speed = speed;
-  }, [generator, speed]);
-
-  useEffect(() => {
     const id = setInterval(() => {
-      if (!allEqualUnordered(notes, generator.lastNotes)) {
-        setNotes(generator.lastNotes);
+      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
+        setNotes(data.generator.lastNotes);
       }
     }, 100);
 
     return () => clearInterval(id);
-  }, [generator, notes]);
+  }, [data.generator, notes]);
 
   return (
     <VestigeNodeBase
