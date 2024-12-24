@@ -107,27 +107,29 @@ export const REVERB_NODE_DESCRIPTOR = {
 export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<ReverbNodeData>>
 ) {
-  const [decay, setDecay] = useState(tone.Time(data.effect.reverb.decay).toSeconds());
-  const [preDelay, setPreDelay] = useState(tone.Time(data.effect.reverb.preDelay).toSeconds());
-  const [wet, setWet] = useState(data.effect.reverb.wet.value * 100);
+  const reverb = data.effect.reverb;
+
+  const [decay, setDecay] = useState(tone.Time(reverb.decay).toSeconds());
+  const [preDelay, setPreDelay] = useState(tone.Time(reverb.preDelay).toSeconds());
+  const [wet, setWet] = useState(reverb.wet.value * 100);
 
   useEffect(() => {
     if (!data.parameters["param-decay"].isAutomated()) {
-      data.effect.reverb.decay = decay;
+      reverb.decay = decay;
     }
-  }, [data, decay]);
+  }, [data, reverb, decay]);
 
   useEffect(() => {
     if (!data.parameters["param-predelay"].isAutomated()) {
-      data.effect.reverb.preDelay = preDelay;
+      reverb.preDelay = preDelay;
     }
-  }, [data, preDelay]);
+  }, [data, reverb, preDelay]);
 
   useEffect(() => {
     if (!data.parameters["param-wet"].isAutomated()) {
-      data.effect.reverb.wet.value = wet / 100;
+      reverb.wet.value = wet / 100;
     }
-  }, [data, wet]);
+  }, [data, reverb, wet]);
 
   return (
     <VestigeNodeBase
@@ -166,7 +168,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               valueStringifier={x => `${x.toFixed(2)} s`}
               onChange={setDecay}
               automatable={data.parameters["param-decay"]}
-              automatableDisplay={() => tone.Time(data.effect.reverb.decay).toSeconds()}
+              automatableDisplay={() => tone.Time(reverb.decay).toSeconds()}
             />
           </NodePort>
 
@@ -177,7 +179,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               min={MIN_PREDELAY} max={MAX_PREDELAY} value={preDelay} step={1 / 1000}
               onChange={setPreDelay}
               automatable={data.parameters["param-predelay"]}
-              automatableDisplay={() => tone.Time(data.effect.reverb.preDelay).toSeconds()}
+              automatableDisplay={() => tone.Time(reverb.preDelay).toSeconds()}
               valueStringifier={x => `${(x * 1000).toFixed(0)} ms`}
             />
           </NodePort>
@@ -189,7 +191,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               min={0} max={100} value={wet} isPercentage
               onChange={setWet}
               automatable={data.parameters["param-wet"]}
-              automatableDisplay={() => data.effect.reverb.wet.value * 100}
+              automatableDisplay={() => reverb.wet.value * 100}
             />
           </NodePort>
         </div>

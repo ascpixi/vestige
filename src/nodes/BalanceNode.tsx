@@ -88,20 +88,22 @@ export const BALANCE_NODE_DESCRIPTOR = {
 export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<BalanceNodeData>>
 ) {
-  const [pan, setPan] = useState(data.effect.panVol.pan.value * 100);
-  const [volume, setVolume] = useState(tone.dbToGain(data.effect.panVol.volume.value) * 100);
+  const panVol = data.effect.panVol;
+
+  const [pan, setPan] = useState(panVol.pan.value * 100);
+  const [volume, setVolume] = useState(tone.dbToGain(panVol.volume.value) * 100);
 
   useEffect(() => {
     if (!data.parameters["param-pan"].isAutomated()) {
-      data.effect.panVol.pan.value = pan / 100;
+       panVol.pan.value = pan / 100;
     }
-  }, [data, pan]);
+  }, [data, panVol, pan]);
 
   useEffect(() => {
     if (!data.parameters["param-volume"].isAutomated()) {
-      data.effect.panVol.volume.value = tone.gainToDb(volume / 100);
+      panVol.volume.value = tone.gainToDb(volume / 100);
     }
-  }, [data, volume]);
+  }, [data, panVol, volume]);
 
   return (
     <VestigeNodeBase
@@ -135,7 +137,7 @@ export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
               min={-100} max={100} value={pan} isPercentage
               onChange={setPan}
               automatable={data.parameters["param-pan"]}
-              automatableDisplay={() => data.effect.panVol.pan.value * 100}
+              automatableDisplay={() => panVol.pan.value * 100}
             />
           </NodePort>
 
@@ -146,7 +148,7 @@ export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
               min={0} max={200} value={volume} isPercentage
               onChange={setVolume}
               automatable={data.parameters["param-volume"]}
-              automatableDisplay={() => tone.dbToGain(data.effect.panVol.volume.value) * 100}
+              automatableDisplay={() => tone.dbToGain(panVol.volume.value) * 100}
             />
           </NodePort>
         </div>

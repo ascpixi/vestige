@@ -144,28 +144,30 @@ export const DELAY_NODE_DESCRIPTOR = {
 export const DelayNodeRenderer = memo(function DelayNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<DelayNodeData>>
 ) {
-  const [time, setTime] = useState(tone.Time(data.effect.delay.delayTime.value).toSeconds());
-  const [feedback, setFeedback] = useState(data.effect.delay.feedback.value * 100);
-  const [wet, setWet] = useState(data.effect.delay.wet.value * 100);
+  const delay = data.effect.delay;
+
+  const [time, setTime] = useState(tone.Time(delay.delayTime.value).toSeconds());
+  const [feedback, setFeedback] = useState(delay.feedback.value * 100);
+  const [wet, setWet] = useState(delay.wet.value * 100);
   const [isPingPong, setIsPingPong] = useState(data.effect.isPingPong);
 
   useEffect(() => {
     if (!data.parameters["param-time"].isAutomated()) {
-      data.effect.delay.delayTime.value = time;
+      delay.delayTime.value = time;
     }
-  }, [data, time]);
+  }, [data, delay, time]);
 
   useEffect(() => {
     if (!data.parameters["param-feedback"].isAutomated()) {
-      data.effect.delay.feedback.value = feedback / 100;
+      delay.feedback.value = feedback / 100;
     }
-  }, [data, feedback]);
+  }, [data, delay, feedback]);
 
   useEffect(() => {
     if (!data.parameters["param-wet"].isAutomated()) {
-      data.effect.delay.wet.value = wet / 100;
+      delay.wet.value = wet / 100;
     }
-  }, [data, wet]);
+  }, [data, delay, wet]);
 
   useEffect(() => {
     data.effect.isPingPong = isPingPong;

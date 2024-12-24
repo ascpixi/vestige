@@ -112,13 +112,15 @@ const resonanceToScalar = (x: number) => x / MAX_Q;
 export const FilterNodeRenderer = memo(function FilterNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<FilterNodeData>>
 ) {
-  const [type, setType] = useState<FilterType>(data.effect.filter.type as FilterType);
+  const filter = data.effect.filter;
 
-  const [cutoff, setCutoff] = useState<number>(hzToCutoffScalar(tone.Frequency(data.effect.filter.frequency.value).toFrequency()) * 100);
-  const [resonance, setResonance] = useState<number>(resonanceToScalar(data.effect.filter.Q.value) * 100);
+  const [type, setType] = useState<FilterType>(filter.type as FilterType);
+
+  const [cutoff, setCutoff] = useState(hzToCutoffScalar(tone.Frequency(filter.frequency.value).toFrequency()) * 100);
+  const [resonance, setResonance] = useState(resonanceToScalar(filter.Q.value) * 100);
   
   const [intensity, setIntensity] = useState<number>(
-    match(data.effect.filter.rolloff, {
+    match(filter.rolloff, {
       [-12]: 1,
       [-24]: 2,
       [-48]: 3,
@@ -126,20 +128,20 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
     }
   ));
 
-  const rolloffDbPerOct = match(intensity - 1, {
+  const rolloffDbPerOct: tone.FilterRollOff = match(intensity - 1, {
     0: -12,
     1: -24,
     2: -48,
     3: -96
-  }) as tone.FilterRollOff;
+  });
 
   useEffect(() => {
-    data.effect.filter.type = type;
-  }, [data, type]);
+    filter.type = type;
+  }, [filter, type]);
 
   useEffect(() => {
-    data.effect.filter.rolloff = rolloffDbPerOct;
-  }, [data, rolloffDbPerOct]);
+    filter.rolloff = rolloffDbPerOct;
+  }, [filter, rolloffDbPerOct]);
 
   useEffect(() => {
     const params = data.parameters;
@@ -168,8 +170,6 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
         The <b>resonance</b> parameter determines how "relaxed" the filter is.
         Larger values mean that the <b>cutoff frequency</b> gets attenuated more,
         but masked frequencies get masked... more.
-
-
       </>}
     >
       <div>
@@ -204,7 +204,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
               valueStringifier={x => `${cutoffScalarToHz(x / 100).toFixed(2)} Hz`}
               onChange={setCutoff}
               automatable={data.parameters["param-cutoff"]}
-              automatableDisplay={() => hzToCutoffScalar(toneFreq(data.effect.filter.frequency.value)) * 100}
+              automatableDisplay={() => hzToCutoffScalar(toneFreq(filter.frequency.value)) * 100}
             />
           </NodePort>
 
@@ -223,7 +223,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
               min={0} max={100} value={resonance} isPercentage
               onChange={setResonance}
               automatable={data.parameters["param-resonance"]}
-              automatableDisplay={() => resonanceToScalar(data.effect.filter.Q.value) * 100}
+              automatableDisplay={() => resonanceToScalar(filter.Q.value) * 100}
             />
           </NodePort>
         </div>

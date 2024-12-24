@@ -159,25 +159,27 @@ export const SAMPLER_NODE_DESCRIPTOR = {
 export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<SamplerNodeData>>
 ) {
-  const [sampleSet, setSampleSet] = useState<KnownSampleSet>(data.generator.set);
-  const [attack, setAttack] = useState<number>(tone.Time(data.generator.sampler.attack).toSeconds());
-  const [release, setRelease] = useState<number>(tone.Time(data.generator.sampler.release).toSeconds());
+  const gen = data.generator;
+
+  const [sampleSet, setSampleSet] = useState<KnownSampleSet>(gen.set);
+  const [attack, setAttack] = useState<number>(tone.Time(gen.sampler.attack).toSeconds());
+  const [release, setRelease] = useState<number>(tone.Time(gen.sampler.release).toSeconds());
 
   useEffect(() => {
-    data.generator.set = sampleSet;
-  }, [data.generator, sampleSet]);
+    gen.set = sampleSet;
+  }, [gen, sampleSet]);
 
   useEffect(() => {
-    data.generator.sampler.attack = attack;
-  }, [data.generator, attack]);
+    gen.sampler.attack = attack;
+  }, [gen, attack]);
 
   useEffect(() => {
-    data.generator.sampler.release = release;
-  }, [data.generator, release]);
+    gen.sampler.release = release;
+  }, [gen, release]);
 
   return (
     <VestigeNodeBase
-      id={id} onRemove={() => data.generator.dispose()}
+      id={id} onRemove={() => gen.dispose()}
       name="sampler"
       help={<>
         The <b>sampler</b> module can emulate any kind of instrument - it takes in

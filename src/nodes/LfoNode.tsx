@@ -86,10 +86,12 @@ const MAX_LOG_SPEED_HZ_LOG10 = Math.log10(MAX_LFO_SPEED_HZ);
 export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<LfoNodeData>>
 ) {
-  const [shape, setShape] = useState<LfoShape>("sine");
-  const [frequency, setFrequency] = useState<number>(data.generator.frequency);
-  const [min, setMin] = useState<number>(data.generator.min * 100);
-  const [max, setMax] = useState<number>(data.generator.max * 100);
+  const lfo = data.generator;
+
+  const [shape, setShape] = useState<LfoShape>(lfo.shape);
+  const [frequency, setFrequency] = useState(lfo.frequency);
+  const [min, setMin] = useState(lfo.min * 100);
+  const [max, setMax] = useState(lfo.max * 100);
 
   function onMinChange(newMin: number) {
     if (newMin > max)
@@ -106,12 +108,11 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   }
 
   useEffect(() => {
-    const lfo = data.generator;
     lfo.shape = shape;
     lfo.frequency = logLerp(frequency / 100, -1, MAX_LOG_SPEED_HZ_LOG10);
     lfo.max = max / 100;
     lfo.min = min / 100;
-  }, [data, shape, frequency, min, max]);
+  }, [lfo, shape, frequency, min, max]);
 
   return (
     <VestigeNodeBase

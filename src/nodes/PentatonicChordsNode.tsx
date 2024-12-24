@@ -94,14 +94,16 @@ export const PENTATONIC_CHORDS_NODE_DESCRIPTOR = {
 export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<PentatonicChordsNodeData>>
 ) {
-  const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
-  const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
+  const gen = data.generator;
 
-  const [chordLength, setChordLength] = useState(data.generator.chordLength);
-  const [minNotes, setMinNotes] = useState(data.generator.minNotes);
-  const [maxNotes, setMaxNotes] = useState(data.generator.maxNotes);
-  const [octave, setOctave] = useState(data.generator.octave);
-  const [pitchRange, setPitchRange] = useState(data.generator.pitchRange);
+  const [rootNote, setRootNote] = useState<number>(gen.rootNote);
+  const [mode, setMode] = useState<ScaleMode>(gen.mode);
+
+  const [chordLength, setChordLength] = useState(gen.chordLength);
+  const [minNotes, setMinNotes] = useState(gen.minNotes);
+  const [maxNotes, setMaxNotes] = useState(gen.maxNotes);
+  const [octave, setOctave] = useState(gen.octave);
+  const [pitchRange, setPitchRange] = useState(gen.pitchRange);
 
   const [notes, setNotes] = useState<number[]>([]);
 
@@ -112,17 +114,15 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
-        setNotes(data.generator.lastNotes);
+      if (!allEqualUnordered(notes, gen.lastNotes)) {
+        setNotes(gen.lastNotes);
       }
     }, 100);
 
     return () => clearInterval(id);
-  }, [data, notes]);
+  }, [gen, notes]);
 
   useEffect(() => {
-    const gen = data.generator;
-
     gen.chordLength = chordLength;
     gen.minNotes = minNotes;
     gen.maxNotes = maxNotes;
@@ -130,7 +130,7 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
     gen.mode = mode;
     gen.octave = octave;
     gen.pitchRange = pitchRange;
-  }, [data.generator, rootNote, mode, chordLength, minNotes, maxNotes, octave, pitchRange])
+  }, [gen, rootNote, mode, chordLength, minNotes, maxNotes, octave, pitchRange]);
 
   function onMaxNotesChange(x: number) {
     if (x < minNotes)

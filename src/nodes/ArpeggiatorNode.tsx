@@ -76,28 +76,30 @@ export const ARPEGGIATOR_NOTE_DESCRIPTOR = {
 export const ArpeggiatorNodeRenderer = memo(function ArpeggiatorNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<ArpeggiatorNodeData>>
 ) {
-  const [style, setStyle] = useState(data.generator.style);
-  const [speed, setSpeed] = useState(data.generator.speed);
+  const generator = data.generator;
+
+  const [style, setStyle] = useState(generator.style);
+  const [speed, setSpeed] = useState(generator.speed);
 
   const [notes, setNotes] = useState<number[]>([]);
 
   useEffect(() => {
-    data.generator.style = style;
-  }, [data.generator, style]);
+    generator.style = style;
+  }, [generator, style]);
 
   useEffect(() => {
-    data.generator.speed = speed;
-  }, [data.generator, speed]);
+    generator.speed = speed;
+  }, [generator, speed]);
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
-        setNotes(data.generator.lastNotes);
+      if (!allEqualUnordered(notes, generator.lastNotes)) {
+        setNotes(generator.lastNotes);
       }
     }, 100);
 
     return () => clearInterval(id);
-  }, [data, notes]);
+  }, [generator, notes]);
 
   return (
     <VestigeNodeBase
