@@ -33,7 +33,6 @@ import { IntroductionTour } from "./components/IntroductionTour";
 import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { CHORUS_NODE_DESCRIPTOR } from "./nodes/ChorusNode";
-import { Automatable } from "./parameters";
 import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "./nodes/ArpeggiatorNode";
 
 const shouldShowTour = !getPersistentData().tourComplete;
