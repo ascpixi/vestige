@@ -70,7 +70,7 @@ export class SynthNodeData extends InstrumentNodeData {
     this.generator.synth.set({ envelope: env });
   }
 
-  constructor() {
+  constructor () {
     super();
 
     this.generator = new SynthAudioGenerator();
@@ -84,10 +84,14 @@ export class SynthNodeData extends InstrumentNodeData {
 };
 
 export class SynthAudioGenerator implements AudioGenerator {
-  synth = new tone.PolySynth(tone.Synth, { oscillator: { type: this.waveform} });
+  synth: tone.PolySynth;
   private _waveform: Waveform = "sine";
   private _unisonSpread: number = 20;
   private _unisonCount: number = 1;
+
+  constructor() {
+    this.synth = new tone.PolySynth(tone.Synth, { oscillator: { type: this.waveform} });
+  }
 
   /** Fully applies oscillator settings, changing its type. May produce audible clicks.  */
   private fullyApplyOsc() {
