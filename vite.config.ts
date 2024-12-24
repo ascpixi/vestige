@@ -38,7 +38,8 @@ const vitestCfg = vitest.defineConfig({
       enabled: true,
       headless: true,
       name: "chrome",
-      provider: "webdriverio"
+      provider: "webdriverio",
+      screenshotFailures: false
     }
   }
 })
