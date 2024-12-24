@@ -440,7 +440,6 @@ export class GraphForwarder {
                     }
 
                     if (events.length != 0) {
-                        console.debug("🎹", events.map(x => `${x.type}: ${midiToName(x.pitch)} (${x.pitch})`));
                         subNode.data.generator.accept(events);
                     }
 
