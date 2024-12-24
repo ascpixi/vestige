@@ -54,6 +54,7 @@ export default function App() {
 
   let [nodes, setNodes] = useState<VestigeNode[]>([]);
   let [edges, setEdges] = useState<flow.Edge[]>([]);
+  const [graphVer, setGraphVer] = useState(0);
 
   const [ctxMenuPos, setCtxMenuPos] = useState({ x: 0, y: 0 });
   const [showCtxMenu, setShowCtxMenu] = useState(false);
@@ -219,7 +220,11 @@ export default function App() {
 
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
-      setNodes((nds) => flow.applyNodeChanges(changes, nds))
+      setNodes(nds => flow.applyNodeChanges(changes, nds));
+
+      if (changes.some(x => x.type != "position")) {
+        setGraphVer(x => x + 1);
+      }
     },
     [],
   );
@@ -238,7 +243,9 @@ export default function App() {
 
         onConnectChange(edge as flow.Connection, "DISCONNECT");
       }
+
       setEdges(eds => flow.applyEdgeChanges(changes, eds));
+      setGraphVer(x => x + 1);
     },
     [edges]
   );
@@ -251,6 +258,7 @@ export default function App() {
  
       setEdges(eds => flow.addEdge({ ...params, type: "vestige" }, eds));
       onConnectChange(params, "CONNECT");
+      setGraphVer(x => x + 1);
     },
     [nodes, edges]
   );
@@ -332,7 +340,16 @@ export default function App() {
 
       return () => clearInterval(id);
     }
-  }, [forwarder, nodes, edges, startTimeMs, playing]);
+    
+  // We only want to restart the graph tracer task when the graph changes in a meaningful
+  // way - `nodes` changes when a node is re-positioned, and we really don't need to reset
+  // the interval just for that (we don't care about node positions!) - we instead keep
+  // a "graph version" counter, which we increment every time the graph changes in a way
+  // that concerns us. We provide it as a dependency. Applying what the exhaustive
+  // dependency warning tells us to do would actually do more harm than good.
+  //
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forwarder, graphVer, startTimeMs, playing]);
 
   async function togglePlay() {
     if (!playing) {
