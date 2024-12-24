@@ -9,7 +9,7 @@ import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_IN
 import { Automatable } from "../parameters";
 import { assert, invLogLerp, logLerp, match } from "../util";
 import { toneFreq } from "../audioUtil";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -66,34 +66,19 @@ export class FilterAudioEffect implements AudioEffect {
   }
 }
 
-export class FilterNodeSerializer implements NodeDataSerializer<FilterNodeData> {
-  type = "filter"
+export class FilterNodeSerializer extends FlatNodeDataSerializer<FilterNodeData> {
+  type = "filter";
+  dataFactory = () => new FilterNodeData();
 
-  serialize(obj: FilterNodeData) {
-    const params = obj.parameters;
-    const flt = obj.effect.filter;
-
-    return {
-      pc: params["param-cutoff"].controlledBy,
-      pq: params["param-resonance"].controlledBy,
-      c: tone.Frequency(flt.frequency.value).toFrequency(),
-      q: flt.Q.value,
-      r: flt.rolloff
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): FilterNodeData {
-    const data = new FilterNodeData();
-    const params = data.parameters;
-    const flt = data.effect.filter;
-
-    params["param-cutoff"].controlledBy = serialized.pc;
-    params["param-resonance"].controlledBy = serialized.pq;
-    flt.frequency.value = serialized.c;
-    flt.Q.value = serialized.q;
-    flt.rolloff = serialized.r;
-
-    return data;
+  spec: FlatSerializerSpec<FilterNodeData> = {
+    pc: this.prop(self => self.parameters["param-cutoff"]).with("controlledBy"),
+    pq: this.prop(self => self.parameters["param-resonance"]).with("controlledBy"),
+    q: this.prop(self => self.effect.filter.Q).with("value"),
+    r: this.prop(self => self.effect.filter).with("rolloff"),
+    c: {
+      get: (self) => tone.Frequency(self.effect.filter.frequency.value).toFrequency(),
+      set: (self, x) => self.effect.filter.frequency.value = x
+    }
   }
 }
 

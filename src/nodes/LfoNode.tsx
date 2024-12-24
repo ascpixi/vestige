@@ -6,7 +6,7 @@ import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
 import { logLerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -56,30 +56,15 @@ export class LfoValueGenerator implements ValueGenerator {
   }
 }
 
-export class LfoNodeSerializer implements NodeDataSerializer<LfoNodeData> {
-  type = "lfo"
+export class LfoNodeSerializer extends FlatNodeDataSerializer<LfoNodeData> {
+  type = "lfo";
+  dataFactory = () => new LfoNodeData();
 
-  serialize(obj: LfoNodeData) {
-    const lfo = obj.generator;
-
-    return {
-      s: lfo.shape,
-      f: lfo.frequency,
-      a: lfo.min,
-      b: lfo.max
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): LfoNodeData {
-    const data = new LfoNodeData();
-    const lfo = data.generator;
-
-    lfo.shape = serialized.s;
-    lfo.frequency = serialized.f;
-    lfo.min = serialized.a;
-    lfo.max = serialized.b;
-
-    return data;
+  spec = {
+    s: this.prop(self => self.generator).with("shape"),
+    f: this.prop(self => self.generator).with("frequency"),
+    a: this.prop(self => self.generator).with("min"),
+    b: this.prop(self => self.generator).with("max"),
   }
 }
 

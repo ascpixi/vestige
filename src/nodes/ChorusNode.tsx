@@ -8,7 +8,7 @@ import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -80,44 +80,21 @@ export class ChorusAudioEffect implements AudioEffect {
   }
 }
 
-export class ChorusNodeSerializer implements NodeDataSerializer<ChorusNodeData> {
-  type = "chorus"
+export class ChorusNodeSerializer extends FlatNodeDataSerializer<ChorusNodeData> {
+  type = "chorus";
+  dataFactory = () => new ChorusNodeData();
 
-  serialize(obj: ChorusNodeData) {
-    const chorus = obj.effect.chorus;
-    const params = obj.parameters;
-
-    return {
-      pf: params["param-feedback"].controlledBy,
-      pq: params["param-frequency"].controlledBy,
-      pd: params["param-depth"].controlledBy,
-      ps: params["param-spread"].controlledBy,
-      pw: params["param-wet"].controlledBy,
-      f: chorus.feedback.value,
-      q: chorus.frequency.value,
-      d: chorus.depth,
-      s: chorus.spread,
-      w: chorus.wet.value
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): ChorusNodeData {
-    const data = new ChorusNodeData();
-    const chorus = data.effect.chorus;
-    const params = data.parameters;
-
-    params["param-feedback"].controlledBy = serialized.pf;
-    params["param-frequency"].controlledBy = serialized.pq;
-    params["param-depth"].controlledBy = serialized.pd;
-    params["param-spread"].controlledBy = serialized.ps;
-    params["param-wet"].controlledBy = serialized.pw;
-    chorus.feedback.value = serialized.f;
-    chorus.frequency.value = serialized.q;
-    chorus.depth = serialized.d;
-    chorus.spread = serialized.s;
-    chorus.wet.value = serialized.w;
-
-    return data;
+  spec = {
+    pf: this.prop(self => self.parameters["param-feedback"]).with("controlledBy"),
+    pq: this.prop(self => self.parameters["param-frequency"]).with("controlledBy"),
+    pd: this.prop(self => self.parameters["param-depth"]).with("controlledBy"),
+    ps: this.prop(self => self.parameters["param-spread"]).with("controlledBy"),
+    pw: this.prop(self => self.parameters["param-wet"]).with("controlledBy"),
+    f: this.prop(self => self.effect.chorus.feedback).with("value"),
+    q: this.prop(self => self.effect.chorus.frequency).with("value"),
+    d: this.prop(self => self.effect.chorus).with("depth"),
+    s: this.prop(self => self.effect.chorus).with("spread"),
+    w: this.prop(self => self.effect.chorus.wet).with("value")
   }
 }
 

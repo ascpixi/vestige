@@ -5,7 +5,7 @@ import { RiMusic2Fill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 import { allEqualUnordered, pickRandom, randInt, seedRng } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
 
@@ -61,36 +61,18 @@ export class PentatonicChordsNodeData extends NoteGeneratorNodeData {
   generator = new PentatonicChordsGenerator();
 };
 
-export class PentatonicChordsNodeSerializer implements NodeDataSerializer<PentatonicChordsNodeData> {
-  type = "pentatonic-chords"
+export class PentatonicChordsNodeSerializer extends FlatNodeDataSerializer<PentatonicChordsNodeData> {
+  type = "pentatonic-chords";
+  dataFactory = () => new PentatonicChordsNodeData();
 
-  serialize(obj: PentatonicChordsNodeData) {
-    const gen = obj.generator;
-
-    return {
-      l: gen.chordLength,
-      a: gen.minNotes,
-      b: gen.maxNotes,
-      o: gen.octave,
-      r: gen.pitchRange,
-      n: gen.rootNote,
-      m: gen.mode
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PentatonicChordsNodeData {
-    const data = new PentatonicChordsNodeData();
-    const gen = data.generator;
-
-    gen.chordLength = serialized.l;
-    gen.minNotes = serialized.a;
-    gen.maxNotes = serialized.b;
-    gen.octave = serialized.o;
-    gen.pitchRange = serialized.r;
-    gen.rootNote = serialized.n;
-    gen.mode = serialized.m;
-
-    return data;
+  spec = {
+    l: this.prop(self => self.generator).with("chordLength"),
+    a: this.prop(self => self.generator).with("minNotes"),
+    b: this.prop(self => self.generator).with("maxNotes"),
+    o: this.prop(self => self.generator).with("octave"),
+    r: this.prop(self => self.generator).with("pitchRange"),
+    n: this.prop(self => self.generator).with("rootNote"),
+    m: this.prop(self => self.generator).with("mode"),
   }
 }
 

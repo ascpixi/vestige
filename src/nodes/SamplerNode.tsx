@@ -7,7 +7,7 @@ import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
 import { Automatable } from "../parameters";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -133,27 +133,15 @@ export class SamplerAudioGenerator implements AudioGenerator {
   }
 }
 
-export class SamplerNodeSerializer implements NodeDataSerializer<SamplerNodeData> {
-  type = "sampler"
+export class SamplerNodeSerializer extends FlatNodeDataSerializer<SamplerNodeData> {
+  type = "sampler";
+  dataFactory = () => new SamplerNodeData();
 
-  serialize(obj: SamplerNodeData) {
-    return {
-      s: obj.generator.set,
-      a: obj.generator.sampler.attack,
-      r: obj.generator.sampler.release
-    };
-  }
-
-  async deserialize(serialized: ReturnType<this["serialize"]>): Promise<SamplerNodeData> {
-    const data = new SamplerNodeData();
-    const gen = data.generator;
-
-    gen.sampler.attack = serialized.a;
-    gen.sampler.release = serialized.r;
-    gen.set = serialized.s;
-
-    return data;
-  }
+  spec = {
+    a: this.prop(self => self.generator.sampler).with("attack"),
+    r: this.prop(self => self.generator.sampler).with("release"),
+    s: this.prop(self => self.generator).with("set")
+  };
 }
 
 export type SamplerNode = flow.Node<SamplerNodeData, "sampler">;

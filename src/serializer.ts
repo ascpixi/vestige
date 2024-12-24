@@ -310,3 +310,135 @@ async function decompress(input: ArrayBuffer): Promise<Uint8Array> {
 
     return concatenated;
 }
+
+interface Property<TSelf, T> {
+    get(self: TSelf): T;
+    set(self: TSelf, x: T): void;
+    migrationDefault?: T;
+}
+
+/**
+ * Represents the serialized key name to getter-setter mapping that a FlatNodeDataSerializer
+ * should follow.
+ */
+export type FlatSerializerSpec<TIn> = { [key: string]: Property<TIn, any> };
+
+type OmitIndexSignature<T> = {
+    [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
+
+/**
+ * Implements a `NodeDataSerializer<TIn>` that follows a specification (`spec`), serializing
+ * data to a flat object (with no explicitly given nested children).
+ */
+export abstract class FlatNodeDataSerializer<TIn> implements NodeDataSerializer<TIn> {
+    abstract type: string;
+    abstract dataFactory: () => TIn;
+    abstract spec: FlatSerializerSpec<TIn>;
+
+    protected beforeSerialize?(data: TIn): void;
+    protected afterSerialize?(serialized: Record<string, any>): void;
+
+    protected beforeDeserialize?(): void;
+    protected afterDeserialize?(data: TIn): void;
+
+    serialize(obj: TIn) {
+        this.beforeSerialize?.(obj);
+
+        const serialized: Record<string, any> = {};
+
+        for (const [key, prop] of Object.entries(this.spec)) {
+            serialized[key] = prop.get(obj);
+        }
+
+        this.afterSerialize?.(serialized);
+        return serialized;
+    }
+
+    deserialize(serialized: ReturnType<this["serialize"]>): TIn | Promise<TIn> {
+        this.beforeDeserialize?.();
+        const data = this.dataFactory();
+
+        for (const [key, prop] of Object.entries(this.spec)) {
+            let value: any;
+
+            if (!(key in serialized)) {
+                value = prop.migrationDefault;
+            } else {
+                value = serialized[key];
+            }
+
+            prop.set(data, value);
+        }
+
+        this.afterDeserialize?.(data);
+        return data;
+    }
+
+    /**
+     * Creates a `Property<TIn, TIn[K]>` that represents member `K` of the node data type.
+     * @param key The target key.
+     * @param migrationDefault If the serialized form stores the member as `undefined`, this value will be used instead.
+     */
+    prop<K extends keyof OmitIndexSignature<TIn>>(
+        key: K,
+        migrationDefault?: TIn[K]
+    ): Property<TIn, TIn[K]>;
+
+    /**
+     * Begins the creation of a `Property<TIn, T[K]>`, which represents any member of
+     * any child of the node data type. This method returns an object with a `with` method,
+     * which should be called to provide the actual key.
+     */
+    prop<T>(
+        parentGetter: (self: TIn) => T
+    ): {
+
+        /**
+         * Specifies the key `K` that the resulting `Property<TIn, T[K]>` should hold.
+         * This ultimately creates the `Property<TIn, T[K]>` object.
+         * @param key The target key, on the child specified by the `prop` call the object with this method was obtained from.
+         * @param migrationDefault If the serialized form stores the member as `undefined`, this value will be used instead.
+         */
+        // We do this, as TypeScript doesn't seem to be able to infer both of the
+        // types at once. We have to first let it infer the type from the lambda,
+        // and then infer K from the `with` call.
+        with<K extends keyof T>(
+            key: K,
+            migrationDefault?: T[K]
+        ): Property<TIn, T[K]>
+    };
+    
+    prop<T>(
+        parentGetterOrSelfKey: ((self: TIn) => T) | keyof TIn,
+        migrationDefault?: TIn[keyof TIn]
+    ) {
+        if (typeof parentGetterOrSelfKey !== "function") {
+            // overload: prop(key: keyof TIn): Property<TIn, TIn[typeof key]>; 
+            const selfKey = parentGetterOrSelfKey;
+
+            return {
+                get: (self: TIn) => self[selfKey],
+                set: (self: TIn, value: TIn[typeof selfKey]) => self[selfKey] = value,
+                migrationDefault
+            } as any;
+        }
+        
+        // overload: prop<T>(parentGetter: (self: TIn) => T, key: keyof T): Property<TIn, T[typeof key]>;
+        assert(typeof parentGetterOrSelfKey == "function");
+        const parentGetter = parentGetterOrSelfKey;
+        
+        return {
+            with<K extends keyof T>(
+                key: K,
+                migrationDefault?: T[K]
+            ): Property<TIn, T[K]> {
+                return {
+                    get: (self: TIn) => parentGetter(self)[key],
+                    set: (self: TIn, value: T[typeof key]) => parentGetter(self)[key] = value,
+                    migrationDefault
+                };
+            }
+        }
+    }
+}

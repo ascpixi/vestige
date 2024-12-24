@@ -8,7 +8,7 @@ import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -114,38 +114,18 @@ export class DelayAudioEffect implements AudioEffect {
   }
 }
 
-export class DelayNodeSerializer implements NodeDataSerializer<DelayNodeData> {
-  type = "delay"
+export class DelayNodeSerializer extends FlatNodeDataSerializer<DelayNodeData> {
+  type = "delay";
+  dataFactory = () => new DelayNodeData();
 
-  serialize(obj: DelayNodeData) {
-    const params = obj.parameters;
-    const delay = obj.effect.delay;
-
-    return {
-      pt: params["param-time"].controlledBy,
-      pf: params["param-feedback"].controlledBy,
-      pw: params["param-wet"].controlledBy,
-      t: delay.delayTime.value,
-      f: delay.feedback.value,
-      w: delay.wet.value,
-      p: obj.effect.isPingPong // since Vestige 0.3.0
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): DelayNodeData {
-    const data = new DelayNodeData();
-    const params = data.parameters;
-    const delay = data.effect.delay;
-    
-    params["param-time"].controlledBy = serialized.pt;
-    params["param-feedback"].controlledBy = serialized.pf;
-    params["param-wet"].controlledBy = serialized.pw;
-    delay.delayTime.value = serialized.t;
-    delay.feedback.value = serialized.f;
-    delay.wet.value = serialized.w;
-    data.effect.isPingPong = serialized.p ?? false; // since Vestige 0.3.0
-
-    return data;
+  spec = {
+    pt: this.prop(self => self.parameters["param-time"]).with("controlledBy"),
+    pf: this.prop(self => self.parameters["param-feedback"]).with("controlledBy"),
+    pw: this.prop(self => self.parameters["param-wet"]).with("controlledBy"),
+    t: this.prop(self => self.effect.delay.delayTime).with("value"),
+    f: this.prop(self => self.effect.delay.feedback).with("value"),
+    w: this.prop(self => self.effect.delay.wet).with("value"),
+    p: this.prop(self => self.effect).with("isPingPong", false) // since Vestige 0.3.0
   }
 }
 

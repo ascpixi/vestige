@@ -8,7 +8,7 @@ import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -61,25 +61,15 @@ export class BalanceAudioEffect implements AudioEffect {
   }
 }
 
-export class BalanceNodeSerializer implements NodeDataSerializer<BalanceNodeData> {
-  type = "balance"
+export class BalanceNodeSerializer extends FlatNodeDataSerializer<BalanceNodeData> {
+  type = "balance";
+  dataFactory = () => new BalanceNodeData();
 
-  serialize(obj: BalanceNodeData) {
-    return {
-      pp: obj.parameters["param-pan"].controlledBy,
-      pv: obj.parameters["param-volume"].controlledBy,
-      p: obj.effect.panVol.pan.value,
-      v: obj.effect.panVol.volume.value
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): BalanceNodeData {
-    const data = new BalanceNodeData();
-    data.parameters["param-pan"].controlledBy = serialized.pp;
-    data.parameters["param-volume"].controlledBy = serialized.pv;
-    data.effect.panVol.pan.value = serialized.p;
-    data.effect.panVol.volume.value = serialized.v;
-    return data;
+  spec = {
+    pp: this.prop(self => self.parameters["param-pan"]).with("controlledBy"),
+    pv: this.prop(self => self.parameters["param-volume"]).with("controlledBy"),
+    p: this.prop(self => self.effect.panVol.pan).with("value"),
+    v: this.prop(self => self.effect.panVol.volume).with("value")
   }
 }
 

@@ -6,7 +6,7 @@ import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
 import { assert } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -39,18 +39,13 @@ export class PickNoteNodeData extends NoteGeneratorNodeData<NoteInputHandle> {
   generator: PickNoteGenerator = new PickNoteGenerator();
 };
 
-export class PickNoteNodeSerializer implements NodeDataSerializer<PickNoteNodeData> {
-  type = "pick-note"
+export class PickNoteNodeSerializer extends FlatNodeDataSerializer<PickNoteNodeData> {
+  type = "pick-note";
+  dataFactory = () => new PickNoteNodeData();
 
-  serialize(obj: PickNoteNodeData) {
-    return { m: obj.generator.mode };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PickNoteNodeData {
-    const data = new PickNoteNodeData();
-    data.generator.mode = serialized.m;
-    return data;
-  }
+  spec = {
+    m: this.prop(self => self.generator).with("mode")
+  };
 }
 
 export type PickNoteNode = flow.Node<PickNoteNodeData, "pick-note">;

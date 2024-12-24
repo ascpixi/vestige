@@ -7,7 +7,7 @@ import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 import { allEqualUnordered, hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -73,34 +73,17 @@ export class PentatonicMelodyNodeData extends NoteGeneratorNodeData {
   generator = new PentatonicMelodyGenerator();
 };
 
-export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<PentatonicMelodyNodeData> {
-  type = "pentatonic-melody"
+export class PentatonicMelodyNodeSerializer extends FlatNodeDataSerializer<PentatonicMelodyNodeData> {
+  type = "pentatonic-melody";
+  dataFactory = () => new PentatonicMelodyNodeData();
 
-  serialize(obj: PentatonicMelodyNodeData) {
-    const gen = obj.generator;
-
-    return {
-      d: gen.density,
-      o: gen.octave,
-      r: gen.pitchRange,
-      n: gen.rootNote,
-      m: gen.mode,
-      p: gen.polyphony // since Vestige 0.3.0
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PentatonicMelodyNodeData {
-    const data = new PentatonicMelodyNodeData();
-    const gen = data.generator;
-
-    gen.density = serialized.d;
-    gen.octave = serialized.o;
-    gen.pitchRange = serialized.r;
-    gen.rootNote = serialized.n;
-    gen.mode = serialized.m;
-    gen.polyphony = serialized.p ?? 1; // since Vestige 0.3.0
-
-    return data;
+  spec = {
+    d: this.prop(self => self.generator).with("density"),
+    o: this.prop(self => self.generator).with("octave"),
+    r: this.prop(self => self.generator).with("pitchRange"),
+    n: this.prop(self => self.generator).with("rootNote"),
+    m: this.prop(self => self.generator).with("mode"),
+    p: this.prop(self => self.generator).with("polyphony", 1), // since Vestige 0.3.0
   }
 }
 

@@ -8,7 +8,7 @@ import { makeNodeFactory } from "./basis";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
 import { octToCents } from "../audioUtil";
 import { Automatable } from "../parameters";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 import { anyOf, lerp, match } from "../util";
 
 import { NodePort } from "../components/NodePort";
@@ -32,7 +32,7 @@ export class SynthNodeData extends InstrumentNodeData {
   parameters: {
     "param-fineTune": Automatable,
     "param-unisonDetune": Automatable
-  } & Record<string, Automatable>
+  };
 
   applyContour() {
     const x = this.countourAmt;
@@ -171,46 +171,25 @@ export class SynthAudioGenerator implements AudioGenerator {
   }
 }
 
-export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
-  type = "synth"
+export class SynthNodeSerializer extends FlatNodeDataSerializer<SynthNodeData> {
+  type = "synth";
+  dataFactory = () => new SynthNodeData();
 
-  serialize(obj: SynthNodeData) {
-    const synth = obj.generator.synth;
-    const params = obj.parameters;
+  spec = {
+    pf: this.prop(self => self.parameters["param-fineTune"]).with("controlledBy"),
+    ps: this.prop(self => self.parameters["param-unisonDetune"]).with("controlledBy"),
+    c: this.prop("contour"),
+    a: this.prop("countourAmt"),
+    o: this.prop("octave"),
+    f: this.prop("fineTune"),
+    w: this.prop(self => self.generator).with("waveform"),
+    v: this.prop(self => self.generator.synth.volume).with("value"),
+    s: this.prop(self => self.generator).with("unisonSpread", 1), // since Vestige 0.2.0
+    u: this.prop(self => self.generator).with("unisonCount", 0), // since Vestige 0.2.0
+  };
 
-    return {
-      pf: params["param-fineTune"].controlledBy,
-      ps: params["param-unisonDetune"].controlledBy,
-      c: obj.contour,
-      a: obj.countourAmt,
-      o: obj.octave,
-      f: obj.fineTune,
-      w: obj.generator.waveform,
-      v: synth.volume.value,
-      s: obj.generator.unisonSpread, // since Vestige 0.2.0
-      u: obj.generator.unisonCount // since Vestige 0.2.0
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): SynthNodeData {
-    const data = new SynthNodeData();
-    const synth = data.generator.synth;
-    const params = data.parameters;
-
-    params["param-fineTune"].controlledBy = serialized.pf;
-    params["param-unisonDetune"].controlledBy = serialized.ps;
-    data.octave = serialized.o;
-    data.fineTune = serialized.f;
-    data.contour = serialized.c;
-    data.countourAmt = serialized.a;
-    synth.volume.value = serialized.v;
-    data.generator.unisonCount = serialized.u ?? 1; // since Vestige 0.2.0
-    data.generator.unisonSpread = serialized.s ?? 0; // since Vestige 0.2.0
-    data.generator.waveform = serialized.w;
-
+  protected override afterDeserialize(data: SynthNodeData): void {
     data.applyContour();
-
-    return data;
   }
 }
 
