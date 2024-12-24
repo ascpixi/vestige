@@ -30,7 +30,7 @@ import { MIDI_NOTES } from "../audioUtil";
  *                 LFO
  */
 const TEST_PROJ_1: string = (
-    "AWWQK0_DUBiGu0GmuQn-RAVjg6LAIriEkKDf7py2Z22_0_U77VZDloDCoUhQJGwIFBYBmZ7mDxB-AoKQIWCEhBL0m-e9Xfu5TFlpqkjSQvLpEEZ6ihChZ6GwoNqsvTzh3G80Ia6GMJ1EkoHRpFp2LCMtCvQmo_Pj7OFjvIFiMmpfjGec_itU2MhXmUQRZmkIcQOxXIeeQVoD1RDLne3dvQMk1WkkF2QC9Daq8yicFah20u0UjmPqVIe4dRMvbPrhel1E-Vqg3ITf0JJJlLVC4N2xoC14c-gGjK7R2gTILfASssoQphV5-ruhv_gy-0xfDbf6C9ZZd_0JquwKMQALViThTTbvH_cv7456gAW3IqXwJZ8MYEq9XBPEimzSRrIdQxG4PNjlgHRmSvoU_z3TNQEpsln5hOiHL7tzoKd4Sf8XTwlSxLanSB5mJMF_TvrJzxFl8pv_BA=="
+    "AWWQPy8DYRzHrxpmxGAxeAE3OFpnYjUgEZvpe32eu3t6d7_n9PfctbdIU2I3WQwSrcE7kCBG6eKtEINIDVQkTszffL7_LoNctlhpqkjSQvLxAEb6ihCjY6GwoJqs_TzlPFipQVwMYA5SSQZGk2rYiYy1KNAZPZweZncfwzUUo4fm2bDqdl-hopV8mUkUUdaKIK4g5h3oKlpToEkkcmtze2cX6cQ4kgsyITprEzMo3CWoZto-KFzXOORAXHupH9WCaNURcV4PlZfyGxoyjbNGBLy7FrQFfxrtkNE2WpsQuQWeQ1YZwDRiX383PLl_6bXjr4Ybve7T7sLsM1TZFaIPFqxIwh-t39ye7y_WHwELXkVKEUg-6sOUenkmTBTZpI1kO4EicHmwxyHpzJT0Mf57pmdCUmSzCgjxD19251CP8ZL-L55StJDYviK5l5EE_znpJz9HnMlv_hM="
 );
 
 test("deserializes initial project", async () => {
