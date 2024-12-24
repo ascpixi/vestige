@@ -325,11 +325,7 @@ export class GraphForwarder {
      * For each note generator-to-instrument connection, stores the previous
      * notes (in MIDI pitches) that were active in the previous pulse.
      */
-    private prevNoteMap: Map<string, number[]>;
-
-    constructor() {
-        this.prevNoteMap = new Map();
-    }
+    private prevNoteMap: Map<string, number[]> = new Map();
 
     /**
      * Traces the given graph, forwarding Vestige-generated data to out-of-graph

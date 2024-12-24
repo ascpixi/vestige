@@ -17,16 +17,11 @@ const INPUT_A = signalInHandleId("a");
 const INPUT_B = signalInHandleId("b");
 
 export class MixNodeData extends EffectNodeData {
-  effect: MixAudioEffect;
-
-  constructor() {
-    super();
-    this.effect = new MixAudioEffect();
-  }
+  effect = new MixAudioEffect();
 };
 
 export class MixAudioEffect implements AudioEffect {
-  gain: tone.Gain;
+  gain = new tone.Gain();
   inputA?: tone.ToneAudioNode;
   inputB?: tone.ToneAudioNode;
 
@@ -46,10 +41,6 @@ export class MixAudioEffect implements AudioEffect {
   getConnectDestination(handleId: string) {
     assert(handleId == INPUT_A || handleId == INPUT_B, `Unknown signal input handle ID ${handleId}`);
     return unaryAudioDestination(this.gain);
-  }
-
-  constructor() {
-    this.gain = new tone.Gain();
   }
 }
 

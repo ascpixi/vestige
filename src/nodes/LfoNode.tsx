@@ -39,10 +39,10 @@ export class LfoNodeData extends ValueNodeData {
 };
 
 export class LfoValueGenerator implements ValueGenerator {
-  shape: LfoShape;
-  frequency: number;
-  min: number;
-  max: number;
+  shape: LfoShape = "sine";
+  frequency: number = 1;
+  min: number = 0;
+  max: number = 1;
 
   generate(time: number): number {
     switch (this.shape) {
@@ -53,13 +53,6 @@ export class LfoValueGenerator implements ValueGenerator {
       case "saw":
         return scale(biToUni(lfoSaw(time, this.frequency)), this.min, this.max);
     }
-  }
-
-  constructor() {
-    this.shape = "sine";
-    this.frequency = 1;
-    this.min = 0;
-    this.max = 1;
   }
 }
 

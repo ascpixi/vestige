@@ -57,7 +57,7 @@ export class ChorusAudioEffect implements AudioEffect {
     wet: 0.4
   });
 
-  constructor () {
+  constructor() {
     this.chorus.start();
   }
 

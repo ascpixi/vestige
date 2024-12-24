@@ -40,7 +40,12 @@ export class FilterNodeData extends EffectNodeData {
 };
 
 export class FilterAudioEffect implements AudioEffect {
-  filter: tone.Filter;
+  filter: tone.Filter = new tone.Filter({
+    frequency: cutoffScalarToHz(0.5),
+    Q: scalarToResonance(0.5),
+    rolloff: -24,
+    type: "lowpass"
+  });
 
   connectTo(dst: AudioDestination): void {
     dst.accept(this.filter);
@@ -58,15 +63,6 @@ export class FilterAudioEffect implements AudioEffect {
   getConnectDestination(handleId: string) {
     assert(handleId == SIGNAL_INPUT_HID_MAIN, `Unknown signal input handle ID ${handleId}`);
     return unaryAudioDestination(this.filter);
-  }
-
-  constructor() {
-    this.filter = new tone.Filter({
-      frequency: cutoffScalarToHz(0.5),
-      Q: scalarToResonance(0.5),
-      rolloff: -24,
-      type: "lowpass"
-    });
   }
 }
 

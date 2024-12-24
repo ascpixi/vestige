@@ -22,7 +22,7 @@ export class PentatonicChordsGenerator implements PlainNoteGenerator {
   seedOffset: number;
   lastNotes: number[] = [];
 
-  constructor(
+  constructor (
     public chordLength: number = 6,
     public minNotes: number = 4,
     public maxNotes: number = 6,

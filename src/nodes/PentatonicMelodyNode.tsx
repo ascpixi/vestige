@@ -21,7 +21,7 @@ export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   offset: number;
   lastNotes: number[] = [];
 
-  constructor(
+  constructor (
     public density: number = 50,
     public octave: number = 4,
     public pitchRange: number = 6,

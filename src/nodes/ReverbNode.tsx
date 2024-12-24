@@ -47,7 +47,11 @@ export class ReverbNodeData extends EffectNodeData {
 };
 
 export class ReverbAudioEffect implements AudioEffect {
-  reverb: tone.Reverb;
+  reverb: tone.Reverb = new tone.Reverb({
+    decay: 4.00,
+    preDelay: 20 / 1000,
+    wet: 0.5
+  });
 
   connectTo(dst: AudioDestination): void {
     dst.accept(this.reverb);
@@ -65,14 +69,6 @@ export class ReverbAudioEffect implements AudioEffect {
   getConnectDestination(handleId: string) {
     assert(handleId == SIGNAL_INPUT_HID_MAIN, `Unknown signal input handle ID ${handleId}`);
     return unaryAudioDestination(this.reverb);
-  }
-
-  constructor() {
-    this.reverb = new tone.Reverb({
-      decay: 4.00,
-      preDelay: 20 / 1000,
-      wet: 0.5
-    });
   }
 }
 

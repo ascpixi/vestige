@@ -70,7 +70,7 @@ export class SamplerAudioGenerator implements AudioGenerator {
     this.sampler.connect(this.out);
   }
 
-  constructor () {
+  constructor() {
     this.sampler.connect(this.out);
   }
 
