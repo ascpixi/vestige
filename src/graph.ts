@@ -2,7 +2,6 @@ import * as tone from "tone";
 import * as flow from "@xyflow/react";
 
 import { VestigeNodeOfType } from "./nodes";
-import { midiToName } from "./audioUtil";
 import { Automatable } from "./parameters";
 import { assert, mapFromSingle } from "./util";
 import { FinalNodeData } from "./nodes/FinalNode";

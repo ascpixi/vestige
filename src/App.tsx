@@ -218,6 +218,27 @@ export default function App() {
     }, 300);
   }, []);
 
+  const togglePlay = useCallback(async () => {
+    if (!playing) {
+      setStartTimeMs(performance.now());
+
+      if (!wasStarted) {
+        console.log("▶️ Playing (performing first time initialization)");
+        await tone.start();
+        setWasStarted(true);
+      } else {
+        console.log("▶️ Playing");
+        tone.getDestination().volume.rampTo(prevVolume, 0.25);
+      }
+    } else {
+      console.log("⏹️ Stopping");
+      setPrevVolume(tone.getDestination().volume.value);
+      tone.getDestination().volume.rampTo(-Infinity, 0.25);
+    }
+
+    setPlaying(!playing);
+  }, [playing, prevVolume, wasStarted]);
+
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
       setNodes(nds => flow.applyNodeChanges(changes, nds));
@@ -229,41 +250,7 @@ export default function App() {
     [],
   );
 
-  const onEdgesChange = useCallback(
-    (changes: flow.EdgeChange<flow.Edge>[]) => {
-      for (const change of changes) {
-        if (change.type != "remove")
-          continue;
-
-        const edge = edges.find(x => x.id == change.id);
-        assert(edge, `could not find removed edge with ID ${change.id}`);
-
-        assert(edge.sourceHandle, `edge w/ ID ${change.id} has an undefined source handle`);
-        assert(edge.targetHandle, `edge w/ ID ${change.id} has an undefined target handle`)
-
-        onConnectChange(edge as flow.Connection, "DISCONNECT");
-      }
-
-      setEdges(eds => flow.applyEdgeChanges(changes, eds));
-      setGraphVer(x => x + 1);
-    },
-    [edges]
-  );
-
-  const onConnect = useCallback(
-    (params: flow.Connection) => {
-      // We can't connect two different sources to one target
-      if (edges.some(x => x.target == params.target && x.targetHandle == params.targetHandle))
-        return;
- 
-      setEdges(eds => flow.addEdge({ ...params, type: "vestige" }, eds));
-      onConnectChange(params, "CONNECT");
-      setGraphVer(x => x + 1);
-    },
-    [nodes, edges]
-  );
-
-  function onConnectChange(conn: flow.Connection, action: "CONNECT" | "DISCONNECT") {
+  const onConnectChange = useCallback((conn: flow.Connection, action: "CONNECT" | "DISCONNECT") => {
     const src = (nodes.find(x => x.id == conn.source)! as AbstractVestigeNode).data;
     const dst = (nodes.find(x => x.id == conn.target)! as AbstractVestigeNode).data;
 
@@ -327,7 +314,42 @@ export default function App() {
           : undefined;
       }
     }
-  }
+  }, [connectedFinalBefore, nodes, playing, togglePlay]);
+
+
+  const onEdgesChange = useCallback(
+    (changes: flow.EdgeChange<flow.Edge>[]) => {
+      for (const change of changes) {
+        if (change.type != "remove")
+          continue;
+
+        const edge = edges.find(x => x.id == change.id);
+        assert(edge, `could not find removed edge with ID ${change.id}`);
+
+        assert(edge.sourceHandle, `edge w/ ID ${change.id} has an undefined source handle`);
+        assert(edge.targetHandle, `edge w/ ID ${change.id} has an undefined target handle`)
+
+        onConnectChange(edge as flow.Connection, "DISCONNECT");
+      }
+
+      setEdges(eds => flow.applyEdgeChanges(changes, eds));
+      setGraphVer(x => x + 1);
+    },
+    [edges, onConnectChange]
+  );
+
+  const onConnect = useCallback(
+    (params: flow.Connection) => {
+      // We can't connect two different sources to one target
+      if (edges.some(x => x.target == params.target && x.targetHandle == params.targetHandle))
+        return;
+ 
+      setEdges(eds => flow.addEdge({ ...params, type: "vestige" }, eds));
+      onConnectChange(params, "CONNECT");
+      setGraphVer(x => x + 1);
+    },
+    [edges, onConnectChange]
+  );
 
   useEffect(() => {
     if (playing) {
@@ -340,37 +362,17 @@ export default function App() {
 
       return () => clearInterval(id);
     }
-    
-  // We only want to restart the graph tracer task when the graph changes in a meaningful
-  // way - `nodes` changes when a node is re-positioned, and we really don't need to reset
-  // the interval just for that (we don't care about node positions!) - we instead keep
-  // a "graph version" counter, which we increment every time the graph changes in a way
-  // that concerns us. We provide it as a dependency. Applying what the exhaustive
-  // dependency warning tells us to do would actually do more harm than good.
-  //
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forwarder, graphVer, startTimeMs, playing]);
-
-  async function togglePlay() {
-    if (!playing) {
-      setStartTimeMs(performance.now());
-
-      if (!wasStarted) {
-        console.log("▶️ Playing (performing first time initialization)");
-        await tone.start();
-        setWasStarted(true);
-      } else {
-        console.log("▶️ Playing");
-        tone.getDestination().volume.rampTo(prevVolume, 0.25);
-      }
-    } else {
-      console.log("⏹️ Stopping");
-      setPrevVolume(tone.getDestination().volume.value);
-      tone.getDestination().volume.rampTo(-Infinity, 0.25);
-    }
-
-    setPlaying(!playing);
-  }
+  },
+    // We only want to restart the graph tracer task when the graph changes in a meaningful
+    // way - `nodes` changes when a node is re-positioned, and we really don't need to reset
+    // the interval just for that (we don't care about node positions!) - we instead keep
+    // a "graph version" counter, which we increment every time the graph changes in a way
+    // that concerns us. We provide it as a dependency. Applying what the exhaustive
+    // dependency warning tells us to do would actually do more harm than good.
+    //
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [forwarder, graphVer, startTimeMs, playing]
+  );
 
   function handleTourFinished() {
     mutatePersistentData({ tourComplete: true });
