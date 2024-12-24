@@ -14,6 +14,7 @@ import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./Balan
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
 import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./ChorusNode";
+import { ArpeggiatorNode, ArpeggiatorNodeRenderer, ArpeggiatorNodeSerializer } from "./ArpeggiatorNode";
 
 export type NodeData = {
     type: NodeType
@@ -33,6 +34,7 @@ export type VestigeNode =
     MixNode |
     BalanceNode |
     PickNoteNode |
+    ArpeggiatorNode |
     FinalNode;
 
 /**
@@ -57,6 +59,7 @@ export const VESTIGE_NODE_TYPES = {
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
     "pick-note": PickNoteNodeRenderer,
+    "arpeggiator": ArpeggiatorNodeRenderer,
     "final": FinalNodeRenderer
 };
 
@@ -73,6 +76,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
     new PickNoteNodeSerializer(),
+    new ArpeggiatorNodeSerializer(),
     new FinalNodeSerializer()
 ];
 

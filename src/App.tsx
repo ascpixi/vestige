@@ -21,7 +21,7 @@ import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode"
 import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
 import { createFinalNode } from "./nodes/FinalNode";
 
-import { AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
+import { AbstractVestigeNode, AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
 import { assert } from "./util";
 import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
 import { getPersistentData, mutatePersistentData } from "./persistent";
@@ -33,6 +33,8 @@ import { IntroductionTour } from "./components/IntroductionTour";
 import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { CHORUS_NODE_DESCRIPTOR } from "./nodes/ChorusNode";
+import { Automatable } from "./parameters";
+import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "./nodes/ArpeggiatorNode";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -255,8 +257,8 @@ export default function App() {
   );
 
   function onConnectChange(conn: flow.Connection, action: "CONNECT" | "DISCONNECT") {
-    const src = nodes.find(x => x.id == conn.source)!.data;
-    const dst = nodes.find(x => x.id == conn.target)!.data;
+    const src = (nodes.find(x => x.id == conn.source)! as AbstractVestigeNode).data;
+    const dst = (nodes.find(x => x.id == conn.target)! as AbstractVestigeNode).data;
 
     // We only handle connection changes between Tone.js-backed nodes, such as
     // INSTRUMENT or EFFECT. For NOTES and VALUE nodes, this is handled via the
@@ -389,7 +391,8 @@ export default function App() {
               type: "GROUP", content: "melodies & chords", entries: [
                 getContextMenuEntry(PENTATONIC_MELODY_NODE_DESCRIPTOR),
                 getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
-                getContextMenuEntry(PICK_NOTE_DESCRIPTOR)
+                getContextMenuEntry(ARPEGGIATOR_NOTE_DESCRIPTOR),
+                getContextMenuEntry(PICK_NOTE_DESCRIPTOR),
               ]
             },
             {
