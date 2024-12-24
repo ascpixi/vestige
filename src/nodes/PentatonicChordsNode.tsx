@@ -58,12 +58,7 @@ export class PentatonicChordsGenerator implements PlainNoteGenerator {
 }
 
 export class PentatonicChordsNodeData extends NoteGeneratorNodeData {
-  generator: PentatonicChordsGenerator;
-
-  constructor () {
-    super();
-    this.generator = new PentatonicChordsGenerator();
-  }
+  generator = new PentatonicChordsGenerator();
 };
 
 export class PentatonicChordsNodeSerializer implements NodeDataSerializer<PentatonicChordsNodeData> {

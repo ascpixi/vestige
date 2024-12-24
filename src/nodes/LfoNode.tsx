@@ -35,13 +35,7 @@ function biToUni(x: number) {
 }
 
 export class LfoNodeData extends ValueNodeData {
-  generator: LfoValueGenerator;
-
-  constructor () {
-    super();
-
-    this.generator = new LfoValueGenerator();
-  }
+  generator = new LfoValueGenerator();
 };
 
 export class LfoValueGenerator implements ValueGenerator {

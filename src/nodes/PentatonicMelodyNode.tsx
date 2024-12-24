@@ -70,12 +70,7 @@ export class PentatonicMelodyGenerator implements PlainNoteGenerator {
 }
 
 export class PentatonicMelodyNodeData extends NoteGeneratorNodeData {
-  generator: PentatonicMelodyGenerator;
-
-  constructor () {
-    super();
-    this.generator = new PentatonicMelodyGenerator();
-  }
+  generator = new PentatonicMelodyGenerator();
 };
 
 export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<PentatonicMelodyNodeData> {

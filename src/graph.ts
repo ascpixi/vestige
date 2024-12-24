@@ -43,12 +43,8 @@ export type BaseNodeData = Record<string, unknown> & {
 export abstract class NoteGeneratorNodeData<TParamType extends string = string> implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "NOTES";
+    nodeType = "NOTES" as const;
     abstract generator: PlainNoteGenerator | ParametricNoteGenerator<TParamType>;
-
-    constructor () {
-        this.nodeType = "NOTES";
-    }
 }
 
 /**
@@ -58,15 +54,10 @@ export abstract class NoteGeneratorNodeData<TParamType extends string = string> 
 export abstract class InstrumentNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "INSTRUMENT";
-    parameters: { [handleName: string]: Automatable };
+    nodeType = "INSTRUMENT" as const;
+    parameters: { [handleName: string]: Automatable } = {};
 
     abstract generator: AudioGenerator;
-
-    constructor () {
-        this.nodeType = "INSTRUMENT";
-        this.parameters = {};
-    }
 };
 
 /**
@@ -75,15 +66,10 @@ export abstract class InstrumentNodeData implements BaseNodeData {
 export abstract class EffectNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "EFFECT";
-    parameters: { [handleName: string]: Automatable };
+    nodeType = "EFFECT" as const;
+    parameters: { [handleName: string]: Automatable } = {};
 
     abstract effect: AudioEffect;
-
-    constructor () {
-        this.nodeType = "EFFECT";
-        this.parameters = {};
-    }
 }
 
 /**
@@ -93,12 +79,8 @@ export abstract class EffectNodeData implements BaseNodeData {
 export abstract class ValueNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "VALUE";
+    nodeType = "VALUE" as const;
     abstract generator: ValueGenerator;
-
-    constructor () {
-        this.nodeType = "VALUE";
-    }
 }
 
 export type NoInputs<T> = { [paramName in keyof never]: T };

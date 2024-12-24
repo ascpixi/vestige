@@ -6,11 +6,9 @@ export function toAugmented<T>(array: T[]): ArrayProcessor<T> {
  * Allows for extended functionality when modifying arrays.
  */
 export class ArrayProcessor<T> {
-    array: T[];
-
-    constructor (arr: T[]) {
-        this.array = arr;
-    }
+    constructor (
+        private array: T[]
+    ) {}
 
     collect() { return this.array; }
 
