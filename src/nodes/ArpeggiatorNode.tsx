@@ -41,7 +41,7 @@ export class ArpeggiatorGenerator implements ParametricNoteGenerator<NoteInputHa
     // https://www.desmos.com/calculator/rgyhezrleq
     let idx = match(this.style, {
       "UP": Math.floor(((1 / this.speed) * time)) % n,
-      "DOWN": Math.floor((-(1 / this.speed) * time) % n)
+      "DOWN": -Math.floor(((1 / this.speed) * time) % n) + (n - 1)
     });
 
     return this.lastNotes = [input[idx]];
