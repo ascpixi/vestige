@@ -5,7 +5,7 @@ import { RiPulseFill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
-import { logLerp } from "../util";
+import { invLogLerp, logLerp } from "../util";
 import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
@@ -89,7 +89,7 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   const lfo = data.generator;
 
   const [shape, setShape] = useState<LfoShape>(lfo.shape);
-  const [frequency, setFrequency] = useState(lfo.frequency);
+  const [frequency, setFrequency] = useState(invLogLerp(lfo.frequency, -1, MAX_LOG_SPEED_HZ_LOG10) * 100);
   const [min, setMin] = useState(lfo.min * 100);
   const [max, setMax] = useState(lfo.max * 100);
 
