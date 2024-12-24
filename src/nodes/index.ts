@@ -13,6 +13,7 @@ import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
 import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
+import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./ChorusNode";
 
 export type NodeData = {
     type: NodeType
@@ -27,6 +28,7 @@ export type VestigeNode =
     FilterNode |
     ReverbNode |
     DelayNode |
+    ChorusNode |
     LfoNode |
     MixNode |
     BalanceNode |
@@ -50,6 +52,7 @@ export const VESTIGE_NODE_TYPES = {
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
+    "chorus": ChorusNodeRenderer,
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
@@ -65,6 +68,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),
+    new ChorusNodeSerializer(),
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),

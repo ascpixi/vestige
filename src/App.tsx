@@ -32,6 +32,7 @@ import { Link } from "./components/Link";
 import { IntroductionTour } from "./components/IntroductionTour";
 import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
+import { CHORUS_NODE_DESCRIPTOR } from "./nodes/ChorusNode";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -401,7 +402,8 @@ export default function App() {
               type: "GROUP", content: "effects", entries: [
                 getContextMenuEntry(FILTER_NODE_DESCRIPTOR),
                 getContextMenuEntry(REVERB_NODE_DESCRIPTOR),
-                getContextMenuEntry(DELAY_NODE_DESCRIPTOR)
+                getContextMenuEntry(DELAY_NODE_DESCRIPTOR),
+                getContextMenuEntry(CHORUS_NODE_DESCRIPTOR)
               ]
             },
             getContextMenuEntry(LFO_NODE_DESCRIPTOR),
