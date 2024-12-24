@@ -1,13 +1,13 @@
 import * as flow from "@xyflow/react";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { RiDice3Fill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
-import { allEqualUnordered, assert, match } from "../util";
+import { assert, match } from "../util";
 import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState } from "../hooks";
+import { useBoundState, useNoteGeneratorSync } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -80,17 +80,7 @@ export const ArpeggiatorNodeRenderer = memo(function ArpeggiatorNodeRenderer(
   const [style, setStyle] = useBoundState(data.generator, "style");
   const [speed, setSpeed] = useBoundState(data.generator, "speed");
 
-  const [notes, setNotes] = useState<number[]>([]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!allEqualUnordered(notes, data.generator.lastNotes)) {
-        setNotes(data.generator.lastNotes);
-      }
-    }, 100);
-
-    return () => clearInterval(id);
-  }, [data.generator, notes]);
+  const notes = useNoteGeneratorSync(() => data.generator.lastNotes);
 
   return (
     <VestigeNodeBase

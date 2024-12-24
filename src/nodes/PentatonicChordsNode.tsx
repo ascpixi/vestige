@@ -1,14 +1,14 @@
 import * as flow from "@xyflow/react";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { RiMusic2Fill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 import { FlatNodeDataSerializer } from "../serializer";
-import { allEqualUnordered, pickRandom, randInt, seedRng } from "../util";
+import { pickRandom, randInt, seedRng } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
-import { useBoundState } from "../hooks";
+import { useBoundState, useNoteGeneratorSync } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -106,22 +106,12 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
   const [octave, setOctave] = useBoundState(gen, "octave");
   const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
 
-  const [notes, setNotes] = useState<number[]>([]);
+  const notes = useNoteGeneratorSync(() => gen.lastNotes);
 
   const semitonePitchRange = (mode == "MAJOR" ?
     MAJOR_PENTATONIC[pitchRange % 5] :
     MINOR_PENTATONIC[pitchRange % 5]
   ) + (12 * Math.floor(pitchRange / 5));
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!allEqualUnordered(notes, gen.lastNotes)) {
-        setNotes(gen.lastNotes);
-      }
-    }, 100);
-
-    return () => clearInterval(id);
-  }, [gen, notes]);
 
   function onMaxNotesChange(x: number) {
     if (x < minNotes) return;
