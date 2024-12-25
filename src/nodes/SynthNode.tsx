@@ -3,12 +3,14 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVolumeVibrateFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
 import { octToCents } from "../audioUtil";
 import { Automatable } from "../parameters";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 import { anyOf, lerp, match } from "../util";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -31,7 +33,7 @@ export class SynthNodeData extends InstrumentNodeData {
   parameters: {
     "param-fineTune": Automatable,
     "param-unisonDetune": Automatable
-  } & Record<string, Automatable>
+  };
 
   applyContour() {
     const x = this.countourAmt;
@@ -94,6 +96,8 @@ export class SynthAudioGenerator implements AudioGenerator {
 
   /** Fully applies oscillator settings, changing its type. May produce audible clicks.  */
   private fullyApplyOsc() {
+    this.synth.releaseAll();
+
     if (this._unisonCount > 1) {
       this.synth.set({
         oscillator: {
@@ -170,46 +174,25 @@ export class SynthAudioGenerator implements AudioGenerator {
   }
 }
 
-export class SynthNodeSerializer implements NodeDataSerializer<SynthNodeData> {
-  type = "synth"
+export class SynthNodeSerializer extends FlatNodeDataSerializer<SynthNodeData> {
+  type = "synth";
+  dataFactory = () => new SynthNodeData();
 
-  serialize(obj: SynthNodeData) {
-    const synth = obj.generator.synth;
-    const params = obj.parameters;
+  spec = {
+    pf: this.prop(self => self.parameters["param-fineTune"]).with("controlledBy"),
+    ps: this.prop(self => self.parameters["param-unisonDetune"]).with("controlledBy"),
+    c: this.prop("contour"),
+    a: this.prop("countourAmt"),
+    o: this.prop("octave"),
+    f: this.prop("fineTune"),
+    w: this.prop(self => self.generator).with("waveform"),
+    v: this.prop(self => self.generator.synth.volume).with("value"),
+    s: this.prop(self => self.generator).with("unisonSpread", 1), // since Vestige 0.2.0
+    u: this.prop(self => self.generator).with("unisonCount", 0), // since Vestige 0.2.0
+  };
 
-    return {
-      pf: params["param-fineTune"].controlledBy,
-      ps: params["param-unisonDetune"].controlledBy,
-      c: obj.contour,
-      a: obj.countourAmt,
-      o: obj.octave,
-      f: obj.fineTune,
-      w: obj.generator.waveform,
-      v: synth.volume.value,
-      s: obj.generator.unisonSpread, // since Vestige 0.2.0
-      u: obj.generator.unisonCount // since Vestige 0.2.0
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): SynthNodeData {
-    const data = new SynthNodeData();
-    const synth = data.generator.synth;
-    const params = data.parameters;
-
-    params["param-fineTune"].controlledBy = serialized.pf;
-    params["param-unisonDetune"].controlledBy = serialized.ps;
-    data.octave = serialized.o;
-    data.fineTune = serialized.f;
-    data.contour = serialized.c;
-    data.countourAmt = serialized.a;
-    synth.volume.value = serialized.v;
-    data.generator.unisonCount = serialized.u ?? 1; // since Vestige 0.2.0
-    data.generator.unisonSpread = serialized.s ?? 0; // since Vestige 0.2.0
-    data.generator.waveform = serialized.w;
-
+  protected override afterDeserialize(data: SynthNodeData): void {
     data.applyContour();
-
-    return data;
   }
 }
 
@@ -228,30 +211,28 @@ export const SYNTH_NODE_DESCRIPTOR = {
 export const SynthNodeRenderer = memo(function SynthNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<SynthNodeData>>
 ) {
+  const gen = data.generator;
+
   const [countour, setCountour] = useState<Countour>(data.contour);
   const [countourAmt, setCountourAmt] = useState<number>(data.countourAmt * 100);
 
-  const [waveform, setWaveform] = useState<Waveform>(data.generator.waveform);
+  const [waveform, setWaveform] = useBoundState(gen, "waveform");
   const [fineTune, setFineTune] = useState(data.fineTune);
   const [octave, setOctave] = useState(data.octave);
-  const [volume, setVolume] = useState(tone.dbToGain(data.generator.synth.volume.value) * 100);
+  const [volume, setVolume] = useState(tone.dbToGain(gen.synth.volume.value) * 100);
 
-  const [unisonVoices, setUnisonVoices] = useState(data.generator.unisonCount);
-  const [unisonSpread, setUnisonSpread] = useState(data.generator.unisonSpread);
-
-  useEffect(() => {
-    data.generator.waveform = waveform;
-  }, [data.generator, waveform]);
+  const [unisonVoices, setUnisonVoices] = useBoundState(gen, "unisonCount");
+  const [unisonSpread, setUnisonSpread] = useBoundState(gen, "unisonSpread");
 
   useEffect(() => {
-    data.generator.synth.volume.value = tone.gainToDb(volume / 100);
-  }, [data.generator, volume]);
+    gen.synth.volume.value = tone.gainToDb(volume / 100);
+  }, [gen, volume]);
 
   useEffect(() => {
     data.fineTune = fineTune;
     data.octave = octave;
-    data.generator.synth.set({ detune: octToCents(octave + 1) + fineTune });
-  }, [data, octave, fineTune]);
+    gen.synth.set({ detune: octToCents(octave + 1) + fineTune });
+  }, [data, gen, octave, fineTune]);
 
   useEffect(() => {
     data.contour = countour;
@@ -259,17 +240,9 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
     data.applyContour();
   }, [data, countour, countourAmt]);
 
-  useEffect(() => {
-    data.generator.unisonCount = unisonVoices;
-  }, [data, unisonVoices]);
-
-  useEffect(() => {
-    data.generator.unisonSpread = unisonSpread;
-  }, [data, unisonSpread]);
-
   return (
     <VestigeNodeBase
-      id={id} onRemove={() => data.generator.dispose()}
+      id={id} onRemove={() => gen.dispose()}
       name="synth"
       help={<>
         The <b>synth</b> module takes in notes, and outputs audio - more specifically,
@@ -350,7 +323,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
               min={-100} max={100} value={fineTune} isPercentage
               onChange={setFineTune}
               automatable={data.parameters["param-fineTune"]}
-              automatableDisplay={() => data.generator.synth.get().detune - (octave * 1200)}
+              automatableDisplay={() => gen.synth.get().detune - (octave * 1200)}
             />
           </NodePort>
 
@@ -376,7 +349,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
               onChange={setUnisonSpread}
               valueStringifier={x => `${Math.round(x)} cents`}
               automatable={data.parameters["param-unisonDetune"]}
-              automatableDisplay={() => data.generator.unisonSpread}
+              automatableDisplay={() => gen.unisonSpread}
             />
           </NodePort>
         </div>

@@ -1,11 +1,13 @@
 import * as flow from "@xyflow/react";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { RiDropperFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
 import { assert } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -38,18 +40,13 @@ export class PickNoteNodeData extends NoteGeneratorNodeData<NoteInputHandle> {
   generator: PickNoteGenerator = new PickNoteGenerator();
 };
 
-export class PickNoteNodeSerializer implements NodeDataSerializer<PickNoteNodeData> {
-  type = "pick-note"
+export class PickNoteNodeSerializer extends FlatNodeDataSerializer<PickNoteNodeData> {
+  type = "pick-note";
+  dataFactory = () => new PickNoteNodeData();
 
-  serialize(obj: PickNoteNodeData) {
-    return { m: obj.generator.mode };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PickNoteNodeData {
-    const data = new PickNoteNodeData();
-    data.generator.mode = serialized.m;
-    return data;
-  }
+  spec = {
+    m: this.prop(self => self.generator).with("mode")
+  };
 }
 
 export type PickNoteNode = flow.Node<PickNoteNodeData, "pick-note">;
@@ -67,11 +64,7 @@ export const PICK_NOTE_DESCRIPTOR = {
 export const PickNoteNodeRenderer = memo(function PickNoteNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<PickNoteNodeData>>
 ) {
-  const [mode, setMode] = useState<Mode>(data.generator.mode);
-
-  useEffect(() => {
-    data.generator.mode = mode;
-  }, [data.generator, mode])
+  const [mode, setMode] = useBoundState(data.generator, "mode");
 
   return (
     <VestigeNodeBase

@@ -13,6 +13,7 @@ export function SelectField({ name, description, value, onChange, children }: Pr
       <select
         value={value} onChange={ev => onChange(ev.target.value)}
         className="select select-primary select-sm w-full max-w-xs"
+        aria-label={`${name}: ${description}`}
       >
         {children}
       </select>

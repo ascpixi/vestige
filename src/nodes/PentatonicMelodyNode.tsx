@@ -1,24 +1,28 @@
 import * as flow from "@xyflow/react";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { RiMusicFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
 import { hashify } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
+import { useBoundState, useNoteGeneratorSync } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { SelectField } from "../components/SelectField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { MusicalKeyboard } from "../components/MusicalKeyboard";
 
 export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   inputs = 0 as const;
   offset: number;
+  lastNotes: number[] = [];
 
-  constructor(
+  constructor (
     public density: number = 50,
     public octave: number = 4,
     public pitchRange: number = 6,
@@ -62,45 +66,25 @@ export class PentatonicMelodyGenerator implements PlainNoteGenerator {
         break;
     }
 
-    return played;
+    return this.lastNotes = played;
   }
 }
 
 export class PentatonicMelodyNodeData extends NoteGeneratorNodeData {
-  generator: PentatonicMelodyGenerator;
-
-  constructor () {
-    super();
-    this.generator = new PentatonicMelodyGenerator();
-  }
+  generator = new PentatonicMelodyGenerator();
 };
 
-export class PentatonicMelodyNodeSerializer implements NodeDataSerializer<PentatonicMelodyNodeData> {
-  type = "pentatonic-melody"
+export class PentatonicMelodyNodeSerializer extends FlatNodeDataSerializer<PentatonicMelodyNodeData> {
+  type = "pentatonic-melody";
+  dataFactory = () => new PentatonicMelodyNodeData();
 
-  serialize(obj: PentatonicMelodyNodeData) {
-    const gen = obj.generator;
-
-    return {
-      d: gen.density,
-      o: gen.octave,
-      r: gen.pitchRange,
-      n: gen.rootNote,
-      m: gen.mode
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PentatonicMelodyNodeData {
-    const data = new PentatonicMelodyNodeData();
-    const gen = data.generator;
-
-    gen.density = serialized.d;
-    gen.octave = serialized.o;
-    gen.pitchRange = serialized.r;
-    gen.rootNote = serialized.n;
-    gen.mode = serialized.m;
-
-    return data;
+  spec = {
+    d: this.prop(self => self.generator).with("density"),
+    o: this.prop(self => self.generator).with("octave"),
+    r: this.prop(self => self.generator).with("pitchRange"),
+    n: this.prop(self => self.generator).with("rootNote"),
+    m: this.prop(self => self.generator).with("mode"),
+    p: this.prop(self => self.generator).with("polyphony", 1), // since Vestige 0.3.0
   }
 }
 
@@ -122,24 +106,22 @@ export const PENTATONIC_MELODY_NODE_DESCRIPTOR = {
 export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<PentatonicMelodyNodeData>>
 ) {
-  const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
-  const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
+  const gen = data.generator;
+  
+  const [rootNote, setRootNote] = useBoundState(gen, "rootNote");
+  const [mode, setMode] = useBoundState(gen, "mode");
 
-  const [density, setDensity] = useState(data.generator.density);
-  const [octave, setOctave] = useState(data.generator.octave);
-  const [pitchRange, setPitchRange] = useState(data.generator.pitchRange);
-  const [polyphony, setPolyphony] = useState(data.generator.polyphony);
+  const [density, setDensity] = useBoundState(gen, "density");
+  const [octave, setOctave] = useBoundState(gen, "octave");
+  const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
+  const [polyphony, setPolyphony] = useBoundState(gen, "polyphony");
 
-  useEffect(() => {
-    const gen = data.generator;
+  const notes = useNoteGeneratorSync(() => gen.lastNotes);
 
-    gen.rootNote = rootNote;
-    gen.mode = mode;
-    gen.density = density;
-    gen.octave = octave;
-    gen.pitchRange = pitchRange;
-    gen.polyphony = polyphony;
-  }, [data.generator, rootNote, mode, density, octave, pitchRange, polyphony])
+  const semitonePitchRange = (mode == "MAJOR" ?
+    MAJOR_PENTATONIC[pitchRange % 5] :
+    MINOR_PENTATONIC[pitchRange % 5]
+  ) + (12 * Math.floor(pitchRange / 5));
 
   return (
     <VestigeNodeBase
@@ -214,6 +196,11 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
             description="amount of notes that can be played at the same time"
             min={1} max={4} value={polyphony}
             onChange={setPolyphony}
+          />
+
+          <MusicalKeyboard
+            octaves={Math.ceil((semitonePitchRange + rootNote) / 12)}
+            notes={notes.map(x => x - (octave * 12))}
           />
         </div>
       </div>

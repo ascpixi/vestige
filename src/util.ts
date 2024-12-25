@@ -18,9 +18,13 @@ export function mapFromSingle<TKey, TValue>(key: TKey, value: TValue) {
     return new Map<TKey, TValue>([[key, value]]);
 }
 
-export function assert(condition: any, msg: string): asserts condition {
+export function assert(condition: any, msg?: string): asserts condition {
     if (!condition) {
-        throw new Error(`Assertion failed: ${msg}`);
+        if (msg) {
+            throw new Error(`Assertion failed: ${msg}`);
+        } else {
+            throw new Error("Assertion failed.");
+        }
     }
 }
 
@@ -230,4 +234,76 @@ export class Deferred<T> {
         assert(this.promise === null, "attempted to get a deferred value before it's finished");
         return this.value!;
     }
+}
+
+/**
+ * Returns an array with all integers in the range of `[min, max]`, inclusive.
+ * For example, for `range(0, 4)`, this function returns `[0, 1, 2, 3, 4]`.
+ */
+export function range(min: number, max: number): number[];
+
+/**
+ * Returns an array with all integers in the range of `[min, max]`, incrementing
+ * by `step`. For example, for `range(0, 8, 2)`, this function returns
+ * `[0, 2, 4, 6, 8]`.
+ */
+export function range(min: number, max: number, step: number): number[];
+
+/**
+ * Returns an array, starting from 0, with the given amount of elements.
+ * For example, for `range(4)`, this function returns `[0, 1, 2, 3]`.
+ */
+export function range(length: number): number[];
+
+export function range(min: number, max?: number, step?: number): number[] {
+    if (max === undefined) {
+        max = min - 1;
+        min = 0;
+    }
+
+    step ??= 1;
+
+    const seq = [];
+    for (let i = min; i < max + 1; i += step) {
+        seq.push(i);
+    }
+
+    return seq;
+}
+
+/**
+ * Checks if all numbers from array `a` are equal to the numbers in array `b`,
+ * with respect to order.
+ */
+export function allEqual(a: number[], b: number[]) {
+    if (a.length != b.length)
+        return false;
+
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Checks if all numbers from array `a` are equal to the numbers in array `b`,
+ * regardless of order.
+ */
+export function allEqualUnordered(a: number[], b: number[]) {
+    if (a.length !== b.length)
+        return false;
+
+    const sortedA = [...a].sort((x, y) => x - y);
+    const sortedB = [...b].sort((x, y) => x - y);
+
+    for (let i = 0; i < sortedA.length; i++) {
+        if (sortedA[i] !== sortedB[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }

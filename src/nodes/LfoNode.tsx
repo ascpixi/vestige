@@ -2,10 +2,11 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiPulseFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { VALUE_OUTPUT_HID, ValueGenerator, ValueNodeData } from "../graph";
-import { logLerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { invLogLerp, logLerp } from "../util";
+import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -34,20 +35,14 @@ function biToUni(x: number) {
 }
 
 export class LfoNodeData extends ValueNodeData {
-  generator: LfoValueGenerator;
-
-  constructor () {
-    super();
-
-    this.generator = new LfoValueGenerator();
-  }
+  generator = new LfoValueGenerator();
 };
 
 export class LfoValueGenerator implements ValueGenerator {
-  shape: LfoShape;
-  frequency: number;
-  min: number;
-  max: number;
+  shape: LfoShape = "sine";
+  frequency: number = 1;
+  min: number = 0;
+  max: number = 1;
 
   generate(time: number): number {
     switch (this.shape) {
@@ -59,39 +54,17 @@ export class LfoValueGenerator implements ValueGenerator {
         return scale(biToUni(lfoSaw(time, this.frequency)), this.min, this.max);
     }
   }
-
-  constructor() {
-    this.shape = "sine";
-    this.frequency = 1;
-    this.min = 0;
-    this.max = 1;
-  }
 }
 
-export class LfoNodeSerializer implements NodeDataSerializer<LfoNodeData> {
-  type = "lfo"
+export class LfoNodeSerializer extends FlatNodeDataSerializer<LfoNodeData> {
+  type = "lfo";
+  dataFactory = () => new LfoNodeData();
 
-  serialize(obj: LfoNodeData) {
-    const lfo = obj.generator;
-
-    return {
-      s: lfo.shape,
-      f: lfo.frequency,
-      a: lfo.min,
-      b: lfo.max
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): LfoNodeData {
-    const data = new LfoNodeData();
-    const lfo = data.generator;
-
-    lfo.shape = serialized.s;
-    lfo.frequency = serialized.f;
-    lfo.min = serialized.a;
-    lfo.max = serialized.b;
-
-    return data;
+  spec = {
+    s: this.prop(self => self.generator).with("shape"),
+    f: this.prop(self => self.generator).with("frequency"),
+    a: this.prop(self => self.generator).with("min"),
+    b: this.prop(self => self.generator).with("max"),
   }
 }
 
@@ -113,32 +86,29 @@ const MAX_LOG_SPEED_HZ_LOG10 = Math.log10(MAX_LFO_SPEED_HZ);
 export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<LfoNodeData>>
 ) {
-  const [shape, setShape] = useState<LfoShape>("sine");
-  const [frequency, setFrequency] = useState<number>(data.generator.frequency);
-  const [min, setMin] = useState<number>(data.generator.min * 100);
-  const [max, setMax] = useState<number>(data.generator.max * 100);
+  const lfo = data.generator;
+
+  const [shape, setShape] = useState<LfoShape>(lfo.shape);
+  const [frequency, setFrequency] = useState(invLogLerp(lfo.frequency, -1, MAX_LOG_SPEED_HZ_LOG10) * 100);
+  const [min, setMin] = useState(lfo.min * 100);
+  const [max, setMax] = useState(lfo.max * 100);
 
   function onMinChange(newMin: number) {
-    if (newMin > max)
-      return;
-
+    if (newMin > max) return;
     setMin(newMin);
   }
 
   function onMaxChange(newMax: number) {
-    if (newMax < min)
-      return;
-
+    if (newMax < min) return;
     setMax(newMax);
   }
 
   useEffect(() => {
-    const lfo = data.generator;
     lfo.shape = shape;
     lfo.frequency = logLerp(frequency / 100, -1, MAX_LOG_SPEED_HZ_LOG10);
     lfo.max = max / 100;
     lfo.min = min / 100;
-  }, [data, shape, frequency, min, max]);
+  }, [lfo, shape, frequency, min, max]);
 
   return (
     <VestigeNodeBase

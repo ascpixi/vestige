@@ -1,25 +1,29 @@
 import * as flow from "@xyflow/react";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { RiMusic2Fill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer } from "../serializer";
 import { pickRandom, randInt, seedRng } from "../util";
 import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
+import { useBoundState, useNoteGeneratorSync } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { SelectField } from "../components/SelectField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { MusicalKeyboard } from "../components/MusicalKeyboard";
 
 export class PentatonicChordsGenerator implements PlainNoteGenerator {
   inputs = 0 as const;
   offset: number;
   seedOffset: number;
+  lastNotes: number[] = [];
 
-  constructor(
+  constructor (
     public chordLength: number = 6,
     public minNotes: number = 4,
     public maxNotes: number = 6,
@@ -46,7 +50,7 @@ export class PentatonicChordsGenerator implements PlainNoteGenerator {
     const rng = seedRng(seed + this.seedOffset);
 
     // Form the chord from N random notes, between minNotes and maxNotes.
-    return pickRandom(
+    return this.lastNotes = pickRandom(
       available,
       randInt(this.minNotes, this.maxNotes, rng),
       rng
@@ -55,44 +59,21 @@ export class PentatonicChordsGenerator implements PlainNoteGenerator {
 }
 
 export class PentatonicChordsNodeData extends NoteGeneratorNodeData {
-  generator: PentatonicChordsGenerator;
-
-  constructor () {
-    super();
-    this.generator = new PentatonicChordsGenerator();
-  }
+  generator = new PentatonicChordsGenerator();
 };
 
-export class PentatonicChordsNodeSerializer implements NodeDataSerializer<PentatonicChordsNodeData> {
-  type = "pentatonic-chords"
+export class PentatonicChordsNodeSerializer extends FlatNodeDataSerializer<PentatonicChordsNodeData> {
+  type = "pentatonic-chords";
+  dataFactory = () => new PentatonicChordsNodeData();
 
-  serialize(obj: PentatonicChordsNodeData) {
-    const gen = obj.generator;
-
-    return {
-      l: gen.chordLength,
-      a: gen.minNotes,
-      b: gen.maxNotes,
-      o: gen.octave,
-      r: gen.pitchRange,
-      n: gen.rootNote,
-      m: gen.mode
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): PentatonicChordsNodeData {
-    const data = new PentatonicChordsNodeData();
-    const gen = data.generator;
-
-    gen.chordLength = serialized.l;
-    gen.minNotes = serialized.a;
-    gen.maxNotes = serialized.b;
-    gen.octave = serialized.o;
-    gen.pitchRange = serialized.r;
-    gen.rootNote = serialized.n;
-    gen.mode = serialized.m;
-
-    return data;
+  spec = {
+    l: this.prop(self => self.generator).with("chordLength"),
+    a: this.prop(self => self.generator).with("minNotes"),
+    b: this.prop(self => self.generator).with("maxNotes"),
+    o: this.prop(self => self.generator).with("octave"),
+    r: this.prop(self => self.generator).with("pitchRange"),
+    n: this.prop(self => self.generator).with("rootNote"),
+    m: this.prop(self => self.generator).with("mode"),
   }
 }
 
@@ -114,50 +95,37 @@ export const PENTATONIC_CHORDS_NODE_DESCRIPTOR = {
 export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<PentatonicChordsNodeData>>
 ) {
-  const [rootNote, setRootNote] = useState<number>(data.generator.rootNote);
-  const [mode, setMode] = useState<ScaleMode>(data.generator.mode);
+  const gen = data.generator;
 
-  const [chordLength, setChordLength] = useState(data.generator.chordLength);
-  const [minNotes, setMinNotes] = useState(data.generator.minNotes);
-  const [maxNotes, setMaxNotes] = useState(data.generator.maxNotes);
-  const [octave, setOctave] = useState(data.generator.octave);
-  const [pitchRange, setPitchRange] = useState(data.generator.pitchRange);
+  const [rootNote, setRootNote] = useBoundState(gen, "rootNote");
+  const [mode, setMode] = useBoundState(gen, "mode");
 
-  useEffect(() => {
-    const gen = data.generator;
+  const [chordLength, setChordLength] = useBoundState(gen, "chordLength");
+  const [minNotes, setMinNotes] = useBoundState(gen, "minNotes");
+  const [maxNotes, setMaxNotes] = useBoundState(gen, "maxNotes");
+  const [octave, setOctave] = useBoundState(gen, "octave");
+  const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
 
-    gen.chordLength = chordLength;
-    gen.minNotes = minNotes;
-    gen.maxNotes = maxNotes;
-    gen.rootNote = rootNote;
-    gen.mode = mode;
-    gen.octave = octave;
-    gen.pitchRange = pitchRange;
-  }, [data.generator, rootNote, mode, chordLength, minNotes, maxNotes, octave, pitchRange])
+  const notes = useNoteGeneratorSync(() => gen.lastNotes);
+
+  const semitonePitchRange = (mode == "MAJOR" ?
+    MAJOR_PENTATONIC[pitchRange % 5] :
+    MINOR_PENTATONIC[pitchRange % 5]
+  ) + (12 * Math.floor(pitchRange / 5));
 
   function onMaxNotesChange(x: number) {
-    if (x < minNotes)
-      return;
-
+    if (x < minNotes) return;
     setMaxNotes(x);
   }
 
   function onMinNotesChange(x: number) {
-    if (x > maxNotes)
-      return;
-
+    if (x > maxNotes)  return;
     setMinNotes(x);
   }
 
   function onPitchRangeChange(x: number) {
-    if (maxNotes > x) {
-      setMaxNotes(x);
-    }
-
-    if (minNotes > x) {
-      setMinNotes(x);
-    }
-
+    if (maxNotes > x) { setMaxNotes(x); }
+    if (minNotes > x) { setMinNotes(x); }
     setPitchRange(x);
   }
 
@@ -242,6 +210,11 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
             description="the octave (pitch) center - all notes will be above this pitch"
             min={1} max={6} value={octave}
             onChange={setOctave}
+          />
+
+          <MusicalKeyboard
+            octaves={Math.ceil((semitonePitchRange + rootNote) / 12)}
+            notes={notes.map(x => x - (octave * 12))}
           />
         </div>
       </div>

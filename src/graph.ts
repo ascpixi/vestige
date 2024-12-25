@@ -1,8 +1,7 @@
 import * as tone from "tone";
 import * as flow from "@xyflow/react";
 
-import { VestigeNode, VestigeNodeOfType } from "./nodes";
-import { midiToName } from "./audioUtil";
+import { VestigeNodeOfType } from "./nodes";
 import { Automatable } from "./parameters";
 import { assert, mapFromSingle } from "./util";
 import { FinalNodeData } from "./nodes/FinalNode";
@@ -43,12 +42,8 @@ export type BaseNodeData = Record<string, unknown> & {
 export abstract class NoteGeneratorNodeData<TParamType extends string = string> implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "NOTES";
+    nodeType = "NOTES" as const;
     abstract generator: PlainNoteGenerator | ParametricNoteGenerator<TParamType>;
-
-    constructor () {
-        this.nodeType = "NOTES";
-    }
 }
 
 /**
@@ -58,15 +53,10 @@ export abstract class NoteGeneratorNodeData<TParamType extends string = string> 
 export abstract class InstrumentNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "INSTRUMENT";
-    parameters: { [handleName: string]: Automatable };
+    nodeType = "INSTRUMENT" as const;
+    parameters: { [handleName: string]: Automatable } = {};
 
     abstract generator: AudioGenerator;
-
-    constructor () {
-        this.nodeType = "INSTRUMENT";
-        this.parameters = {};
-    }
 };
 
 /**
@@ -75,15 +65,10 @@ export abstract class InstrumentNodeData implements BaseNodeData {
 export abstract class EffectNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "EFFECT";
-    parameters: { [handleName: string]: Automatable };
+    nodeType = "EFFECT" as const;
+    parameters: { [handleName: string]: Automatable } = {};
 
     abstract effect: AudioEffect;
-
-    constructor () {
-        this.nodeType = "EFFECT";
-        this.parameters = {};
-    }
 }
 
 /**
@@ -93,12 +78,8 @@ export abstract class EffectNodeData implements BaseNodeData {
 export abstract class ValueNodeData implements BaseNodeData {
     [x: string]: unknown;
 
-    nodeType: "VALUE";
+    nodeType = "VALUE" as const;
     abstract generator: ValueGenerator;
-
-    constructor () {
-        this.nodeType = "VALUE";
-    }
 }
 
 export type NoInputs<T> = { [paramName in keyof never]: T };
@@ -343,23 +324,19 @@ export class GraphForwarder {
      * For each note generator-to-instrument connection, stores the previous
      * notes (in MIDI pitches) that were active in the previous pulse.
      */
-    private prevNoteMap: Map<string, number[]>;
-
-    constructor() {
-        this.prevNoteMap = new Map();
-    }
+    private prevNoteMap: Map<string, number[]> = new Map();
 
     /**
      * Traces the given graph, forwarding Vestige-generated data to out-of-graph
      * nodes, e.g. `INSTRUMENT` nodes.
      */
-    traceGraph(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
+    traceGraph(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
        this.traceValues(time, nodes, edges);
        this.traceNotes(time, nodes, edges);
     }
 
     /** Forwards outputs from `VALUE` nodes to their final destinations. */
-    private traceValues(time: number, nodes: VestigeNode[], edges: flow.Edge[]) {
+    private traceValues(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
         // Maps node IDs of `VALUE` generators to the number of inputs they have
         // received so far. A VALUE generator that has `valueNodeConnCount[keyof awaitingNodes]`
         // inputs is considered fulfilled.
@@ -462,7 +439,6 @@ export class GraphForwarder {
                     }
 
                     if (events.length != 0) {
-                        console.debug("🎹", events.map(x => `${x.type}: ${midiToName(x.pitch)} (${x.pitch})`));
                         subNode.data.generator.accept(events);
                     }
 

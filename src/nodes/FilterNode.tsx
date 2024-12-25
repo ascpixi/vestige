@@ -3,12 +3,14 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiEqualizerFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { assert, invLogLerp, logLerp, match } from "../util";
 import { toneFreq } from "../audioUtil";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
+import { useBoundState } from "../hooks";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -39,7 +41,12 @@ export class FilterNodeData extends EffectNodeData {
 };
 
 export class FilterAudioEffect implements AudioEffect {
-  filter: tone.Filter;
+  filter: tone.Filter = new tone.Filter({
+    frequency: cutoffScalarToHz(0.5),
+    Q: scalarToResonance(0.5),
+    rolloff: -24,
+    type: "lowpass"
+  });
 
   connectTo(dst: AudioDestination): void {
     dst.accept(this.filter);
@@ -58,45 +65,21 @@ export class FilterAudioEffect implements AudioEffect {
     assert(handleId == SIGNAL_INPUT_HID_MAIN, `Unknown signal input handle ID ${handleId}`);
     return unaryAudioDestination(this.filter);
   }
-
-  constructor() {
-    this.filter = new tone.Filter({
-      frequency: cutoffScalarToHz(0.5),
-      Q: scalarToResonance(0.5),
-      rolloff: -24,
-      type: "lowpass"
-    });
-  }
 }
 
-export class FilterNodeSerializer implements NodeDataSerializer<FilterNodeData> {
-  type = "filter"
+export class FilterNodeSerializer extends FlatNodeDataSerializer<FilterNodeData> {
+  type = "filter";
+  dataFactory = () => new FilterNodeData();
 
-  serialize(obj: FilterNodeData) {
-    const params = obj.parameters;
-    const flt = obj.effect.filter;
-
-    return {
-      pc: params["param-cutoff"].controlledBy,
-      pq: params["param-resonance"].controlledBy,
-      c: tone.Frequency(flt.frequency.value).toFrequency(),
-      q: flt.Q.value,
-      r: flt.rolloff
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): FilterNodeData {
-    const data = new FilterNodeData();
-    const params = data.parameters;
-    const flt = data.effect.filter;
-
-    params["param-cutoff"].controlledBy = serialized.pc;
-    params["param-resonance"].controlledBy = serialized.pq;
-    flt.frequency.value = serialized.c;
-    flt.Q.value = serialized.q;
-    flt.rolloff = serialized.r;
-
-    return data;
+  spec: FlatSerializerSpec<FilterNodeData> = {
+    pc: this.prop(self => self.parameters["param-cutoff"]).with("controlledBy"),
+    pq: this.prop(self => self.parameters["param-resonance"]).with("controlledBy"),
+    q: this.prop(self => self.effect.filter.Q).with("value"),
+    r: this.prop(self => self.effect.filter).with("rolloff"),
+    c: {
+      get: (self) => tone.Frequency(self.effect.filter.frequency.value).toFrequency(),
+      set: (self, x) => self.effect.filter.frequency.value = x
+    }
   }
 }
 
@@ -130,13 +113,15 @@ const resonanceToScalar = (x: number) => x / MAX_Q;
 export const FilterNodeRenderer = memo(function FilterNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<FilterNodeData>>
 ) {
-  const [type, setType] = useState<FilterType>(data.effect.filter.type as FilterType);
+  const filter = data.effect.filter;
 
-  const [cutoff, setCutoff] = useState<number>(hzToCutoffScalar(tone.Frequency(data.effect.filter.frequency.value).toFrequency()) * 100);
-  const [resonance, setResonance] = useState<number>(resonanceToScalar(data.effect.filter.Q.value) * 100);
+  const [type, setType] = useBoundState(filter, "type");
+
+  const [cutoff, setCutoff] = useState(hzToCutoffScalar(tone.Frequency(filter.frequency.value).toFrequency()) * 100);
+  const [resonance, setResonance] = useState(resonanceToScalar(filter.Q.value) * 100);
   
   const [intensity, setIntensity] = useState<number>(
-    match(data.effect.filter.rolloff, {
+    match(filter.rolloff, {
       [-12]: 1,
       [-24]: 2,
       [-48]: 3,
@@ -144,20 +129,16 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
     }
   ));
 
-  const rolloffDbPerOct = match(intensity - 1, {
+  const rolloffDbPerOct: tone.FilterRollOff = match(intensity - 1, {
     0: -12,
     1: -24,
     2: -48,
     3: -96
-  }) as tone.FilterRollOff;
+  });
 
   useEffect(() => {
-    data.effect.filter.type = type;
-  }, [data, type]);
-
-  useEffect(() => {
-    data.effect.filter.rolloff = rolloffDbPerOct;
-  }, [data, rolloffDbPerOct]);
+    filter.rolloff = rolloffDbPerOct;
+  }, [filter, rolloffDbPerOct]);
 
   useEffect(() => {
     const params = data.parameters;
@@ -186,8 +167,6 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
         The <b>resonance</b> parameter determines how "relaxed" the filter is.
         Larger values mean that the <b>cutoff frequency</b> gets attenuated more,
         but masked frequencies get masked... more.
-
-
       </>}
     >
       <div>
@@ -222,7 +201,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
               valueStringifier={x => `${cutoffScalarToHz(x / 100).toFixed(2)} Hz`}
               onChange={setCutoff}
               automatable={data.parameters["param-cutoff"]}
-              automatableDisplay={() => hzToCutoffScalar(toneFreq(data.effect.filter.frequency.value)) * 100}
+              automatableDisplay={() => hzToCutoffScalar(toneFreq(filter.frequency.value)) * 100}
             />
           </NodePort>
 
@@ -241,7 +220,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
               min={0} max={100} value={resonance} isPercentage
               onChange={setResonance}
               automatable={data.parameters["param-resonance"]}
-              automatableDisplay={() => resonanceToScalar(data.effect.filter.Q.value) * 100}
+              automatableDisplay={() => resonanceToScalar(filter.Q.value) * 100}
             />
           </NodePort>
         </div>

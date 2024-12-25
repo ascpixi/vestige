@@ -3,11 +3,12 @@ import * as tone from "tone";
 import { memo, useEffect, useState } from "react";
 import { RiSchoolFill } from "@remixicon/react";
 
-import { makeNodeFactory, NodeTypeDescriptor } from ".";
+import type { NodeTypeDescriptor } from ".";
+import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
 import { Automatable } from "../parameters";
 import { assert, lerp } from "../util";
-import { NodeDataSerializer } from "../serializer";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
@@ -46,7 +47,11 @@ export class ReverbNodeData extends EffectNodeData {
 };
 
 export class ReverbAudioEffect implements AudioEffect {
-  reverb: tone.Reverb;
+  reverb: tone.Reverb = new tone.Reverb({
+    decay: 4.00,
+    preDelay: 20 / 1000,
+    wet: 0.5
+  });
 
   connectTo(dst: AudioDestination): void {
     dst.accept(this.reverb);
@@ -65,47 +70,26 @@ export class ReverbAudioEffect implements AudioEffect {
     assert(handleId == SIGNAL_INPUT_HID_MAIN, `Unknown signal input handle ID ${handleId}`);
     return unaryAudioDestination(this.reverb);
   }
-
-  constructor() {
-    this.reverb = new tone.Reverb({
-      decay: 4.00,
-      preDelay: 20 / 1000,
-      wet: 0.5
-    });
-  }
 }
 
-export class ReverbNodeSerializer implements NodeDataSerializer<ReverbNodeData> {
-  type = "reverb"
+export class ReverbNodeSerializer extends FlatNodeDataSerializer<ReverbNodeData> {
+  type = "reverb";
+  dataFactory = () => new ReverbNodeData();
 
-  serialize(obj: ReverbNodeData) {
-    const reverb = obj.effect.reverb;
-    const params = obj.parameters;
-
-    return {
-      pd: params["param-decay"].controlledBy,
-      pp: params["param-predelay"].controlledBy,
-      pw: params["param-wet"].controlledBy,
-      d: tone.Time(reverb.decay).toSeconds(),
-      p: tone.Time(reverb.preDelay).toSeconds(),
-      w: reverb.wet.value,
-    };
-  }
-
-  deserialize(serialized: ReturnType<this["serialize"]>): ReverbNodeData {
-    const data = new ReverbNodeData();
-    const reverb = data.effect.reverb;
-    const params = data.parameters;
-
-    params["param-decay"].controlledBy = serialized.pd;
-    params["param-predelay"].controlledBy = serialized.pp;
-    params["param-wet"].controlledBy = serialized.pw;
-    reverb.decay = serialized.d;
-    reverb.preDelay = serialized.p;
-    reverb.wet.value = serialized.w;
-
-    return data;
-  }
+  spec: FlatSerializerSpec<ReverbNodeData> = {
+    pd: this.prop(self => self.parameters["param-decay"]).with("controlledBy"),
+    pp: this.prop(self => self.parameters["param-predelay"]).with("controlledBy"),
+    pw: this.prop(self => self.parameters["param-wet"]).with("controlledBy"),
+    w: this.prop(self => self.effect.reverb.wet).with("value"),
+    d: {
+      get: (self) => tone.Time(self.effect.reverb.decay).toSeconds(),
+      set: (self, x) => self.effect.reverb.decay = x
+    },
+    p: {
+      get: (self) => tone.Time(self.effect.reverb.preDelay).toSeconds(),
+      set: (self, x) => self.effect.reverb.preDelay = x
+    }
+  };
 }
 
 export type ReverbNode = flow.Node<ReverbNodeData, "reverb">
@@ -123,27 +107,29 @@ export const REVERB_NODE_DESCRIPTOR = {
 export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
   { id, data }: flow.NodeProps<flow.Node<ReverbNodeData>>
 ) {
-  const [decay, setDecay] = useState(tone.Time(data.effect.reverb.decay).toSeconds());
-  const [preDelay, setPreDelay] = useState(tone.Time(data.effect.reverb.preDelay).toSeconds());
-  const [wet, setWet] = useState(data.effect.reverb.wet.value * 100);
+  const reverb = data.effect.reverb;
+
+  const [decay, setDecay] = useState(tone.Time(reverb.decay).toSeconds());
+  const [preDelay, setPreDelay] = useState(tone.Time(reverb.preDelay).toSeconds());
+  const [wet, setWet] = useState(reverb.wet.value * 100);
 
   useEffect(() => {
     if (!data.parameters["param-decay"].isAutomated()) {
-      data.effect.reverb.decay = decay;
+      reverb.decay = decay;
     }
-  }, [data, decay]);
+  }, [data, reverb, decay]);
 
   useEffect(() => {
     if (!data.parameters["param-predelay"].isAutomated()) {
-      data.effect.reverb.preDelay = preDelay;
+      reverb.preDelay = preDelay;
     }
-  }, [data, preDelay]);
+  }, [data, reverb, preDelay]);
 
   useEffect(() => {
     if (!data.parameters["param-wet"].isAutomated()) {
-      data.effect.reverb.wet.value = wet / 100;
+      reverb.wet.value = wet / 100;
     }
-  }, [data, wet]);
+  }, [data, reverb, wet]);
 
   return (
     <VestigeNodeBase
@@ -182,7 +168,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               valueStringifier={x => `${x.toFixed(2)} s`}
               onChange={setDecay}
               automatable={data.parameters["param-decay"]}
-              automatableDisplay={() => tone.Time(data.effect.reverb.decay).toSeconds()}
+              automatableDisplay={() => tone.Time(reverb.decay).toSeconds()}
             />
           </NodePort>
 
@@ -193,7 +179,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               min={MIN_PREDELAY} max={MAX_PREDELAY} value={preDelay} step={1 / 1000}
               onChange={setPreDelay}
               automatable={data.parameters["param-predelay"]}
-              automatableDisplay={() => tone.Time(data.effect.reverb.preDelay).toSeconds()}
+              automatableDisplay={() => tone.Time(reverb.preDelay).toSeconds()}
               valueStringifier={x => `${(x * 1000).toFixed(0)} ms`}
             />
           </NodePort>
@@ -205,7 +191,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
               min={0} max={100} value={wet} isPercentage
               onChange={setWet}
               automatable={data.parameters["param-wet"]}
-              automatableDisplay={() => data.effect.reverb.wet.value * 100}
+              automatableDisplay={() => reverb.wet.value * 100}
             />
           </NodePort>
         </div>

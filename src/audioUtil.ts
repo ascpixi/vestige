@@ -27,15 +27,27 @@ export const MIDI_NOTES = {
     /** D  */ D : 2,
     /** D# */ Ds: 3,
     /** E  */ E : 4,
-    /** E# */ Es: 5,
-    /** F  */ F : 6,
-    /** F# */ Fs: 7,
-    /** G  */ G : 8,
-    /** G# */ Gs: 9,
-    /** A  */ A : 10,
-    /** A# */ As: 11,
-    /** B  */ B : 12
+    /** F  */ F : 5,
+    /** F# */ Fs: 6,
+    /** G  */ G : 7,
+    /** G# */ Gs: 8,
+    /** A  */ A : 9,
+    /** A# */ As: 10,
+    /** B  */ B : 11
 } as const;
+
+/** The an array of values of the `MIDI_NOTES` array. */
+export const MIDI_NOTE_VALUES: number[] = Object.values(MIDI_NOTES);
+
+/** MIDI note numbers for all sharp (C#, D#, F#...) notes in the chromatic scale. */
+export const SHARP_MIDI_NOTES: number[] = [
+    MIDI_NOTES.Cs, MIDI_NOTES.Ds, MIDI_NOTES.Fs, MIDI_NOTES.Gs, MIDI_NOTES.As
+];
+
+/** MIDI note numbers for all natural (C, D, E...) notes in the chromatic scale. */
+export const NATURAL_MIDI_NOTES: number[] = [
+    MIDI_NOTES.C, MIDI_NOTES.D, MIDI_NOTES.E, MIDI_NOTES.F, MIDI_NOTES.G, MIDI_NOTES.A, MIDI_NOTES.B
+]
 
 /** Represents all notes in the chromatic scale. */
 export const CHROMATIC_SCALE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
