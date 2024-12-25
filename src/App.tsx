@@ -1,7 +1,7 @@
 import * as flow from "@xyflow/react";
 import * as tone from "tone";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { RiDeleteBinFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RiDeleteBinFill, RiFileCheckFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
 
 import "@xyflow/react/dist/style.css";
 import iconShadow from "./assets/icon-shadow.svg";
@@ -21,8 +21,7 @@ import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode"
 import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
 import { createFinalNode } from "./nodes/FinalNode";
 
-import { AbstractVestigeNode, AudioDestination, GraphForwarder, SIGNAL_INPUT_HID_PREFIX, SIGNAL_OUTPUT_HID, VALUE_INPUT_HID_PREFIX, VALUE_OUTPUT_HID } from "./graph";
-import { assert } from "./util";
+import { VestigeGraph, GraphMutator, graphFromExisting } from "./graph";
 import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
 import { getPersistentData, mutatePersistentData } from "./persistent";
 import { AFTER_TOUR_PROJECT } from "./builtinProjects";
@@ -50,10 +49,8 @@ export default function App() {
 
   const [wasStarted, setWasStarted] = useState(false);
   const [connectedFinalBefore, setConnectedFinalBefore] = useState(false);
-  const [forwarder] = useState(new GraphForwarder());
 
-  let [nodes, setNodes] = useState<VestigeNode[]>([]);
-  let [edges, setEdges] = useState<flow.Edge[]>([]);
+  let [graph, setGraph] = useState(new VestigeGraph());
   const [graphVer, setGraphVer] = useState(0);
 
   const [ctxMenuPos, setCtxMenuPos] = useState({ x: 0, y: 0 });
@@ -69,31 +66,49 @@ export default function App() {
   const projLinkDialogRef = useRef<HTMLDialogElement>(null);
   const projLinkTextRef = useRef<HTMLTextAreaElement>(null);
 
+
+  const togglePlay = useCallback(async () => {
+    if (!playing) {
+      setStartTimeMs(performance.now());
+
+      if (!wasStarted) {
+        console.log("▶️ Playing (performing first time initialization)");
+        await tone.start();
+        setWasStarted(true);
+      } else {
+        console.log("▶️ Playing");
+        tone.getDestination().volume.rampTo(prevVolume, 0.25);
+      }
+    } else {
+      console.log("⏹️ Stopping");
+      setPrevVolume(tone.getDestination().volume.value);
+      tone.getDestination().volume.rampTo(-Infinity, 0.25);
+    }
+
+    setPlaying(!playing);
+  }, [playing, prevVolume, wasStarted]);
+
+  const mutator = useMemo(() => new GraphMutator({
+    onSignalConnect(_src, dst) {
+      if (dst.nodeType != "FINAL")
+        return;
+
+      if (!connectedFinalBefore) {
+        if (!playing) {
+          togglePlay();
+        }
+
+        setConnectedFinalBefore(true);
+     } 
+    }
+  }), [connectedFinalBefore, playing, togglePlay]);
+
   useEffect(() => {
     window.addEventListener("hashchange", () => {
       if (location.hash.startsWith("#p:") || location.hash.startsWith("#tour")) {
         location.reload();
       }
     });
-  }, []);
-
-  const loadFromNodesAndEdges = useCallback((targetNodes: VestigeNode[], targetEdges: flow.Edge[]) => {
-    setNodes(targetNodes);
-    setEdges(targetEdges);
-
-    // Even if we call "setNodes" and "setEdges" here, the state of those
-    // variables are still what they were previously (i.e. empty arrays in our case)
-    // on this render. We need to explicitly assign them.
-
-    /* eslint-disable react-hooks/exhaustive-deps */
-    nodes = targetNodes;
-    edges = targetEdges;
-    /* eslint-enable react-hooks/exhaustive-deps */
-
-    // We also need to handle all of the connections
-    for (const edge of targetEdges) {
-      onConnectChange(edge as flow.Connection, "CONNECT");
-    }
   }, []);
 
   useEffect(() => {
@@ -104,12 +119,12 @@ export default function App() {
       const data = location.hash.substring(3);
       const result = await deserializeBase64(data, VESTIGE_NODE_SERIALIZERS);
   
-      loadFromNodesAndEdges(result.nodes, result.edges);
+      setGraph(graphFromExisting(result.nodes, result.edges));
   
       console.log("✅ Successfully loaded project from URL.", result);
       location.hash = "";
     })();
-  }, [loadFromNodesAndEdges]);
+  }, []);
 
   function getContextMenuEntry(descriptor: NodeTypeDescriptor): ContextMenuEntry {
     return {
@@ -120,7 +135,7 @@ export default function App() {
       </div>,
       onChoose: async () => {
         const { x, y } = thisFlow!.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-        setNodes([...nodes, await descriptor.create(x - 200, y - 200)]);
+        setGraph(mutator.addNode(graph, await descriptor.create(x - 200, y - 200)));
         setShowCtxMenu(false);
       }
     }
@@ -143,7 +158,7 @@ export default function App() {
   }
 
   async function saveAsLink() {
-    const data = await serializeBase64(nodes, edges, VESTIGE_NODE_SERIALIZERS);
+    const data = await serializeBase64(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS);
     const root = isTauri()
       ? "https://vestige.ascpixi.dev/"
       : location.origin + location.pathname;
@@ -159,7 +174,7 @@ export default function App() {
 
   async function saveAsFile() {
     await promptToSaveFile(
-      await serialize(nodes, edges, VESTIGE_NODE_SERIALIZERS),
+      await serialize(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS),
       "untitled",
       "Vestige Project",
       "vestigeproj"
@@ -187,7 +202,7 @@ export default function App() {
     });
 
     const result = await deserialize(new Uint8Array(data), VESTIGE_NODE_SERIALIZERS);
-    loadFromNodesAndEdges(result.nodes, result.edges);
+    setGraph(graphFromExisting(result.nodes, result.edges));
   }
 
   function loadFromLink() {
@@ -210,154 +225,58 @@ export default function App() {
 
     // Load default project
     setTimeout(() => {
-      setNodes([createFinalNode(0, 0)]);
+      setGraph(mutator.mutate(graph, { nodes: [createFinalNode(0, 0)] }));
 
       if (shouldShowTour) {
         tourDialogRef.current!.showModal();
       }
     }, 300);
+  //
+  // If we were to add "graph" and "mutator" to the dependencies, we would have an
+  // infinite loop of changing the graph because it changed, and so on...
+  //
+  // Silly React! Bad!
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const togglePlay = useCallback(async () => {
-    if (!playing) {
-      setStartTimeMs(performance.now());
-
-      if (!wasStarted) {
-        console.log("▶️ Playing (performing first time initialization)");
-        await tone.start();
-        setWasStarted(true);
-      } else {
-        console.log("▶️ Playing");
-        tone.getDestination().volume.rampTo(prevVolume, 0.25);
-      }
-    } else {
-      console.log("⏹️ Stopping");
-      setPrevVolume(tone.getDestination().volume.value);
-      tone.getDestination().volume.rampTo(-Infinity, 0.25);
-    }
-
-    setPlaying(!playing);
-  }, [playing, prevVolume, wasStarted]);
 
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
-      setNodes(nds => flow.applyNodeChanges(changes, nds));
+      setGraph(mutator.mutate(graph, { nodes: flow.applyNodeChanges(changes, graph.nodes) }));
 
       if (changes.some(x => x.type != "position")) {
         setGraphVer(x => x + 1);
       }
     },
-    [],
+    [graph, mutator],
   );
-
-  const onConnectChange = useCallback((conn: flow.Connection, action: "CONNECT" | "DISCONNECT") => {
-    const src = (nodes.find(x => x.id == conn.source)! as AbstractVestigeNode).data;
-    const dst = (nodes.find(x => x.id == conn.target)! as AbstractVestigeNode).data;
-
-    // We only handle connection changes between Tone.js-backed nodes, such as
-    // INSTRUMENT or EFFECT. For NOTES and VALUE nodes, this is handled via the
-    // GraphForwarder.
-    if (conn.sourceHandle == SIGNAL_OUTPUT_HID && conn.targetHandle?.startsWith(SIGNAL_INPUT_HID_PREFIX)) {
-      // Main input/output change
-      if (src.nodeType == "NOTES" || dst.nodeType == "NOTES")
-        return;
-
-      let connDest: AudioDestination;
-      if (dst.nodeType == "EFFECT") {
-        connDest = dst.effect.getConnectDestination(conn.targetHandle);
-      } else if (dst.nodeType == "FINAL") {
-        connDest = dst.getInputDestination();
-
-        if (!connectedFinalBefore) {
-          if (!playing) {
-            togglePlay();
-          }
-
-          setConnectedFinalBefore(true);
-        }
-      } else {
-        console.error("Invalid connection!", src, dst, conn);
-        throw new Error(`Attempted to connect a ${src.nodeType} node to a ${dst.nodeType} node`);
-      }
-
-      if (action == "CONNECT") {
-        console.log("Connected:", src, " -> ", dst);
-
-        if (src.nodeType == "INSTRUMENT") {
-          src.generator.connectTo(connDest);
-          console.log("Audio graph node changed:", src.generator, connDest);
-        } else if (src.nodeType == "EFFECT") {
-          src.effect.connectTo(connDest);
-          console.log("Audio graph node changed:", src.effect, connDest);
-        }
-      } else {
-        console.log("Disconnected:", src, " -> ", dst);
-
-        if (src.nodeType == "INSTRUMENT") {
-          src.generator.disconnect();
-        } else if (src.nodeType == "EFFECT") {
-          src.effect.disconnect();
-        }
-      }
-    } else if (conn.sourceHandle == VALUE_OUTPUT_HID && conn.targetHandle?.startsWith(VALUE_INPUT_HID_PREFIX)) {
-      // Automatable parameter change
-      if (dst.nodeType == "EFFECT" || dst.nodeType == "INSTRUMENT") {
-        const automatable = dst.parameters[conn.targetHandle];
-
-        if (!automatable) {
-          console.error(`Attempted to automate parameter ${conn.targetHandle}, but there is no handle for it! Destination:`, dst);
-          throw new Error(`No automatable handle for ${conn.targetHandle} in ${conn.source}`);
-        }
-
-        dst.parameters[conn.targetHandle].controlledBy = action == "CONNECT"
-          ? conn.source
-          : undefined;
-      }
-    }
-  }, [connectedFinalBefore, nodes, playing, togglePlay]);
-
 
   const onEdgesChange = useCallback(
     (changes: flow.EdgeChange<flow.Edge>[]) => {
-      for (const change of changes) {
-        if (change.type != "remove")
-          continue;
-
-        const edge = edges.find(x => x.id == change.id);
-        assert(edge, `could not find removed edge with ID ${change.id}`);
-
-        assert(edge.sourceHandle, `edge w/ ID ${change.id} has an undefined source handle`);
-        assert(edge.targetHandle, `edge w/ ID ${change.id} has an undefined target handle`)
-
-        onConnectChange(edge as flow.Connection, "DISCONNECT");
-      }
-
-      setEdges(eds => flow.applyEdgeChanges(changes, eds));
+      setGraph(mutator.mutateEdges(graph, changes));
       setGraphVer(x => x + 1);
     },
-    [edges, onConnectChange]
+    [graph, mutator]
   );
 
   const onConnect = useCallback(
     (params: flow.Connection) => {
       // We can't connect two different sources to one target
-      if (edges.some(x => x.target == params.target && x.targetHandle == params.targetHandle))
+      if (graph.edges.some(x => x.target == params.target && x.targetHandle == params.targetHandle))
         return;
  
-      setEdges(eds => flow.addEdge({ ...params, type: "vestige" }, eds));
-      onConnectChange(params, "CONNECT");
+      setGraph(mutator.mutate(graph, {
+        edges: flow.addEdge({ ...params, type: "vestige" }, graph.edges)
+      }));
+
       setGraphVer(x => x + 1);
     },
-    [edges, onConnectChange]
+    [graph, mutator]
   );
 
   useEffect(() => {
     if (playing) {
       const id = setInterval(() => {
-        forwarder.traceGraph(
-          (performance.now() - startTimeMs) / 1000,
-          nodes, edges
-        );
+        graph.traceGraph((performance.now() - startTimeMs) / 1000);
       }, (1 / 96) * 1000);
 
       return () => clearInterval(id);
@@ -371,7 +290,7 @@ export default function App() {
     // dependency warning tells us to do would actually do more harm than good.
     //
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [forwarder, graphVer, startTimeMs, playing]
+    [graphVer, startTimeMs, playing]
   );
 
   function handleTourFinished() {
@@ -380,7 +299,7 @@ export default function App() {
   }
 
   function enterTour() {
-    if (nodes.length != 1 || edges.length != 0) {
+    if (graph.nodes.length != 1 || graph.edges.length != 0) {
       mutatePersistentData({ tourComplete: false });
       location.href = "#tour";
     }
@@ -437,8 +356,8 @@ export default function App() {
         !thisFlow || !inTour ? <></> :
         <div className="absolute z-20 bottom-8 left-8 pr-8 sm:w-3/4">
           <IntroductionTour
-            nodes={nodes}
-            edges={edges}
+            nodes={graph.nodes}
+            edges={graph.edges}
             flowState={thisFlow}
             viewport={viewport}
             onTourFinish={handleTourFinished}
@@ -535,8 +454,8 @@ export default function App() {
 
       <flow.ReactFlow
         onMouseDownCapture={() => setShowCtxMenu(false)}
-        nodes={nodes}
-        edges={edges}
+        nodes={graph.nodes}
+        edges={graph.edges}
         nodeTypes={VESTIGE_NODE_TYPES}
         edgeTypes={VESTIGE_EDGE_TYPES}
         onNodesChange={onNodesChange}
@@ -571,7 +490,7 @@ export default function App() {
               </button>
 
               <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-[1] w-52 p-2 shadow">
-                <li><a onClick={saveAsFile}><RiFileMusicFill className="w-4"/> Save as file</a></li>
+                <li><a onClick={saveAsFile}><RiFileCheckFill className="w-4"/> Save as file</a></li>
                 <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
                 <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
                 

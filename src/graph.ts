@@ -1,7 +1,7 @@
 import * as tone from "tone";
 import * as flow from "@xyflow/react";
 
-import { VestigeNodeOfType } from "./nodes";
+import { VestigeNode, VestigeNodeOfType } from "./nodes";
 import { Automatable } from "./parameters";
 import { assert, mapFromSingle } from "./util";
 import { FinalNodeData } from "./nodes/FinalNode";
@@ -311,10 +311,181 @@ function getConnected(targetNodeId: string, nodes: AbstractVestigeNode[], edges:
 }
 
 /**
- * Maintains the flow of notes to instrument nodes and of generated values to
- * automatable parameters.
+ * Creates a `VestigeGraph` from an existing set of `nodes` and `edges`, firing
+ * change events for each edge in `edges`.
  */
-export class GraphForwarder {
+export function graphFromExisting(nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
+    const mutator = new GraphMutator();
+    return mutator.mutate(new VestigeGraph(), { nodes, edges });
+}
+
+export class GraphMutator {
+    constructor (attr: Partial<GraphMutator> = {}) {
+        Object.assign(this, attr);
+    }
+
+    /**
+     * Fired each time a signal connection is established between `src` and `dst`, where
+     * the signal from `src` flows to `dst`.
+     */
+    onSignalConnect?: (
+        src: InstrumentNodeData | EffectNodeData,
+        dst: EffectNodeData | FinalNodeData
+    ) => void;
+
+    /**
+     * Mutates the graph, applying new `nodes` and `edges` values.
+     */
+    mutate(graph: VestigeGraph, changes: {
+        nodes?: AbstractVestigeNode[],
+        edges?: flow.Edge[]
+    }) {
+        const newGraph = new VestigeGraph(
+            changes.nodes as VestigeNode[] ?? [...graph.nodes],
+            changes.edges ?? [...graph.edges]
+        );
+
+        if (changes.edges) {
+            for (const oldEdge of graph.edges) {
+                if (changes.edges.some(x => x.id == oldEdge.id))
+                    continue; // this edge exists in the old and new edges
+
+                // This edge is present in the old edge array, but not the new one!
+                // This means that we removed it!
+                this.onConnectChange(graph.nodes, oldEdge as flow.Connection, "DISCONNECT");
+            }
+
+            for (const newEdge of changes.edges) {
+                if (graph.edges.some(x => x.id == newEdge.id))
+                    continue;
+
+                // This edge is present in the new edge array, but not the old one!
+                // Analogous to the previous case, but we pass in our "new" node state,
+                // as it has the added node.
+                this.onConnectChange(changes.nodes ?? graph.nodes, newEdge as flow.Connection, "CONNECT");
+            }
+        }
+
+        newGraph.copyInternals(graph);
+        return newGraph;
+    }
+
+    mutateEdges(graph: VestigeGraph, changes: flow.EdgeChange<flow.Edge>[]) {
+        for (const change of changes) {
+            if (change.type != "remove")
+                continue;
+
+            const id = change.id;
+            const edge = graph.edges.find(x => x.id == id);
+
+            this.onConnectChange(
+                graph.nodes,
+                edge as flow.Connection,
+                "DISCONNECT"
+            );
+        }
+
+        const newGraph = new VestigeGraph(
+            [...graph.nodes],
+            flow.applyEdgeChanges(changes, graph.edges)
+        );
+
+        return newGraph;
+    }
+
+    addNode(graph: VestigeGraph, node: AbstractVestigeNode) {
+        return this.mutate(graph, { nodes: [...graph.nodes, node] });
+    }
+
+    /**
+     * Applies a single connection change, represented by `conn`, affecting a union
+     * of both the new and old node states. The `nodeUnion` parameter should be the "larger"
+     * of two graph diffs - for example, when removing a node, it should be the old node state,
+     * and when adding, it should be the new node state.
+     */
+    onConnectChange(nodeUnion: AbstractVestigeNode[], conn: flow.Connection, action: "CONNECT" | "DISCONNECT") {
+        const src = (nodeUnion.find(x => x.id == conn.source) as AbstractVestigeNode)!.data;
+        const dst = (nodeUnion.find(x => x.id == conn.target) as AbstractVestigeNode)!.data;
+
+        // We only handle connection changes between Tone.js-backed nodes, such as
+        // INSTRUMENT or EFFECT. For NOTES and VALUE nodes, this is handled via the
+        // GraphForwarder.
+        if (conn.sourceHandle == SIGNAL_OUTPUT_HID && conn.targetHandle?.startsWith(SIGNAL_INPUT_HID_PREFIX)) {
+            // Main input/output change
+            if (src.nodeType == "NOTES" || dst.nodeType == "NOTES")
+              return;
+
+            if (
+                (src.nodeType == "FINAL" || src.nodeType == "VALUE") ||
+                (dst.nodeType == "INSTRUMENT" || dst.nodeType == "VALUE")
+            ) {
+                console.error("Invalid connection!", src, dst, conn);
+                throw new Error(`Attempted to connect a ${src.nodeType} node to a ${dst.nodeType} node`);
+            }
+
+            let connDest: AudioDestination;
+            if (dst.nodeType == "EFFECT") {
+                connDest = dst.effect.getConnectDestination(conn.targetHandle);
+            } else {
+                connDest = dst.getInputDestination();
+            }
+
+            this.onSignalConnect?.(src, dst);
+
+            if (action == "CONNECT") {
+                console.log("Connected:", src, " -> ", dst);
+
+                if (src.nodeType == "INSTRUMENT") {
+                    src.generator.connectTo(connDest);
+                    console.log("Audio graph node changed:", src.generator, connDest);
+                } else if (src.nodeType == "EFFECT") {
+                    src.effect.connectTo(connDest);
+                    console.log("Audio graph node changed:", src.effect, connDest);
+                }
+            } else {
+                console.log("Disconnected:", src, " -> ", dst);
+
+                if (src.nodeType == "INSTRUMENT") {
+                    src.generator.disconnect();
+                } else if (src.nodeType == "EFFECT") {
+                    src.effect.disconnect();
+                }
+            }
+        } else if (conn.sourceHandle == VALUE_OUTPUT_HID && conn.targetHandle?.startsWith(VALUE_INPUT_HID_PREFIX)) {
+            // Automatable parameter change
+            if (dst.nodeType == "EFFECT" || dst.nodeType == "INSTRUMENT") {
+                const automatable = dst.parameters[conn.targetHandle];
+
+                if (!automatable) {
+                    console.error(`Attempted to automate parameter ${conn.targetHandle}, but there is no handle for it! Destination:`, dst);
+                    throw new Error(`No automatable handle for ${conn.targetHandle} in ${conn.source}`);
+                }
+
+                dst.parameters[conn.targetHandle].controlledBy = action == "CONNECT"
+                    ? conn.source
+                    : undefined;
+            }
+        }
+    }
+}
+
+/**
+ * Represents a Vestige graph - a collection of `VestigeNode` and `Edge` objects.
+ * Objects of this class are considered immutable and may be safely used from stateful
+ * values of components.
+ */
+export class VestigeGraph {
+    /**
+     * Creates a graph from the given node and edge values. Please note that
+     * this will not cause any connection change updates - if you're trying to
+     * create a graph from an existing set of nodes and edges, you're probably
+     * looking from `graphFromExisting`.
+     */
+    constructor (
+        public readonly nodes: VestigeNode[] = [],
+        public readonly edges: flow.Edge[] = []
+    ) { };
+
     // In order to convert continous notes to discrete note events, we
     // compute the difference between the previous and current state of
     // each note-to-instrument connection. If in the diff a note is added,
@@ -326,28 +497,32 @@ export class GraphForwarder {
      */
     private prevNoteMap: Map<string, number[]> = new Map();
 
+    copyInternals(from: VestigeGraph) {
+        this.prevNoteMap = from.prevNoteMap;
+    }
+
     /**
      * Traces the given graph, forwarding Vestige-generated data to out-of-graph
      * nodes, e.g. `INSTRUMENT` nodes.
      */
-    traceGraph(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
-       this.traceValues(time, nodes, edges);
-       this.traceNotes(time, nodes, edges);
+    traceGraph(time: number) {
+       this.traceValues(time);
+       this.traceNotes(time);
     }
 
     /** Forwards outputs from `VALUE` nodes to their final destinations. */
-    private traceValues(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
+    private traceValues(time: number) {
         // Maps node IDs of `VALUE` generators to the number of inputs they have
         // received so far. A VALUE generator that has `valueNodeConnCount[keyof awaitingNodes]`
         // inputs is considered fulfilled.
         const awaitingNodes = new Map<string, number>();
         
         // This map holds the number of incoming connections that each VALUE node has.
-        const valueNodeConnCount = nodes
+        const valueNodeConnCount = this.nodes
             .filter(x => x.data.nodeType == "VALUE")
             .map(vnode => ({
                 vnode,
-                count: edges
+                count: this.edges
                     .filter(edge => edge.target == vnode.id)
                     .length
             }))
@@ -357,7 +532,7 @@ export class GraphForwarder {
             }, new Map<string, number>());
 
         const traceOne = (node: AbstractVestigeNode, value: number) => {
-            for (const { subNode, subEdge } of getConnected(node.id, nodes, edges)) {
+            for (const { subNode, subEdge } of getConnected(node.id, this.nodes, this.edges)) {
                 if (subNode.data.nodeType == "VALUE") {
                     // If this is another VALUE node, the flow continues.
                     const reqConnections = valueNodeConnCount.get(subNode.id) ?? 0;
@@ -397,18 +572,18 @@ export class GraphForwarder {
         // number of connections for a value node is always 0.
 
         // We begin from value nodes that have no incoming connections.
-        for (const node of getRootNodes(nodes, edges, "VALUE")) {
+        for (const node of getRootNodes(this.nodes, this.edges, "VALUE")) {
             traceOne(node, node.data.generator.generate(time));
         }
     }
 
     /** Forwards outputs from `NOTES` nodes to their final destinations. */
-    private traceNotes(time: number, nodes: AbstractVestigeNode[], edges: flow.Edge[]) {
+    private traceNotes(time: number) {
         // Maps node IDs of `NOTES` generators to the inputs they received so far. 
         const awaitingNodes = new Map<string, Map<string, number[]>>();
             
         const traceOne = (node: AbstractVestigeNode, notes: number[]) => {
-            for (const { subNode, subEdge } of getConnected(node.id, nodes, edges)) {
+            for (const { subNode, subEdge } of getConnected(node.id, this.nodes, this.edges)) {
                 if (subNode.data.nodeType == "INSTRUMENT") {
                     // This is the last node in the chain! Just supply the
                     // note events to the Tone.js object.
@@ -485,7 +660,7 @@ export class GraphForwarder {
             }
         }
 
-        for (const node of getRootNodes(nodes, edges, "NOTES")) {
+        for (const node of getRootNodes(this.nodes, this.edges, "NOTES")) {
             if (node.data.generator.inputs != 0)
                 continue;
 

@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { VestigeNode } from "../nodes";
 import { distanceSqr, sqr } from "../util";
+import { AbstractVestigeNode } from "../graph";
 
 interface ExternalTourData {
   flowState: flow.ReactFlowInstance<VestigeNode, flow.Edge>;
-  nodes: VestigeNode[];
+  nodes: AbstractVestigeNode[];
   edges: flow.Edge[];
   viewport: flow.Viewport;
 }

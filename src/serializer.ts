@@ -2,8 +2,9 @@ import * as flow from "@xyflow/react";
 import * as cbor from "cbor2";
 import * as base64 from "byte-base64";
 
-import { VestigeNode } from "./nodes";
 import { assert, uniqueId } from "./util";
+import { AbstractVestigeNode } from "./graph";
+import { VestigeNode } from "./nodes";
 
 /**
  * Represents an object that can create serialization-friendly data-only wrappers
@@ -88,7 +89,7 @@ interface SerializedProject {
 }
 
 function serializeNode(
-    node: VestigeNode,
+    node: AbstractVestigeNode,
     serializers: NodeDataSerializer<any>[]
 ): SerializedNode {
     assert(node.type, `The node ${node.id} is missing its type`);
@@ -144,7 +145,7 @@ function deserializeEdge(edge: SerializedEdge): flow.Edge {
  * Serializes a Vestige project into raw bytes.
  */
 export async function serialize(
-    nodes: VestigeNode[],
+    nodes: AbstractVestigeNode[],
     edges: flow.Edge[],
     serializers: NodeDataSerializer<any>[]
 ): Promise<Uint8Array> {
@@ -183,7 +184,7 @@ export async function serialize(
  * Serializes a Vestige project into a Base-64 encoded string.
  */
 export async function serializeBase64(
-    nodes: VestigeNode[],
+    nodes: AbstractVestigeNode[],
     edges: flow.Edge[],
     serializers: NodeDataSerializer<any>[]
 ): Promise<string> {
