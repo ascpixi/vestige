@@ -75,8 +75,6 @@ export class DelayAudioEffect implements AudioEffect {
     this.in.connect(this.delay);
     this.delay.connect(this.out);
     this._isPingPong = value;
-
-    console.log("Ping pong is now", value);
   }
 
   connectTo(dst: AudioDestination): void {
