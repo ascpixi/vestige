@@ -46,12 +46,20 @@ const SAMPLE_SETS: { [key in KnownSampleSet]: Partial<tone.SamplerOptions> } = {
 export class SamplerNodeData extends InstrumentNodeData {
   generator: SamplerAudioGenerator = new SamplerAudioGenerator();
   parameters: Record<string, Automatable> = {};
+
+  async beforeRender() {
+    if (this.generator.sampler.loaded || !this.generator.loadPromise)
+      return;
+
+    await this.generator.loadPromise;
+  }
 };
 
 export class SamplerAudioGenerator implements AudioGenerator {
-  sampler: tone.Sampler = new tone.Sampler(SAMPLE_SETS["PIANO"]);
+  sampler: tone.Sampler;
   out: tone.Gain = new tone.Gain();
   awaiting: NoteEvent[] = [];
+  loadPromise?: Promise<void>;
 
   private _set: KnownSampleSet = "PIANO";
 
@@ -62,17 +70,29 @@ export class SamplerAudioGenerator implements AudioGenerator {
     this.sampler.disconnect();
     this.sampler.dispose();
 
-    this.sampler = new tone.Sampler({
-      ...SAMPLE_SETS[value],
-      attack: this.sampler.attack,
-      release: this.sampler.release
+    this.loadPromise = new Promise(resolve => {
+      this.sampler = new tone.Sampler({
+        ...SAMPLE_SETS[value],
+        attack: this.sampler.attack,
+        release: this.sampler.release,
+        onload: resolve
+      });
     });
 
     this.sampler.connect(this.out);
   }
 
   constructor() {
-    this.sampler.connect(this.out);
+    this.sampler = null!;
+
+    this.loadPromise = new Promise(resolve => {
+      this.sampler = new tone.Sampler({
+        ...SAMPLE_SETS["PIANO"],
+        onload: resolve
+      });
+
+      this.sampler.connect(this.out);
+    });
   }
 
   connectTo(dst: AudioDestination): void {

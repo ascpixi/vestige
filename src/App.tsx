@@ -22,7 +22,7 @@ import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
 import { createFinalNode } from "./nodes/FinalNode";
 
 import { VestigeGraph, GraphMutator, graphFromExisting } from "./graph";
-import { deserialize, deserializeBase64, serialize, serializeBase64 } from "./serializer";
+import { deserializeProject, deserializeBase64Project, serializeProject, serializeBase64Project } from "./serializer";
 import { getPersistentData, mutatePersistentData } from "./persistent";
 import { AFTER_TOUR_PROJECT } from "./builtinProjects";
 import { isTauri, promptToSaveFile } from "./environment";
@@ -33,6 +33,7 @@ import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { CHORUS_NODE_DESCRIPTOR } from "./nodes/ChorusNode";
 import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "./nodes/ArpeggiatorNode";
+import { renderOffline } from "./render";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -66,6 +67,10 @@ export default function App() {
   const projLinkDialogRef = useRef<HTMLDialogElement>(null);
   const projLinkTextRef = useRef<HTMLTextAreaElement>(null);
 
+  const [isRendering, setIsRendering] = useState(false);
+  const [renderLength, setRenderLength] = useState(30);
+  const [renderProgress, setRenderProgress] = useState(0);
+  const renderDialogRef = useRef<HTMLDialogElement>(null);
 
   const togglePlay = useCallback(async () => {
     if (!playing) {
@@ -117,7 +122,7 @@ export default function App() {
 
     (async () => {
       const data = location.hash.substring(3);
-      const result = await deserializeBase64(data, VESTIGE_NODE_SERIALIZERS);
+      const result = await deserializeBase64Project(data, VESTIGE_NODE_SERIALIZERS);
   
       setGraph(graphFromExisting(result.nodes, result.edges));
   
@@ -158,7 +163,7 @@ export default function App() {
   }
 
   async function saveAsLink() {
-    const data = await serializeBase64(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS);
+    const data = await serializeBase64Project(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS);
     const root = isTauri()
       ? "https://vestige.ascpixi.dev/"
       : location.origin + location.pathname;
@@ -174,7 +179,7 @@ export default function App() {
 
   async function saveAsFile() {
     await promptToSaveFile(
-      await serialize(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS),
+      await serializeProject(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS),
       "untitled",
       "Vestige Project",
       "vestigeproj"
@@ -201,7 +206,7 @@ export default function App() {
       reader.readAsArrayBuffer(file);
     });
 
-    const result = await deserialize(new Uint8Array(data), VESTIGE_NODE_SERIALIZERS);
+    const result = await deserializeProject(new Uint8Array(data), VESTIGE_NODE_SERIALIZERS);
     setGraph(graphFromExisting(result.nodes, result.edges));
   }
 
@@ -212,6 +217,25 @@ export default function App() {
 
     const linkHashIdx = link.indexOf("#");
     location.hash = link.substring(linkHashIdx);
+  }
+
+  async function render() {
+    setIsRendering(true);
+
+    try {
+      await renderOffline(
+        renderLength,
+        graph.nodes, graph.edges,
+        setRenderProgress
+      );
+    }
+    catch (err) {
+      alert(`Oops, something went wrong while rendering your project...\n\n${err}`);
+      setIsRendering(false);
+      throw err;
+    }
+
+    setIsRendering(false);
   }
 
   function reset() {
@@ -241,7 +265,9 @@ export default function App() {
 
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
-      setGraph(mutator.mutate(graph, { nodes: flow.applyNodeChanges(changes, graph.nodes) }));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      graph = mutator.mutate(graph, { nodes: flow.applyNodeChanges(changes, graph.nodes) });
+      setGraph(graph);
 
       if (changes.some(x => x.type != "position")) {
         setGraphVer(x => x + 1);
@@ -252,7 +278,9 @@ export default function App() {
 
   const onEdgesChange = useCallback(
     (changes: flow.EdgeChange<flow.Edge>[]) => {
-      setGraph(mutator.mutateEdges(graph, changes));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      graph = mutator.mutateEdges(graph, changes);
+      setGraph(graph);
       setGraphVer(x => x + 1);
     },
     [graph, mutator]
@@ -452,6 +480,63 @@ export default function App() {
         </div>
       </dialog>
 
+      <dialog ref={renderDialogRef} className="modal">
+        <div className="modal-box max-w-none w-1/2">
+          <h3 className="font-bold text-lg mb-2">Render to audio file</h3>
+          <p className="mb-8">
+            Your project will be rendered to a lossless WAV file. Please note that
+            more complex projects may take longer to render.
+          </p>
+
+          <div className="flex flex-col gap-2">
+            <b>Length <span className="text-gray-400">({renderLength} s)</span></b>
+
+            <input
+              type="range"
+              min={0} max={7 * 60} value={renderLength} step={0.5}
+              onChange={ev => setRenderLength(ev.target.valueAsNumber)}
+              className="range range-primary"
+              disabled={isRendering}
+            />
+          </div>
+
+          <div className="modal-action items-center">
+            {
+              !isRendering ? <></>
+                : (
+                  <div className="flex flex-col gap-2 mr-4">
+                    <span>{
+                      renderProgress < 0.96
+                      ? `Rendering... (${Math.floor(renderProgress * 100)}%)`
+                      : "Finishing up..."
+                    }</span>
+
+                    {
+                      renderProgress < 0.96
+                       ? (
+                        <progress
+                          className="progress progress-primary w-56"
+                          value={renderProgress * 1000}
+                          max="1000"
+                        />
+                       )
+                       : <progress className="progress progress-primary w-56" />
+                    }
+                  </div>
+                )
+                
+                
+            }
+
+            <button className="btn btn-primary" disabled={isRendering} onClick={render}>Render</button>
+
+            <form method="dialog">
+              <button className="btn" disabled={isRendering}>Cancel</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
       <flow.ReactFlow
         onMouseDownCapture={() => setShowCtxMenu(false)}
         nodes={graph.nodes}
@@ -493,7 +578,8 @@ export default function App() {
                 <li><a onClick={saveAsFile}><RiFileCheckFill className="w-4"/> Save as file</a></li>
                 <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
                 <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
-                
+                <li><a onClick={() => renderDialogRef.current!.showModal()}><RiFileMusicFill className="w-4"/>Render to audio file</a></li>
+
                 {
                   !isTauri() ? <></> :
                   <li><a onClick={loadFromLink}><RiLinkUnlinkM className="w-4"/>Load from link</a></li>

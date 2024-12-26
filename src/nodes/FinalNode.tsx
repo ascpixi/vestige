@@ -19,6 +19,8 @@ export class FinalNodeData implements BaseNodeData {
   limiter = new tone.Limiter(tone.gainToDb(0.8));
   final = new tone.Gain(getPersistentData().volume);
 
+  beforeRender?(): Promise<void> | void;
+
   /**
    * Gets the audio node to which other nodes can connect to direct
    * their input to the final output device.

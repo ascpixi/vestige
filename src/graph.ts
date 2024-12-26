@@ -33,6 +33,11 @@ export type BaseNodeData = Record<string, unknown> & {
      * The type of the node. This determines what the node will return.
      */
     nodeType: NodeType;
+
+    /**
+     * Called before an offline render.
+     */
+    beforeRender?(): Promise<void> | void;
 };
 
 /**
@@ -44,6 +49,8 @@ export abstract class NoteGeneratorNodeData<TParamType extends string = string> 
 
     nodeType = "NOTES" as const;
     abstract generator: PlainNoteGenerator | ParametricNoteGenerator<TParamType>;
+
+    beforeRender?(): Promise<void> | void;
 }
 
 /**
@@ -55,6 +62,8 @@ export abstract class InstrumentNodeData implements BaseNodeData {
 
     nodeType = "INSTRUMENT" as const;
     parameters: { [handleName: string]: Automatable } = {};
+
+    beforeRender?(): Promise<void> | void;
 
     abstract generator: AudioGenerator;
 };
@@ -68,6 +77,8 @@ export abstract class EffectNodeData implements BaseNodeData {
     nodeType = "EFFECT" as const;
     parameters: { [handleName: string]: Automatable } = {};
 
+    beforeRender?(): Promise<void> | void;
+
     abstract effect: AudioEffect;
 }
 
@@ -80,6 +91,8 @@ export abstract class ValueNodeData implements BaseNodeData {
 
     nodeType = "VALUE" as const;
     abstract generator: ValueGenerator;
+
+    beforeRender?(): Promise<void> | void;
 }
 
 export type NoInputs<T> = { [paramName in keyof never]: T };
@@ -377,6 +390,16 @@ export class GraphMutator {
 
             const id = change.id;
             const edge = graph.edges.find(x => x.id == id);
+
+            if (edge === undefined)
+                continue;
+
+            if (
+                !graph.nodes.some(x => x.id == edge.sourceHandle) ||
+                !graph.nodes.some(x => x.id == edge.targetHandle)
+            ) {
+                continue;
+            }
 
             this.onConnectChange(
                 graph.nodes,
