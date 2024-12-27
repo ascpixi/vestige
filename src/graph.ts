@@ -187,7 +187,7 @@ export interface AudioGenerator {
     connectTo(dst: AudioDestination): void;
 
     /**
-     * Disconnects this `AudoGenerator` from all Tone.js nodes.
+     * Disconnects this `AudioGenerator` from all Tone.js nodes.
      */
     disconnect(): void;
 }
@@ -395,8 +395,8 @@ export class GraphMutator {
                 continue;
 
             if (
-                !graph.nodes.some(x => x.id == edge.sourceHandle) ||
-                !graph.nodes.some(x => x.id == edge.targetHandle)
+                !graph.nodes.some(x => x.id == edge.source) ||
+                !graph.nodes.some(x => x.id == edge.target)
             ) {
                 continue;
             }
