@@ -25,45 +25,46 @@ export interface NoteEvent {
 export type NodeType = "NOTES" | "INSTRUMENT" | "EFFECT" | "FINAL" | "VALUE";
 
 /**
- * Represents the base type for all node data types. This also allows for
- * node data types to be implemented as interfaces instead of type aliases.
+ * Provides fields and functions common to all node data classes.
  */
-export type BaseNodeData = Record<string, unknown> & {
+export abstract class NodeData implements Record<string, unknown> {
+    /** @deprecated This indexer is only provided for compatibility with React Flow. */
+    [x: string]: unknown;
+
     /**
      * The type of the node. This determines what the node will return.
      */
-    nodeType: NodeType;
+    abstract nodeType: NodeType;
 
     /**
      * Called before an offline render.
      */
     beforeRender?(): Promise<void> | void;
-};
+
+    /**
+     * Called on each Tone.js tick. A tick occurs on a fixed interval, independent
+     * on the graph tick rate, when the audio is playing or being rendered offline.
+     * The `time` parameter represents the time, in seconds, since the start of playback.
+     */
+    onTick?(time: number): void;
+}
 
 /**
  * Represents the data of a node that can generate notes. Such nodes
  * participate in the note-to-instrument graph.
  */
-export abstract class NoteGeneratorNodeData<TParamType extends string = string> implements BaseNodeData {
-    [x: string]: unknown;
-
+export abstract class NoteGeneratorNodeData<TParamType extends string = string> extends NodeData {
     nodeType = "NOTES" as const;
     abstract generator: PlainNoteGenerator | ParametricNoteGenerator<TParamType>;
-
-    beforeRender?(): Promise<void> | void;
 }
 
 /**
  * Represents the data of a node that accept notes and output audio. Such
  * nodes participate in the node-to-instrument graph.
  */
-export abstract class InstrumentNodeData implements BaseNodeData {
-    [x: string]: unknown;
-
+export abstract class InstrumentNodeData extends NodeData {
     nodeType = "INSTRUMENT" as const;
     parameters: { [handleName: string]: Automatable } = {};
-
-    beforeRender?(): Promise<void> | void;
 
     abstract generator: AudioGenerator;
 };
@@ -71,13 +72,9 @@ export abstract class InstrumentNodeData implements BaseNodeData {
 /**
  * Represents the data of a node that modifies a given audio signal.
  */
-export abstract class EffectNodeData implements BaseNodeData {
-    [x: string]: unknown;
-
+export abstract class EffectNodeData extends NodeData {
     nodeType = "EFFECT" as const;
     parameters: { [handleName: string]: Automatable } = {};
-
-    beforeRender?(): Promise<void> | void;
 
     abstract effect: AudioEffect;
 }
@@ -86,13 +83,9 @@ export abstract class EffectNodeData implements BaseNodeData {
  * Represents the data of a value node, which may accept a value, and forward
  * its generated values to the automatable parameters it is connected to.
  */
-export abstract class ValueNodeData implements BaseNodeData {
-    [x: string]: unknown;
-
+export abstract class ValueNodeData extends NodeData {
     nodeType = "VALUE" as const;
     abstract generator: ValueGenerator;
-
-    beforeRender?(): Promise<void> | void;
 }
 
 export type NoInputs<T> = { [paramName in keyof never]: T };

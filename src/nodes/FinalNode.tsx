@@ -3,7 +3,7 @@ import * as flow from "@xyflow/react";
 import { memo, useState } from "react";
 
 import { makeNodeFactory } from "./basis";
-import { BaseNodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
+import { NodeData, SIGNAL_INPUT_HID_MAIN, unaryAudioDestination } from "../graph";
 import { NullNodeDataSerializer } from "../serializer";
 import { getPersistentData, mutatePersistentData } from "../persistent";
 
@@ -12,14 +12,10 @@ import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
 
-export class FinalNodeData implements BaseNodeData {
-  [x: string]: unknown;
-
+export class FinalNodeData extends NodeData {
   nodeType = "FINAL" as const;
   limiter = new tone.Limiter(tone.gainToDb(0.8));
   final = new tone.Gain(getPersistentData().volume);
-
-  beforeRender?(): Promise<void> | void;
 
   /**
    * Gets the audio node to which other nodes can connect to direct
@@ -30,6 +26,7 @@ export class FinalNodeData implements BaseNodeData {
   }
 
   constructor() {
+    super();
     this.limiter.connect(this.final);
     this.final.connect(tone.getDestination());
   }

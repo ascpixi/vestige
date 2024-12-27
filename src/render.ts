@@ -40,9 +40,14 @@ export async function renderOffline(
         const totalTicks = tone.Time(length).toTicks();
         const every = totalTicks / 100;
 
-        ctx.on("tick", () => {
-            graph.traceGraph(ctx.now());
+        const tickedNodes = graph.nodes.filter(x => x.data.onTick);
 
+        ctx.on("tick", () => {
+            const now = ctx.now();
+
+            graph.traceGraph(now);
+            tickedNodes.forEach(x => x.data.onTick!(now));
+            
             tickIdx++;
             if (tickIdx % every) {
                 reportProgress?.(tickIdx / totalTicks);

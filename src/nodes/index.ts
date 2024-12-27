@@ -15,10 +15,7 @@ import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./Sampl
 import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./ChorusNode";
 import { ArpeggiatorNode, ArpeggiatorNodeRenderer, ArpeggiatorNodeSerializer } from "./ArpeggiatorNode";
-
-export type NodeData = {
-    type: NodeType
-};
+import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./StepSeqNode";
 
 /** Represents any kind of node (module) provided by Vestige. */
 export type VestigeNode =
@@ -26,6 +23,7 @@ export type VestigeNode =
     PentatonicChordsNode |
     SynthNode |
     SamplerNode |
+    StepSeqNode |
     FilterNode |
     ReverbNode |
     DelayNode |
@@ -51,6 +49,7 @@ export const VESTIGE_NODE_TYPES = {
     "pentatonic-chords": PentatonicChordsNodeRenderer,
     "synth": SynthNodeRenderer,
     "sampler": SamplerNodeRenderer,
+    "step-seq": StepSeqNodeRenderer,
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
@@ -68,6 +67,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicChordsNodeSerializer(),
     new SynthNodeSerializer(),
     new SamplerNodeSerializer(),
+    new StepSeqNodeSerializer(),
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),

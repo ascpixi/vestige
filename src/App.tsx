@@ -12,6 +12,7 @@ import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "./nodes/PentatonicMelodyNode"
 import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
 import { SAMPLER_NODE_DESCRIPTOR } from "./nodes/SamplerNode";
+import { STEP_SEQ_NODE_DESCRIPTOR } from "./nodes/StepSeqNode";
 import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
 import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
 import { BALANCE_NODE_DESCRIPTOR } from "./nodes/BalanceNode";
@@ -46,7 +47,6 @@ export default function App() {
 
   const [startTimeMs, setStartTimeMs] = useState(performance.now());
   const [playing, setPlaying] = useState(false);
-  const [prevVolume, setPrevVolume] = useState(1);
 
   const [wasStarted, setWasStarted] = useState(false);
   const [connectedFinalBefore, setConnectedFinalBefore] = useState(false);
@@ -72,6 +72,8 @@ export default function App() {
   const [renderProgress, setRenderProgress] = useState(0);
   const renderDialogRef = useRef<HTMLDialogElement>(null);
 
+  const [realtimeCtx] = useState(tone.getContext());
+
   const togglePlay = useCallback(async () => {
     if (!playing) {
       setStartTimeMs(performance.now());
@@ -82,16 +84,15 @@ export default function App() {
         setWasStarted(true);
       } else {
         console.log("▶️ Playing");
-        tone.getDestination().volume.rampTo(prevVolume, 0.25);
+        tone.getDestination().volume.rampTo(tone.gainToDb(1), 0.25);
       }
     } else {
       console.log("⏹️ Stopping");
-      setPrevVolume(tone.getDestination().volume.value);
       tone.getDestination().volume.rampTo(-Infinity, 0.25);
     }
 
     setPlaying(!playing);
-  }, [playing, prevVolume, wasStarted]);
+  }, [playing, wasStarted]);
 
   const mutator = useMemo(() => new GraphMutator({
     onSignalConnect(_src, dst) {
@@ -115,6 +116,19 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!playing)
+      return;
+
+    const handler = () => {
+      const now = realtimeCtx.now();
+      graph.nodes.forEach(x => x.data.onTick?.(now));
+    };
+
+    realtimeCtx.on("tick", handler);
+    return () => { realtimeCtx.off("tick", handler); }
+  }, [realtimeCtx, graphVer, playing]);
 
   useEffect(() => {
     if (!shouldLoadExisting) 
@@ -255,17 +269,10 @@ export default function App() {
         tourDialogRef.current!.showModal();
       }
     }, 300);
-  //
-  // If we were to add "graph" and "mutator" to the dependencies, we would have an
-  // infinite loop of changing the graph because it changed, and so on...
-  //
-  // Silly React! Bad!
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       graph = mutator.mutate(graph, { nodes: flow.applyNodeChanges(changes, graph.nodes) });
       setGraph(graph);
 
@@ -278,7 +285,6 @@ export default function App() {
 
   const onEdgesChange = useCallback(
     (changes: flow.EdgeChange<flow.Edge>[]) => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       graph = mutator.mutateEdges(graph, changes);
       setGraph(graph);
       setGraphVer(x => x + 1);
@@ -314,10 +320,7 @@ export default function App() {
     // way - `nodes` changes when a node is re-positioned, and we really don't need to reset
     // the interval just for that (we don't care about node positions!) - we instead keep
     // a "graph version" counter, which we increment every time the graph changes in a way
-    // that concerns us. We provide it as a dependency. Applying what the exhaustive
-    // dependency warning tells us to do would actually do more harm than good.
-    //
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // that concerns us. We provide it as a dependency.
     [graphVer, startTimeMs, playing]
   );
 
@@ -363,7 +366,8 @@ export default function App() {
             {
               type: "GROUP", content: "instruments", entries: [
                 getContextMenuEntry(SYNTH_NODE_DESCRIPTOR),
-                getContextMenuEntry(SAMPLER_NODE_DESCRIPTOR)
+                getContextMenuEntry(SAMPLER_NODE_DESCRIPTOR),
+                getContextMenuEntry(STEP_SEQ_NODE_DESCRIPTOR)
               ]
             },
             {
