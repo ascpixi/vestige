@@ -418,6 +418,7 @@ export class GraphMutator {
             flow.applyEdgeChanges(changes, graph.edges)
         );
 
+        newGraph.copyInternals(graph);
         return newGraph;
     }
 
