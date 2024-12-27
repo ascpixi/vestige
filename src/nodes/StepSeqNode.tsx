@@ -176,7 +176,6 @@ export class StepSeqAudioGenerator implements AudioGenerator {
 
   disconnect() {
     this.players.disconnect();
-    console.log("Disonnected :D");
   }
 
   dispose() {
