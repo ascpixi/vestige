@@ -372,6 +372,18 @@ export class GraphMutator {
             }
         }
 
+        if (changes.nodes) {
+            for (const oldNode of graph.nodes) {
+                if (changes.nodes.some(x => x.id == oldNode.id))
+                    continue;
+
+                // This node was removed - and, thus, its edges are also implicitly disconnected.
+                for (const edge of graph.edges.filter(x => x.target == oldNode.id || x.source == oldNode.id)) {
+                    this.onConnectChange(graph.nodes, edge as flow.Connection, "DISCONNECT");
+                }
+            }
+        }
+
         newGraph.copyInternals(graph);
         return newGraph;
     }
@@ -617,7 +629,7 @@ export class VestigeGraph {
                         if (notes.includes(prevNote))
                             continue;
 
-                        // This note previously held, but now it isn't.
+                        // This note was previously held down, but now it isn't.
                         events.push({ pitch: prevNote, type: "NOTE_OFF" }); 
                     }
 
