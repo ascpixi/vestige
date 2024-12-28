@@ -1,8 +1,6 @@
 import { NodeType } from "../graph";
 import { NodeDataSerializer } from "../serializer";
 
-
-
 import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
@@ -26,18 +24,22 @@ import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./instr
 export type VestigeNode =
     PentatonicMelodyNode |
     PentatonicChordsNode |
-    SynthNode |
-    SamplerNode |
+    PickNoteNode |
+
     StepSeqNode |
+    SamplerNode |
+    SynthNode |
+
     FilterNode |
     ReverbNode |
     DelayNode |
     ChorusNode |
+    
     LfoNode |
     MixNode |
     BalanceNode |
-    PickNoteNode |
     ArpeggiatorNode |
+    
     FinalNode;
 
 /**
@@ -52,36 +54,44 @@ export type VestigeNodeOfType<T extends NodeType> = VestigeNode & {
 export const VESTIGE_NODE_TYPES = {
     "pentatonic-melody": PentatonicMelodyNodeRenderer,
     "pentatonic-chords": PentatonicChordsNodeRenderer,
+    "arpeggiator": ArpeggiatorNodeRenderer,
+    "pick-note": PickNoteNodeRenderer,
+    
     "synth": SynthNodeRenderer,
     "sampler": SamplerNodeRenderer,
     "step-seq": StepSeqNodeRenderer,
+
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
     "chorus": ChorusNodeRenderer,
+
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
-    "pick-note": PickNoteNodeRenderer,
-    "arpeggiator": ArpeggiatorNodeRenderer,
+
     "final": FinalNodeRenderer
 };
 
 export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicMelodyNodeSerializer(),
     new PentatonicChordsNodeSerializer(),
+    new ArpeggiatorNodeSerializer(),
+    new PickNoteNodeSerializer(),
+
     new SynthNodeSerializer(),
     new SamplerNodeSerializer(),
     new StepSeqNodeSerializer(),
+
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),
     new ChorusNodeSerializer(),
+
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
-    new PickNoteNodeSerializer(),
-    new ArpeggiatorNodeSerializer(),
+
     new FinalNodeSerializer()
 ];
 
