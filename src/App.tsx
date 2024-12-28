@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RiDeleteBinFill, RiFileCheckFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
 
 import "@xyflow/react/dist/style.css";
-import iconShadow from "./assets/icon-shadow.svg";
-import highSeasLogo from "./assets/highseas-logo.svg";
 
 import { VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
 import { createFinalNode } from "./nodes/FinalNode";
@@ -21,6 +19,7 @@ import { IntroductionTour } from "./components/IntroductionTour";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { AddNodeMenu } from "./components/app/AddNodeMenu";
 import { AppRenderDialog } from "./components/app/AppRenderDialog";
+import { AppAboutDialog } from "./components/app/AppAboutDialog";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -368,36 +367,8 @@ export default function App() {
         </div>
       </dialog>
 
-      <dialog ref={aboutDialogRef} className="modal">
-        <div className="modal-box max-w-none w-1/2">
-          <h3 className="font-bold text-lg mb-2">About Vestige</h3>
-
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex gap-4 w-full">
-              <img className="w-32" src={iconShadow} alt="Vestige logo" aria-hidden/>
-
-              <p className="py-4">
-                <b>Vestige</b> is an open-source generative music synthesizer created
-                by <Link href="https://ascpixi.dev">@ascpixi</Link> for
-                the Hack Seas High Seas 2024 event. You can view its source code over
-                at <Link href="https://github.com/ascpixi/vestige">ascpixi/vestige</Link>.
-              </p>
-            </div>
-
-            <Link isContainer href="https://highseas.hackclub.com" className="w-1/2" ariaLabel="Hack Club High Seas">
-              <img src={highSeasLogo} alt="" aria-hidden/>
-            </Link>
-          </div>
-
-          <div className="modal-action">
-            <form method="dialog">
-              <button className="btn">Close</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
-
-      <AppRenderDialog graph={graph} ref={renderDialogRef}/>
+      <AppAboutDialog ref={aboutDialogRef} />
+      <AppRenderDialog ref={renderDialogRef} graph={graph} />
 
       <flow.ReactFlow
         onMouseDownCapture={() => setShowCtxMenu(false)}
