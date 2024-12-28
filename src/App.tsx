@@ -7,19 +7,7 @@ import "@xyflow/react/dist/style.css";
 import iconShadow from "./assets/icon-shadow.svg";
 import highSeasLogo from "./assets/highseas-logo.svg";
 
-import { NodeTypeDescriptor, VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
-import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "./nodes/PentatonicMelodyNode";
-import { FILTER_NODE_DESCRIPTOR } from "./nodes/FilterNode";
-import { SYNTH_NODE_DESCRIPTOR } from "./nodes/SynthNode";
-import { SAMPLER_NODE_DESCRIPTOR } from "./nodes/SamplerNode";
-import { STEP_SEQ_NODE_DESCRIPTOR } from "./nodes/StepSeqNode";
-import { LFO_NODE_DESCRIPTOR } from "./nodes/LfoNode";
-import { REVERB_NODE_DESCRIPTOR } from "./nodes/ReverbNode";
-import { BALANCE_NODE_DESCRIPTOR } from "./nodes/BalanceNode";
-import { MIX_NODE_DESCRIPTOR } from "./nodes/MixNode";
-import { DELAY_NODE_DESCRIPTOR } from "./nodes/DelayNode";
-import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "./nodes/PentatonicChordsNode";
-import { PICK_NOTE_DESCRIPTOR } from "./nodes/PickNoteNode";
+import { VESTIGE_NODE_SERIALIZERS, VESTIGE_NODE_TYPES, type VestigeNode } from "./nodes";
 import { createFinalNode } from "./nodes/FinalNode";
 
 import { VestigeGraph, GraphMutator, graphFromExisting } from "./graph";
@@ -30,11 +18,9 @@ import { isTauri, promptToSaveFile } from "./environment";
 
 import { Link } from "./components/Link";
 import { IntroductionTour } from "./components/IntroductionTour";
-import { ContextMenu, ContextMenuEntry } from "./components/ContextMenu";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
-import { CHORUS_NODE_DESCRIPTOR } from "./nodes/ChorusNode";
-import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "./nodes/ArpeggiatorNode";
 import { renderOffline } from "./render";
+import { AddNodeMenu } from "./components/app/AddNodeMenu";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -145,33 +131,8 @@ export default function App() {
     })();
   }, []);
 
-  function getContextMenuEntry(descriptor: NodeTypeDescriptor): ContextMenuEntry {
-    return {
-      type: "ITEM",
-      content: <div className="flex gap-2 items-center">
-        {descriptor.icon("w-4 h-4")}
-        {descriptor.displayName}
-      </div>,
-      onChoose: async () => {
-        const { x, y } = thisFlow!.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-        setGraph(mutator.addNode(graph, await descriptor.create(x - 200, y - 200)));
-        setShowCtxMenu(false);
-      }
-    }
-  }
-
   function handleContextMenuOpen(ev: React.MouseEvent<HTMLDivElement>) {
-    if (ev.pageX == 1 && ev.pageY == 1) {
-      // Touch devices seem to report the event originating at (1, 1) - in this
-      // case, we position the context menu at the top of the page, centered horizontally.
-      setCtxMenuPos({
-        x: (document.body.clientWidth / 2) - 150,
-        y: 96
-      });
-    } else {
-      setCtxMenuPos({ x: ev.pageX, y: ev.pageY });
-    }
-
+    setCtxMenuPos({ x: ev.pageX, y: ev.pageY });
     setShowCtxMenu(true);
     ev.preventDefault();
   }
@@ -344,45 +305,19 @@ export default function App() {
 
   return (
     <main className="w-screen h-screen overflow-hidden" onContextMenu={handleContextMenuOpen}>
-      <div
-        style={{ top: ctxMenuPos.y, left: ctxMenuPos.x }}
-        className={`
-          absolute z-50
-          ${showCtxMenu ? "" : "hidden"}
-        `}
-      >
-        <ContextMenu
-          title="add node"
-          openSide={ctxMenuPos.x > (document.body.clientWidth * .65) ? "LEFT" : "RIGHT"}
-          entries={[
-            {
-              type: "GROUP", content: "melodies & chords", entries: [
-                getContextMenuEntry(PENTATONIC_MELODY_NODE_DESCRIPTOR),
-                getContextMenuEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
-                getContextMenuEntry(ARPEGGIATOR_NOTE_DESCRIPTOR),
-                getContextMenuEntry(PICK_NOTE_DESCRIPTOR),
-              ]
-            },
-            {
-              type: "GROUP", content: "instruments", entries: [
-                getContextMenuEntry(SYNTH_NODE_DESCRIPTOR),
-                getContextMenuEntry(SAMPLER_NODE_DESCRIPTOR),
-                getContextMenuEntry(STEP_SEQ_NODE_DESCRIPTOR)
-              ]
-            },
-            {
-              type: "GROUP", content: "effects", entries: [
-                getContextMenuEntry(FILTER_NODE_DESCRIPTOR),
-                getContextMenuEntry(REVERB_NODE_DESCRIPTOR),
-                getContextMenuEntry(DELAY_NODE_DESCRIPTOR),
-                getContextMenuEntry(CHORUS_NODE_DESCRIPTOR)
-              ]
-            },
-            getContextMenuEntry(LFO_NODE_DESCRIPTOR),
-            getContextMenuEntry(MIX_NODE_DESCRIPTOR),
-            getContextMenuEntry(BALANCE_NODE_DESCRIPTOR)
-        ]}/>
-      </div>
+      <AddNodeMenu
+        x={ctxMenuPos.x} y={ctxMenuPos.y}
+        show={showCtxMenu}
+        onNodeChoose={async (descriptor) => {
+          const { x, y } = thisFlow!.screenToFlowPosition({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2
+          });
+
+          setGraph(mutator.addNode(graph, await descriptor.create(x - 200, y - 200)));
+          setShowCtxMenu(false);
+        }}
+      />
 
       {
         !thisFlow || !inTour ? <></> :
