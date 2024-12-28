@@ -20,6 +20,7 @@ import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { AddNodeMenu } from "./components/app/AddNodeMenu";
 import { AppRenderDialog } from "./components/app/AppRenderDialog";
 import { AppAboutDialog } from "./components/app/AppAboutDialog";
+import { ConfirmationDialog } from "./components/app/ConfirmationDialog";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -332,22 +333,15 @@ export default function App() {
         </div>
       </dialog>
 
-      <dialog ref={resetDialogRef} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Confirm operation</h3>
-          <p className="py-4">
-            Are you sure you want to create a new project? If you did not save
-            this one before, it will be lost forever!
-          </p>
-
-          <div className="modal-action w-full">
-            <form method="dialog" className="flex gap-2 w-full">
-              <button onClick={reset} className="btn btn-primary w-1/2">Yes, create a new one</button>
-              <button className="btn w-1/2">Cancel</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
+      <ConfirmationDialog
+        ref={resetDialogRef}
+        content={<>
+          Are you sure you want to create a new project? If you did not save
+          this one before, it will be lost forever!
+        </>}
+        confirm="Yes, create a new one"
+        onConfirm={reset}
+      />
 
       <dialog ref={tourDialogRef} className="modal">
         <div className="modal-box">
