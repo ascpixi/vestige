@@ -21,6 +21,7 @@ import { AddNodeMenu } from "./components/app/AddNodeMenu";
 import { AppRenderDialog } from "./components/app/AppRenderDialog";
 import { AppAboutDialog } from "./components/app/AppAboutDialog";
 import { ConfirmationDialog } from "./components/app/ConfirmationDialog";
+import { AppProjectLinkDialog } from "./components/app/AppProjectLinkDialog";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
@@ -48,12 +49,9 @@ export default function App() {
 
   const aboutDialogRef = useRef<HTMLDialogElement>(null);
   const resetDialogRef = useRef<HTMLDialogElement>(null);
+  const renderDialogRef = useRef<HTMLDialogElement>(null);
 
   const [projLink, setProjLink] = useState<string>("");
-  const projLinkDialogRef = useRef<HTMLDialogElement>(null);
-  const projLinkTextRef = useRef<HTMLTextAreaElement>(null);
-
-  const renderDialogRef = useRef<HTMLDialogElement>(null);
 
   const [realtimeCtx] = useState(tone.getContext());
 
@@ -141,12 +139,6 @@ export default function App() {
       : location.origin + location.pathname;
 
     setProjLink(root + "#p:" + data);
-    projLinkDialogRef.current!.showModal();
-
-    setTimeout(() => {
-      projLinkTextRef.current!.focus();
-      projLinkTextRef.current!.select();
-    }, 50);
   }
 
   async function saveAsFile() {
@@ -310,39 +302,6 @@ export default function App() {
         </div>
       }
 
-      <dialog ref={projLinkDialogRef} className="modal">
-        <div className="modal-box max-w-none w-1/2">
-          <h3 className="font-bold text-lg">Project link</h3>
-          <p className="py-4">
-            This is a link to your project - whenever you'll open it, this
-            version of the project will be restored.
-          </p>
-
-          <textarea ref={projLinkTextRef}
-            className="textarea textarea-bordered w-full h-full min-h-[200px]"
-            aria-label="Project link"
-            value={projLink}
-            readOnly
-          />
-          
-          <div className="modal-action">
-            <form method="dialog">
-              <button className="btn">Close</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
-
-      <ConfirmationDialog
-        ref={resetDialogRef}
-        content={<>
-          Are you sure you want to create a new project? If you did not save
-          this one before, it will be lost forever!
-        </>}
-        confirm="Yes, create a new one"
-        onConfirm={reset}
-      />
-
       <dialog ref={tourDialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Interactive tour (tutorial)</h3>
@@ -362,7 +321,18 @@ export default function App() {
       </dialog>
 
       <AppAboutDialog ref={aboutDialogRef} />
+      <AppProjectLinkDialog link={projLink}/>
       <AppRenderDialog ref={renderDialogRef} graph={graph} />
+
+      <ConfirmationDialog
+        ref={resetDialogRef}
+        content={<>
+          Are you sure you want to create a new project? If you did not save
+          this one before, it will be lost forever!
+        </>}
+        confirm="Yes, create a new one"
+        onConfirm={reset}
+      />
 
       <flow.ReactFlow
         onMouseDownCapture={() => setShowCtxMenu(false)}
