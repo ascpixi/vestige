@@ -10,11 +10,9 @@ import { createFinalNode } from "./nodes/FinalNode";
 
 import { VestigeGraph, GraphMutator, graphFromExisting } from "./graph";
 import { deserializeProject, deserializeBase64Project, serializeProject, serializeBase64Project } from "./serializer";
-import { getPersistentData, mutatePersistentData } from "./persistent";
-import { AFTER_TOUR_PROJECT } from "./builtinProjects";
+import { getPersistentData } from "./persistent";
 import { isTauri, promptToSaveFile } from "./environment";
 
-import { Link } from "./components/Link";
 import { IntroductionTour } from "./components/IntroductionTour";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { AddNodeMenu } from "./components/app/AddNodeMenu";
@@ -44,14 +42,13 @@ export default function App() {
   const [ctxMenuPos, setCtxMenuPos] = useState({ x: 0, y: 0 });
   const [showCtxMenu, setShowCtxMenu] = useState(false);
 
-  const [inTour, setInTour] = useState(false);
   const tourDialogRef = useRef<HTMLDialogElement>(null);
-
   const aboutDialogRef = useRef<HTMLDialogElement>(null);
   const resetDialogRef = useRef<HTMLDialogElement>(null);
   const renderDialogRef = useRef<HTMLDialogElement>(null);
 
   const [projLink, setProjLink] = useState<string>("");
+  const [inTour, setInTour] = useState(false);
 
   const [realtimeCtx] = useState(tone.getContext());
 
@@ -255,23 +252,6 @@ export default function App() {
     [graphVer, startTimeMs, playing]
   );
 
-  function handleTourFinished() {
-    mutatePersistentData({ tourComplete: true });
-    location.hash = `#p:${AFTER_TOUR_PROJECT}`;
-  }
-
-  function enterTour() {
-    if (graph.nodes.length != 1 || graph.edges.length != 0) {
-      mutatePersistentData({ tourComplete: false });
-      location.href = "#tour";
-    }
-    
-    setInTour(true);
-  }
-
-  function skipTour() {
-    mutatePersistentData({ tourComplete: true });
-  }
 
   return (
     <main className="w-screen h-screen overflow-hidden" onContextMenu={handleContextMenuOpen}>
@@ -290,35 +270,16 @@ export default function App() {
       />
 
       {
-        !thisFlow || !inTour ? <></> :
-        <div className="absolute z-20 bottom-8 left-8 pr-8 sm:w-3/4">
-          <IntroductionTour
-            nodes={graph.nodes}
-            edges={graph.edges}
-            flowState={thisFlow}
-            viewport={viewport}
-            onTourFinish={handleTourFinished}
-          />
-        </div>
+        !thisFlow ? <></> :
+        <IntroductionTour
+          nodes={graph.nodes}
+          edges={graph.edges}
+          flowState={thisFlow}
+          viewport={viewport}
+          ref={tourDialogRef}
+          tourStateChange={setInTour}
+        />
       }
-
-      <dialog ref={tourDialogRef} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Interactive tour (tutorial)</h3>
-          <p className="py-4">
-            Welcome! It looks like this is your first time using Vestige.
-            Do you want to take an interactive tour that teaches you how to
-            use it? <b>This is highly recommended if you are a newcomer.</b>
-          </p>
-
-          <div className="modal-action w-full">
-            <form method="dialog" className="flex gap-2 w-full">
-              <button onClick={enterTour} className="btn btn-primary w-1/2">Yes</button>
-              <button onClick={skipTour} className="btn w-1/2">No, skip</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
 
       <AppAboutDialog ref={aboutDialogRef} />
       <AppProjectLinkDialog link={projLink}/>
