@@ -1,17 +1,20 @@
 import { NodeTypeDescriptor } from "../../nodes";
 import { ContextMenu, ContextMenuEntry } from "../ContextMenu";
 
-import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "../../nodes/PentatonicMelodyNode";
-import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "../../nodes/PentatonicChordsNode";
-import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "../../nodes/ArpeggiatorNode";
-import { PICK_NOTE_DESCRIPTOR } from "../../nodes/PickNoteNode";
-import { SYNTH_NODE_DESCRIPTOR } from "../../nodes/SynthNode";
-import { SAMPLER_NODE_DESCRIPTOR } from "../../nodes/SamplerNode";
-import { STEP_SEQ_NODE_DESCRIPTOR } from "../../nodes/StepSeqNode";
-import { FILTER_NODE_DESCRIPTOR } from "../../nodes/FilterNode";
-import { REVERB_NODE_DESCRIPTOR } from "../../nodes/ReverbNode";
-import { DELAY_NODE_DESCRIPTOR } from "../../nodes/DelayNode";
-import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/ChorusNode";
+import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicMelodyNode";
+import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicChordsNode";
+import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "../../nodes/note/ArpeggiatorNode";
+import { PICK_NOTE_DESCRIPTOR } from "../../nodes/note/PickNoteNode";
+
+import { SYNTH_NODE_DESCRIPTOR } from "../../nodes/instrument/SynthNode";
+import { SAMPLER_NODE_DESCRIPTOR } from "../../nodes/instrument/SamplerNode";
+import { STEP_SEQ_NODE_DESCRIPTOR } from "../../nodes/instrument/StepSeqNode";
+
+import { FILTER_NODE_DESCRIPTOR } from "../../nodes/effect/FilterNode";
+import { REVERB_NODE_DESCRIPTOR } from "../../nodes/effect/ReverbNode";
+import { DELAY_NODE_DESCRIPTOR } from "../../nodes/effect/DelayNode";
+import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
+
 import { LFO_NODE_DESCRIPTOR } from "../../nodes/LfoNode";
 import { MIX_NODE_DESCRIPTOR } from "../../nodes/MixNode";
 import { BALANCE_NODE_DESCRIPTOR } from "../../nodes/BalanceNode";

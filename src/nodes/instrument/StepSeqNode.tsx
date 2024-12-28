@@ -3,21 +3,21 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiAddFill, RiDeleteBinFill, RiGridFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
-import { Automatable } from "../parameters";
-import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { Automatable } from "../../parameters";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
-import { ONE_SHOT_BASE_URL, ONE_SHOT_SAMPLE_IDS, ONE_SHOT_SAMPLES, OneShotSampleId } from "../assets/oneshots";
-import { assert, changeOne, lerp, range, removeOne } from "../util";
-import { CheckboxField } from "../components/CheckboxField";
+import { ONE_SHOT_BASE_URL, ONE_SHOT_SAMPLE_IDS, ONE_SHOT_SAMPLES, OneShotSampleId } from "../../assets/oneshots";
+import { assert, changeOne, lerp, range, removeOne } from "../../util";
+import { CheckboxField } from "../../components/CheckboxField";
 
 const MIN_BPM = 40;
 const MAX_BPM = 220;

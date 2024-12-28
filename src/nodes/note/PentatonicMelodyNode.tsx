@@ -2,20 +2,20 @@ import * as flow from "@xyflow/react";
 import { memo } from "react";
 import { RiMusicFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../graph";
-import { hashify } from "../util";
-import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../audioUtil";
-import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState, useNoteGeneratorSync } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { NOTE_OUTPUT_HID, NoteGeneratorNodeData, PlainNoteGenerator } from "../../graph";
+import { hashify } from "../../util";
+import { getHarmony, MAJOR_PENTATONIC, MIDI_NOTES, MINOR_PENTATONIC, ScaleMode } from "../../audioUtil";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { useBoundState, useNoteGeneratorSync } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { SelectField } from "../components/SelectField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { MusicalKeyboard } from "../components/MusicalKeyboard";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { SelectField } from "../../components/SelectField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
+import { MusicalKeyboard } from "../../components/MusicalKeyboard";
 
 export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   inputs = 0 as const;

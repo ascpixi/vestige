@@ -3,20 +3,20 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVolumeVibrateFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
-import { octToCents } from "../audioUtil";
-import { Automatable } from "../parameters";
-import { FlatNodeDataSerializer } from "../serializer";
-import { anyOf, lerp, match } from "../util";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { octToCents } from "../../audioUtil";
+import { Automatable } from "../../parameters";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { anyOf, lerp, match } from "../../util";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { SelectField } from "../components/SelectField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { SelectField } from "../../components/SelectField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 const MIN_UNISON_DETUNE = 1; // cents
 const MAX_UNISON_DETUNE = 100; // cents

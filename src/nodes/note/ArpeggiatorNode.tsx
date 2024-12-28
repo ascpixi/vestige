@@ -2,19 +2,19 @@ import * as flow from "@xyflow/react";
 import { memo } from "react";
 import { RiDice3Fill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
-import { assert, match } from "../util";
-import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState, useNoteGeneratorSync } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../../graph";
+import { assert, match } from "../../util";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { useBoundState, useNoteGeneratorSync } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { SliderField } from "../components/SliderField";
-import { MusicalKeyboard } from "../components/MusicalKeyboard";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SelectField } from "../../components/SelectField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
+import { SliderField } from "../../components/SliderField";
+import { MusicalKeyboard } from "../../components/MusicalKeyboard";
 
 const MIN_SPEED = 0.05;
 const MAX_SPEED = 2;

@@ -3,17 +3,17 @@ import * as tone from "tone";
 import { memo, useEffect, useState } from "react";
 import { RiSchoolFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { Automatable } from "../parameters";
-import { assert, lerp } from "../util";
-import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
+import { Automatable } from "../../parameters";
+import { assert, lerp } from "../../util";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 const MIN_DECAY = 0.1;
 const MAX_DECAY = 10;

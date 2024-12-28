@@ -3,22 +3,22 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVoiceprintFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
-import { Automatable } from "../parameters";
-import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../../graph";
+import { Automatable } from "../../parameters";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SelectField } from "../../components/SelectField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
-import HARP_DATA from "../assets/sample-sets/harp.json";
-import PIANO_DATA from "../assets/sample-sets/piano.json";
-import VIOLIN_SUS_DATA from "../assets/sample-sets/violin-sustained.json";
+import HARP_DATA from "../../assets/sample-sets/harp.json";
+import PIANO_DATA from "../../assets/sample-sets/piano.json";
+import VIOLIN_SUS_DATA from "../../assets/sample-sets/violin-sustained.json";
 
 /**
  * Represents the types of all built-in sample sets.
