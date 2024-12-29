@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import * as flow from "@xyflow/react";
 import { graphFromExisting, NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, VALUE_OUTPUT_HID } from "../graph";
-import { createPentatonicChordsNode } from "../nodes/PentatonicChordsNode";
-import { createPickNoteNode } from "../nodes/PickNoteNode";
+import { createPentatonicChordsNode } from "../nodes/note/PentatonicChordsNode";
+import { createPickNoteNode } from "../nodes/note/PickNoteNode";
 import { createFinalNode } from "../nodes/FinalNode";
 import { uniqueId } from "../util";
 
