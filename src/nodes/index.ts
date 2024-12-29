@@ -5,6 +5,7 @@ import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
+import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
 
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
 import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
@@ -24,6 +25,7 @@ import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./instr
 export type VestigeNode =
     PentatonicMelodyNode |
     PentatonicChordsNode |
+    ArpeggiatorNode |
     PickNoteNode |
 
     StepSeqNode |
@@ -38,7 +40,7 @@ export type VestigeNode =
     LfoNode |
     MixNode |
     BalanceNode |
-    ArpeggiatorNode |
+    MathNode |
     
     FinalNode;
 
@@ -69,6 +71,7 @@ export const VESTIGE_NODE_TYPES = {
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
+    "math": MathNodeRenderer,
 
     "final": FinalNodeRenderer
 };
@@ -91,6 +94,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
+    new MathNodeSerializer(),
 
     new FinalNodeSerializer()
 ];

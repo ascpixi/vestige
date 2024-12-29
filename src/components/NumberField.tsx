@@ -3,27 +3,14 @@ import React, { useCallback } from "react";
 import { Automatable } from "../parameters";
 import { useUpdater } from "../hooks";
 
-function stringifyFloat(x: number) {
-  const s = x.toString();
-  const sep = s.indexOf(".");
-  return sep == -1 ? s : s.substring(0, sep);
-}
-
-export function SliderField({
-  name, description, min, max, value, step, automatable, automatableDisplay,
-  isPercentage, valueStringifier, onChange
+export function NumberField({
+  name, description, value, step, automatable, automatableDisplay, onChange, disabled
 }: {
   /** The name of the input field. */
   name: string,
 
   /** A user-friendly description of the input field. */
   description: string,
-
-  /** The minimum value the field accepts. */
-  min: number,
-
-  /** The maximum value the field accepts. */
-  max: number,
 
   /** The current value of the field. Ignored if `automatable?.isAutomated()` returns `true`. */
   value: number,
@@ -43,17 +30,11 @@ export function SliderField({
    */
   automatableDisplay?: () => number,
 
-  /**
-   * If `true`, the field will be displayed as a percentage, with a `%` suffix
-   * after the value. Only applies if `valueStringifier` is not specified.
-   */
-  isPercentage?: boolean,
+  /** Invoked when the value changes. */
+  onChange: (x: number) => void,
 
-  /** If specified, the given function will be called to format the value. */
-  valueStringifier?: (x: number) => string,
-
-  /** Invoked when the value changes.  */
-  onChange: (x: number) => void
+  /** If `true`, any user input to the field will be disabled. */
+  disabled?: boolean
 }) {
   useUpdater(
     useCallback(() => automatable?.isAutomated() ?? false, [automatable])
@@ -64,7 +45,6 @@ export function SliderField({
     value = automatableDisplay();
   } 
 
-  valueStringifier ??= () => `${stringifyFloat(value)}${isPercentage ? "%" : ""}`;
   step ??= 1;
 
   function handleMouseDown(ev: React.MouseEvent<HTMLInputElement>) {
@@ -73,20 +53,16 @@ export function SliderField({
 
   return (
     <div className="flex flex-col gap-1 align-middle">
-      <span className="font-semibold">
-        {name}
-        <span className="text-gray-300"> ({valueStringifier(value)})</span>
-      </span>
-
+      <span className="font-semibold">{name}</span>
       <span>{description}</span>
 
       <input
-        type="range"
-        min={min} max={max} value={value} step={step}
+        type="number"
+        value={value} step={step}
         onChange={ev => onChange(ev.target.valueAsNumber)}
         onMouseDownCapture={handleMouseDown}
-        className={`range range-xs ${automated ? "" : "range-primary"}`}
-        disabled={automated}
+        className="input input-xs"
+        disabled={automated || disabled}
         aria-label={`${name}: ${description}`}
       />
     </div>

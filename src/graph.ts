@@ -85,6 +85,8 @@ export abstract class EffectNodeData extends NodeData {
  */
 export abstract class ValueNodeData extends NodeData {
     nodeType = "VALUE" as const;
+    parameters: { [handleName: string]: Automatable } = {};
+
     abstract generator: ValueGenerator;
 }
 
@@ -482,7 +484,7 @@ export class GraphMutator {
             }
         } else if (conn.sourceHandle == VALUE_OUTPUT_HID && conn.targetHandle?.startsWith(VALUE_INPUT_HID_PREFIX)) {
             // Automatable parameter change
-            if (dst.nodeType == "EFFECT" || dst.nodeType == "INSTRUMENT") {
+            if (dst.nodeType == "EFFECT" || dst.nodeType == "INSTRUMENT" || dst.nodeType == "VALUE") {
                 const automatable = dst.parameters[conn.targetHandle];
 
                 if (!automatable) {
@@ -562,12 +564,26 @@ export class VestigeGraph {
 
         const traceOne = (node: AbstractVestigeNode, value: number) => {
             for (const { subNode, subEdge } of getConnected(node.id, this.nodes, this.edges)) {
+                if (
+                    subNode.data.nodeType != "EFFECT" &&
+                    subNode.data.nodeType != "INSTRUMENT" &&
+                    subNode.data.nodeType != "VALUE"
+                ) {
+                    console.error("Unexpected connection!", node, subNode, subEdge);
+                    throw new Error("Invalid value node to non-value node connection");
+                }
+                
+                assert(subEdge.targetHandle != null, "subEdge.targetHandle is null");
+                assert(subEdge.targetHandle in subNode.data.parameters, "no parameter found");
+
+                subNode.data.parameters[subEdge.targetHandle].change(value);
+                
                 if (subNode.data.nodeType == "VALUE") {
                     // If this is another VALUE node, the flow continues.
                     const reqConnections = valueNodeConnCount.get(subNode.id) ?? 0;
                     const currConnections = awaitingNodes.get(subNode.id) ?? 0;
 
-                    assert(reqConnections < currConnections, "number of required connection is lower than the number of current connections");
+                    assert(reqConnections >= currConnections, "number of required connection is lower than the number of current connections");
 
                     if (reqConnections == currConnections + 1) {
                         // If, with the input we will be giving the node, we satisfy
@@ -579,18 +595,6 @@ export class VestigeGraph {
                         // this node has received so far.
                         awaitingNodes.set(subNode.id, currConnections + 1);
                     }
-                } else {
-                    // This is not a VALUE node, and thus, the value we currently
-                    // hold flows to the parameter represented by the target handle.
-                    if (subNode.data.nodeType != "EFFECT" && subNode.data.nodeType != "INSTRUMENT") {
-                        console.error("Unexpected connection!", node, subNode, subEdge);
-                        throw new Error("Invalid value node to non-value node connection");
-                    }
-
-                    assert(subEdge.targetHandle != null, "subEdge.targetHandle is null");
-                    assert(subEdge.targetHandle in subNode.data.parameters, "no parameter found");
-
-                    subNode.data.parameters[subEdge.targetHandle].change(value);
                 }
             }
         }

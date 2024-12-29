@@ -18,6 +18,7 @@ import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
 import { LFO_NODE_DESCRIPTOR } from "../../nodes/LfoNode";
 import { MIX_NODE_DESCRIPTOR } from "../../nodes/MixNode";
 import { BALANCE_NODE_DESCRIPTOR } from "../../nodes/BalanceNode";
+import { MATH_NODE_DESCRIPTOR } from "../../nodes/MathNode";
 
 export function AddNodeMenu({ x, y, show, onNodeChoose }: {
   x: number,
@@ -77,7 +78,8 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
           },
           getEntry(LFO_NODE_DESCRIPTOR),
           getEntry(MIX_NODE_DESCRIPTOR),
-          getEntry(BALANCE_NODE_DESCRIPTOR)
+          getEntry(BALANCE_NODE_DESCRIPTOR),
+          getEntry(MATH_NODE_DESCRIPTOR)
       ]}/>
     </div>
   )
