@@ -1,13 +1,16 @@
 import * as flow from "@xyflow/react";
 import { RiGraduationCapFill } from "@remixicon/react";
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 
 import { VestigeNode } from "../nodes";
 import { distanceSqr, sqr } from "../util";
+import { AbstractVestigeNode } from "../graph";
+import { mutatePersistentData } from "../persistent";
+import { AFTER_TOUR_PROJECT } from "../builtinProjects";
 
 interface ExternalTourData {
   flowState: flow.ReactFlowInstance<VestigeNode, flow.Edge>;
-  nodes: VestigeNode[];
+  nodes: AbstractVestigeNode[];
   edges: flow.Edge[];
   viewport: flow.Viewport;
 }
@@ -136,15 +139,20 @@ const STEPS: TourStepFactory[] = [
   })),
 ];
 
-export function IntroductionTour({ flowState, nodes, edges, viewport, onTourFinish }: {
-  onTourFinish: () => void
-} & ExternalTourData) {
+export const IntroductionTour = forwardRef((
+  { flowState, nodes, edges, viewport, tourStateChange }: ExternalTourData &
+    {
+      tourStateChange: (inTour: boolean) => void
+    },
+  ref: React.ForwardedRef<HTMLDialogElement>
+) => {
+  const [inTour, setInTour] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [step, setStep] = useState<TourStep>(STEPS[0]());
 
   const advance = useCallback(() => {
     if (stepIdx + 1 == STEPS.length) {
-      onTourFinish();
+      handleTourFinished();
       return;
     }
 
@@ -153,7 +161,7 @@ export function IntroductionTour({ flowState, nodes, edges, viewport, onTourFini
     const step = STEPS[stepIdx + 1]();
     step.onInit?.({ flowState, nodes, edges, viewport });
     setStep(step);
-  }, [stepIdx, edges, flowState, nodes, viewport, onTourFinish]);
+  }, [stepIdx, edges, flowState, nodes, viewport]);
 
   useEffect(() => {
     if (step.continueWhen) {
@@ -163,24 +171,71 @@ export function IntroductionTour({ flowState, nodes, edges, viewport, onTourFini
     }
   }, [step, flowState, nodes, edges, viewport, advance]);
 
+  
+  function handleTourFinished() {
+    mutatePersistentData({ tourComplete: true });
+    location.hash = `#p:${AFTER_TOUR_PROJECT}`;
+  }
+  
+  function enterTour() {
+    if (nodes.length != 1 || edges.length != 0) {
+      mutatePersistentData({ tourComplete: false });
+      location.href = "#tour";
+    }
+    
+    setInTour(true);
+    tourStateChange(true);
+  }
+
+  function skipTour() {
+    mutatePersistentData({ tourComplete: true });
+  }
+
   if (!step)
     return <></>;
 
   return (
-    <div className={`
-      alert border border-solid border-gray-200 h-full
-      bg-white shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]
-    `}>
-      <RiGraduationCapFill/>
+    <>
+      <dialog ref={ref} className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Interactive tour (tutorial)</h3>
+          <p className="py-4">
+            Welcome! It looks like this is your first time using Vestige.
+            Do you want to take an interactive tour that teaches you how to
+            use it? <b>This is highly recommended if you are a newcomer.</b>
+          </p>
 
-      <span>{step.content}</span>
-      
-      {
-        step.continueWhen ? <></> :
-        <div>
-          <button onClick={advance} className="btn btn-sm btn-primary">Next</button>
+          <div className="modal-action w-full">
+            <form method="dialog" className="flex gap-2 w-full">
+              <button onClick={enterTour} className="btn btn-primary w-1/2">Yes</button>
+              <button onClick={skipTour} className="btn w-1/2">No, skip</button>
+            </form>
+          </div>
         </div>
-      }
-    </div>
+      </dialog>
+
+      <div className="absolute z-20 bottom-8 left-8 pr-8 sm:w-3/4">
+        {
+          !step || !inTour ? <></>
+          : (
+            <div className={`
+              alert border border-solid border-gray-200 h-full
+              bg-white shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]
+            `}>
+              <RiGraduationCapFill/>
+        
+              <span>{step.content}</span>
+              
+              {
+                step.continueWhen ? <></> :
+                <div>
+                  <button onClick={advance} className="btn btn-sm btn-primary">Next</button>
+                </div>
+              }
+            </div>
+          )
+        }
+      </div>
+    </>
   );
-}
+});

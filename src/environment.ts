@@ -5,7 +5,13 @@ export function isTauri(): boolean {
     return "isTauri" in window && !!window.isTauri;
 }
 
-export async function promptToSaveFile(data: Uint8Array, filename: string, fileType: string, extension: string) {
+export async function promptToSaveFile(
+    data: Uint8Array,
+    filename: string,
+    fileType: string,
+    extension: string,
+    mimeType = "application/octet-stream"
+) {
     if (isTauri()) {
         const { save } = await import("@tauri-apps/plugin-dialog");
         const { writeFile } = await import("@tauri-apps/plugin-fs");
@@ -22,7 +28,7 @@ export async function promptToSaveFile(data: Uint8Array, filename: string, fileT
             await writeFile(filePath, data);
         }
     } else {
-        const blob = new Blob([data], { type: "application/octet-stream" });
+        const blob = new Blob([data], { type: mimeType });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");

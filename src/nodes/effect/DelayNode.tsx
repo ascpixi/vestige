@@ -3,18 +3,18 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiRepeatLine } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { Automatable } from "../parameters";
-import { assert, lerp } from "../util";
-import { FlatNodeDataSerializer } from "../serializer";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
+import { Automatable } from "../../parameters";
+import { assert, lerp } from "../../util";
+import { FlatNodeDataSerializer } from "../../serializer";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { CheckboxField } from "../components/CheckboxField";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
+import { CheckboxField } from "../../components/CheckboxField";
 
 const MIN_DELAY_TIME = 1 / 1000;
 const MAX_DELAY_TIME = 1000 / 1000;
@@ -75,8 +75,6 @@ export class DelayAudioEffect implements AudioEffect {
     this.in.connect(this.delay);
     this.delay.connect(this.out);
     this._isPingPong = value;
-
-    console.log("Ping pong is now", value);
   }
 
   connectTo(dst: AudioDestination): void {

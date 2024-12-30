@@ -2,8 +2,9 @@ import * as flow from "@xyflow/react";
 import * as cbor from "cbor2";
 import * as base64 from "byte-base64";
 
-import { VestigeNode } from "./nodes";
 import { assert, uniqueId } from "./util";
+import { AbstractVestigeNode } from "./graph";
+import { VestigeNode } from "./nodes";
 
 /**
  * Represents an object that can create serialization-friendly data-only wrappers
@@ -88,7 +89,7 @@ interface SerializedProject {
 }
 
 function serializeNode(
-    node: VestigeNode,
+    node: AbstractVestigeNode,
     serializers: NodeDataSerializer<any>[]
 ): SerializedNode {
     assert(node.type, `The node ${node.id} is missing its type`);
@@ -141,13 +142,15 @@ function deserializeEdge(edge: SerializedEdge): flow.Edge {
 }
 
 /**
- * Serializes a Vestige project into raw bytes.
+ * Projects a Vestige project into a marshalled form, which can be used to re-create
+ * the project independent of its previous state or execution environment. Marshalled
+ * projects can be safely serialized.
  */
-export async function serialize(
-    nodes: VestigeNode[],
+export async function marshalProject(
+    nodes: AbstractVestigeNode[],
     edges: flow.Edge[],
     serializers: NodeDataSerializer<any>[]
-): Promise<Uint8Array> {
+): Promise<SerializedProject> {
     const srlNodes: SerializedNode[] = [
         // The "final" node is required to be first.
         serializeNode(nodes.find(x => x.type == "final")!, serializers),
@@ -159,12 +162,23 @@ export async function serialize(
 
     const srlEdges: SerializedEdge[] = edges.map(x => serializeEdge(x));
 
-    const data = cbor.encode({
+    return {
         version: 1,
         nodes: srlNodes,
         edges: srlEdges
-    } satisfies SerializedProject);
+    };
+}
 
+
+/**
+ * Serializes a Vestige project into raw bytes.
+ */
+export async function serializeProject(
+    nodes: AbstractVestigeNode[],
+    edges: flow.Edge[],
+    serializers: NodeDataSerializer<any>[]
+): Promise<Uint8Array> {
+    const data = cbor.encode(await marshalProject(nodes, edges, serializers));
     const compressed = await compress(data);
 
     let result: Uint8Array;
@@ -182,20 +196,40 @@ export async function serialize(
 /**
  * Serializes a Vestige project into a Base-64 encoded string.
  */
-export async function serializeBase64(
-    nodes: VestigeNode[],
+export async function serializeBase64Project(
+    nodes: AbstractVestigeNode[],
     edges: flow.Edge[],
     serializers: NodeDataSerializer<any>[]
 ): Promise<string> {
-    return base64.bytesToBase64(await serialize(nodes, edges, serializers))
+    return base64.bytesToBase64(await serializeProject(nodes, edges, serializers))
         .replace(/\//g, "_")
         .replace(/\+/g, "-");
 }
 
 /**
+ * Creates nodes and edges from a marshalled form of a Vestige project, obtained
+ * with `marshalProject`. The data of the returned nodes will be fully unique and owned
+ * by those nodes.
+ */
+export async function unmarshalProject(project: SerializedProject, serializers: NodeDataSerializer<any>[]): Promise<{
+    nodes: VestigeNode[],
+    edges: flow.Edge[]
+}> {
+    // When we'll need to add changes to the serialization protocol, this will
+    // need to be changed.
+    if (project.version != 1)
+        throw new Error(`Unsupported project schema version ${project.version}`);
+
+    return {
+        nodes: await Promise.all(project.nodes.map(x => deserializeNode(x, serializers))),
+        edges: project.edges.map(x => deserializeEdge(x))
+    };
+}
+
+/**
  * Deserializes a Vestige project.
  */
-export async function deserialize(data: Uint8Array, serializers: NodeDataSerializer<any>[]): Promise<{
+export async function deserializeProject(data: Uint8Array, serializers: NodeDataSerializer<any>[]): Promise<{
     nodes: VestigeNode[],
     edges: flow.Edge[]
 }> {
@@ -215,26 +249,17 @@ export async function deserialize(data: Uint8Array, serializers: NodeDataSeriali
     }
 
     console.debug("Project deserialized from CBOR.", project);
-
-    // When we'll need to add changes to the serialization protocol, this will
-    // need to be changed.
-    if (project.version != 1)
-        throw new Error(`Unsupported project schema version ${project.version}`);
-
-    return {
-        nodes: await Promise.all(project.nodes.map(x => deserializeNode(x, serializers))),
-        edges: project.edges.map(x => deserializeEdge(x))
-    };
+    return await unmarshalProject(project, serializers);
 }
 
 /**
  * Deserializes a Vestige project from its base-64 encoded form.
  */
-export async function deserializeBase64(data: string, serializers: NodeDataSerializer<any>[]): Promise<{
+export async function deserializeBase64Project(data: string, serializers: NodeDataSerializer<any>[]): Promise<{
     nodes: VestigeNode[],
     edges: flow.Edge[]
 }> {
-    return await deserialize(
+    return await deserializeProject(
         base64.base64ToBytes(
             data.replace(/_/g, "/").replace(/-/g, "+")
         ),

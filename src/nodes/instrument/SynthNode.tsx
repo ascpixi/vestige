@@ -3,20 +3,20 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVolumeVibrateFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../graph";
-import { octToCents } from "../audioUtil";
-import { Automatable } from "../parameters";
-import { FlatNodeDataSerializer } from "../serializer";
-import { anyOf, lerp, match } from "../util";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { octToCents } from "../../audioUtil";
+import { Automatable } from "../../parameters";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { anyOf, lerp, match } from "../../util";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SliderField } from "../components/SliderField";
-import { SelectField } from "../components/SelectField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SliderField } from "../../components/SliderField";
+import { SelectField } from "../../components/SelectField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 const MIN_UNISON_DETUNE = 1; // cents
 const MAX_UNISON_DETUNE = 100; // cents
@@ -71,6 +71,10 @@ export class SynthNodeData extends InstrumentNodeData {
     this.generator.synth.set({ envelope: env });
   }
 
+  applyTransposition() {
+    this.generator.synth.set({ detune: octToCents(this.octave + 1) + this.fineTune });
+  }
+
   constructor () {
     super();
 
@@ -95,7 +99,7 @@ export class SynthAudioGenerator implements AudioGenerator {
   }
 
   /** Fully applies oscillator settings, changing its type. May produce audible clicks.  */
-  private fullyApplyOsc() {
+  fullyApplyOsc() {
     this.synth.releaseAll();
 
     if (this._unisonCount > 1) {
@@ -193,6 +197,8 @@ export class SynthNodeSerializer extends FlatNodeDataSerializer<SynthNodeData> {
 
   protected override afterDeserialize(data: SynthNodeData): void {
     data.applyContour();
+    data.applyTransposition();
+    data.generator.fullyApplyOsc();
   }
 }
 
@@ -231,7 +237,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
   useEffect(() => {
     data.fineTune = fineTune;
     data.octave = octave;
-    gen.synth.set({ detune: octToCents(octave + 1) + fineTune });
+    data.applyTransposition();
   }, [data, gen, octave, fineTune]);
 
   useEffect(() => {

@@ -3,6 +3,12 @@ export function changeOne<T>(arr: T[], idx: number, newValue: T): T[] {
     return [...arr];
 }
 
+export function removeOne<T>(arr: T[], idx: number) {
+    const value = [...arr];
+    value.splice(idx, 1);
+    return value;
+}
+
 /**
  * Returns a random and unique value, in the form of a stringified base-36
  * number, e.g. `bn94abnte0k`.

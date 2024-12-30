@@ -3,22 +3,22 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiVoiceprintFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../graph";
-import { Automatable } from "../parameters";
-import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../../graph";
+import { Automatable } from "../../parameters";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SelectField } from "../../components/SelectField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
-import HARP_DATA from "../assets/sample-sets/harp.json";
-import PIANO_DATA from "../assets/sample-sets/piano.json";
-import VIOLIN_SUS_DATA from "../assets/sample-sets/violin-sustained.json";
+import HARP_DATA from "../../assets/sample-sets/harp.json";
+import PIANO_DATA from "../../assets/sample-sets/piano.json";
+import VIOLIN_SUS_DATA from "../../assets/sample-sets/violin-sustained.json";
 
 /**
  * Represents the types of all built-in sample sets.
@@ -46,12 +46,20 @@ const SAMPLE_SETS: { [key in KnownSampleSet]: Partial<tone.SamplerOptions> } = {
 export class SamplerNodeData extends InstrumentNodeData {
   generator: SamplerAudioGenerator = new SamplerAudioGenerator();
   parameters: Record<string, Automatable> = {};
+
+  async beforeRender() {
+    if (this.generator.sampler.loaded || !this.generator.loadPromise)
+      return;
+
+    await this.generator.loadPromise;
+  }
 };
 
 export class SamplerAudioGenerator implements AudioGenerator {
-  sampler: tone.Sampler = new tone.Sampler(SAMPLE_SETS["PIANO"]);
+  sampler: tone.Sampler;
   out: tone.Gain = new tone.Gain();
   awaiting: NoteEvent[] = [];
+  loadPromise?: Promise<void>;
 
   private _set: KnownSampleSet = "PIANO";
 
@@ -62,17 +70,29 @@ export class SamplerAudioGenerator implements AudioGenerator {
     this.sampler.disconnect();
     this.sampler.dispose();
 
-    this.sampler = new tone.Sampler({
-      ...SAMPLE_SETS[value],
-      attack: this.sampler.attack,
-      release: this.sampler.release
+    this.loadPromise = new Promise(resolve => {
+      this.sampler = new tone.Sampler({
+        ...SAMPLE_SETS[value],
+        attack: this.sampler.attack,
+        release: this.sampler.release,
+        onload: resolve
+      });
     });
 
     this.sampler.connect(this.out);
   }
 
   constructor() {
-    this.sampler.connect(this.out);
+    this.sampler = null!;
+
+    this.loadPromise = new Promise(resolve => {
+      this.sampler = new tone.Sampler({
+        ...SAMPLE_SETS["PIANO"],
+        onload: resolve
+      });
+
+      this.sampler.connect(this.out);
+    });
   }
 
   connectTo(dst: AudioDestination): void {

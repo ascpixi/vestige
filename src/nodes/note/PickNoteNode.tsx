@@ -2,17 +2,17 @@ import * as flow from "@xyflow/react";
 import { memo } from "react";
 import { RiDropperFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../graph";
-import { assert } from "../util";
-import { FlatNodeDataSerializer } from "../serializer";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { NOTE_INPUT_HID_MAIN, NOTE_OUTPUT_HID, NoteGeneratorNodeData, ParametricNoteGenerator } from "../../graph";
+import { assert } from "../../util";
+import { FlatNodeDataSerializer } from "../../serializer";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SelectField } from "../../components/SelectField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 type Mode = "LOWEST" | "HIGHEST";
 type NoteInputHandle = typeof NOTE_INPUT_HID_MAIN; // we only accept one note input (the main one)

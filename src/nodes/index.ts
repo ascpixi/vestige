@@ -1,40 +1,47 @@
 import { NodeType } from "../graph";
 import { NodeDataSerializer } from "../serializer";
 
-import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./PentatonicMelodyNode";
-import { PentatonicChordsNode, PentatonicChordsNodeRenderer, PentatonicChordsNodeSerializer } from "./PentatonicChordsNode";
-import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./FilterNode";
-import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./ReverbNode";
-import { DelayNode, DelayNodeRenderer, DelayNodeSerializer } from "./DelayNode";
-import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./SynthNode";
 import { FinalNode, FinalNodeRenderer, FinalNodeSerializer } from "./FinalNode";
 import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
-import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./SamplerNode";
-import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./PickNoteNode";
-import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./ChorusNode";
-import { ArpeggiatorNode, ArpeggiatorNodeRenderer, ArpeggiatorNodeSerializer } from "./ArpeggiatorNode";
+import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
 
-export type NodeData = {
-    type: NodeType
-};
+import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
+import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
+import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./effect/ReverbNode";
+import { DelayNode, DelayNodeRenderer, DelayNodeSerializer } from "./effect/DelayNode";
+
+import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./note/PentatonicMelodyNode";
+import { PentatonicChordsNode, PentatonicChordsNodeRenderer, PentatonicChordsNodeSerializer } from "./note/PentatonicChordsNode";
+import { ArpeggiatorNode, ArpeggiatorNodeRenderer, ArpeggiatorNodeSerializer } from "./note/ArpeggiatorNode";
+import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./note/PickNoteNode";
+
+import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./instrument/SynthNode";
+import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./instrument/SamplerNode";
+import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./instrument/StepSeqNode";
 
 /** Represents any kind of node (module) provided by Vestige. */
 export type VestigeNode =
     PentatonicMelodyNode |
     PentatonicChordsNode |
-    SynthNode |
+    ArpeggiatorNode |
+    PickNoteNode |
+
+    StepSeqNode |
     SamplerNode |
+    SynthNode |
+
     FilterNode |
     ReverbNode |
     DelayNode |
     ChorusNode |
+    
     LfoNode |
     MixNode |
     BalanceNode |
-    PickNoteNode |
-    ArpeggiatorNode |
+    MathNode |
+    
     FinalNode;
 
 /**
@@ -49,34 +56,46 @@ export type VestigeNodeOfType<T extends NodeType> = VestigeNode & {
 export const VESTIGE_NODE_TYPES = {
     "pentatonic-melody": PentatonicMelodyNodeRenderer,
     "pentatonic-chords": PentatonicChordsNodeRenderer,
+    "arpeggiator": ArpeggiatorNodeRenderer,
+    "pick-note": PickNoteNodeRenderer,
+    
     "synth": SynthNodeRenderer,
     "sampler": SamplerNodeRenderer,
+    "step-seq": StepSeqNodeRenderer,
+
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
     "chorus": ChorusNodeRenderer,
+
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
-    "pick-note": PickNoteNodeRenderer,
-    "arpeggiator": ArpeggiatorNodeRenderer,
+    "math": MathNodeRenderer,
+
     "final": FinalNodeRenderer
 };
 
 export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicMelodyNodeSerializer(),
     new PentatonicChordsNodeSerializer(),
+    new ArpeggiatorNodeSerializer(),
+    new PickNoteNodeSerializer(),
+
     new SynthNodeSerializer(),
     new SamplerNodeSerializer(),
+    new StepSeqNodeSerializer(),
+
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),
     new ChorusNodeSerializer(),
+
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
-    new PickNoteNodeSerializer(),
-    new ArpeggiatorNodeSerializer(),
+    new MathNodeSerializer(),
+
     new FinalNodeSerializer()
 ];
 

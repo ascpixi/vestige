@@ -3,20 +3,20 @@ import * as flow from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import { RiEqualizerFill } from "@remixicon/react";
 
-import type { NodeTypeDescriptor } from ".";
-import { makeNodeFactory } from "./basis";
-import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { Automatable } from "../parameters";
-import { assert, invLogLerp, logLerp, match } from "../util";
-import { toneFreq } from "../audioUtil";
-import { FlatNodeDataSerializer, FlatSerializerSpec } from "../serializer";
-import { useBoundState } from "../hooks";
+import type { NodeTypeDescriptor } from "..";
+import { makeNodeFactory } from "../basis";
+import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
+import { Automatable } from "../../parameters";
+import { assert, invLogLerp, logLerp, match } from "../../util";
+import { toneFreq } from "../../audioUtil";
+import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
+import { useBoundState } from "../../hooks";
 
-import { NodePort } from "../components/NodePort";
-import { PlainField } from "../components/PlainField";
-import { SelectField } from "../components/SelectField";
-import { SliderField } from "../components/SliderField";
-import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { NodePort } from "../../components/NodePort";
+import { PlainField } from "../../components/PlainField";
+import { SelectField } from "../../components/SelectField";
+import { SliderField } from "../../components/SliderField";
+import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 type FilterType = "lowpass" | "bandpass" | "highpass";
 

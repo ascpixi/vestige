@@ -42,3 +42,30 @@ export function useNoteGeneratorSync(getter: () => number[]) {
 
     return notes;
 }
+
+/**
+ * Forces a re-render of the component when `shouldUpdate` returns `true` every
+ * `rate` milliseconds.
+ */
+export function useUpdater(
+    shouldUpdate: () => boolean,
+    rate = (1 / 30) * 1000
+) {
+    const [, setTimestamp] = useState(Date.now());
+
+    useEffect(() => {
+        let updateLatch = false;
+
+        const id = setInterval(() => {
+            if (shouldUpdate()) {
+                setTimestamp(Date.now());
+                updateLatch = true;
+            } else if (updateLatch) {
+                setTimestamp(Date.now());
+                updateLatch = false;
+            }
+        }, rate);
+
+        return () => clearInterval(id);
+    }, [shouldUpdate]);
+}
