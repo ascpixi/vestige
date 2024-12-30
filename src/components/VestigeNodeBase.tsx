@@ -1,6 +1,7 @@
 import { RiCloseCircleFill } from "@remixicon/react";
 import { useReactFlow } from "@xyflow/react";
 import React, { PropsWithChildren, useRef } from "react";
+import { twMerge } from "tailwind-merge";
 
 import { assert } from "../util";
  
@@ -27,7 +28,10 @@ export function VestigeNodeBase({ id, name, help, onRemove, className, children 
 
   return (
     <>
-      <div className={`flex flex-col text-xs border border-solid border-gray-200 h-full rounded-2xl w-[400px] bg-white/70 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)] ${className ?? ""}`}>
+      <div className={twMerge(
+        "flex flex-col text-xs border border-solid border-gray-200 h-full rounded-2xl w-[400px] bg-white/70 shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]",
+        className
+      )}>
         <header className={`
           flex items-center justify-between
           px-3 py-2 border-b border-solid border-gray-200 font-semibold rounded-t-2xl

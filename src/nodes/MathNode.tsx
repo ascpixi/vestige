@@ -26,6 +26,11 @@ type Operation =
   "SQRT" |
   "POW";
 
+function roundDecimals(value: number, places: number = 3) {
+  const mult = Math.pow(10, places);
+  return Math.round((value + Number.EPSILON) * mult) / mult;
+}
+
 export class MathNodeData extends ValueNodeData {
   generator = new MathValueGenerator();
   parameters = {
@@ -100,7 +105,8 @@ export const MathNodeRenderer = memo(function MathNodeRenderer(
       help={<>
         The <b>math</b> node can perform arbitrary arithmetic on one or two value inputs.
         The value inputs are always in the range of 0.0 to 1.0 (0% to 100%), and the output
-        value is always normalized to this range.
+        value is always limited to be in this range (if we get a result that's lower than 0.0,
+        it's set to 0.0 - and vice versa with 1.0).
       </>}
     >
       <div>
@@ -131,7 +137,7 @@ export const MathNodeRenderer = memo(function MathNodeRenderer(
               description="a value, 0.0 to 1.0, to use as variable A"
               value={valA} onChange={setValA} step={0.25}
               automatable={data.parameters["param-a"]}
-              automatableDisplay={() => data.generator.a}
+              automatableDisplay={() => roundDecimals(data.generator.a)}
             />
           </NodePort>
 
@@ -141,7 +147,7 @@ export const MathNodeRenderer = memo(function MathNodeRenderer(
               description="a value, 0.0 to 1.0, to use as variable B"
               value={!isSingleInput ? valB : NaN} onChange={setValB} step={0.25}
               automatable={data.parameters["param-b"]}
-              automatableDisplay={() => data.generator.b}
+              automatableDisplay={() => roundDecimals(data.generator.b)}
               disabled={isSingleInput}
             />
           </NodePort>
