@@ -342,7 +342,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
 
           <SliderField
             name="unison voices"
-            description="values larger than 1 play multiple version of the synth in unison, slightly detuned. creates a 'fuller', more complex sound."
+            description="values larger than 1 play multiple versions of the synth in unison, slightly detuned. creates a 'fuller', more complex sound."
             min={1} max={16} value={unisonVoices}
             onChange={setUnisonVoices}
           />
