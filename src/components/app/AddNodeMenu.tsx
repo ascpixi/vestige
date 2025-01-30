@@ -14,6 +14,7 @@ import { FILTER_NODE_DESCRIPTOR } from "../../nodes/effect/FilterNode";
 import { REVERB_NODE_DESCRIPTOR } from "../../nodes/effect/ReverbNode";
 import { DELAY_NODE_DESCRIPTOR } from "../../nodes/effect/DelayNode";
 import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
+import { PHASER_NODE_DESCRIPTOR } from "../../nodes/effect/PhaserNode";
 
 import { LFO_NODE_DESCRIPTOR } from "../../nodes/LfoNode";
 import { MIX_NODE_DESCRIPTOR } from "../../nodes/MixNode";
@@ -73,7 +74,8 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
               getEntry(FILTER_NODE_DESCRIPTOR),
               getEntry(REVERB_NODE_DESCRIPTOR),
               getEntry(DELAY_NODE_DESCRIPTOR),
-              getEntry(CHORUS_NODE_DESCRIPTOR)
+              getEntry(CHORUS_NODE_DESCRIPTOR),
+              getEntry(PHASER_NODE_DESCRIPTOR)
             ]
           },
           getEntry(LFO_NODE_DESCRIPTOR),

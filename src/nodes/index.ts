@@ -10,6 +10,7 @@ import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
 import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
 import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./effect/ReverbNode";
+import { PhaserNode, PhaserNodeRenderer, PhaserNodeSerializer } from "./effect/PhaserNode";
 import { DelayNode, DelayNodeRenderer, DelayNodeSerializer } from "./effect/DelayNode";
 
 import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./note/PentatonicMelodyNode";
@@ -36,6 +37,7 @@ export type VestigeNode =
     ReverbNode |
     DelayNode |
     ChorusNode |
+    PhaserNode |
     
     LfoNode |
     MixNode |
@@ -67,6 +69,7 @@ export const VESTIGE_NODE_TYPES = {
     "reverb": ReverbNodeRenderer,
     "delay": DelayNodeRenderer,
     "chorus": ChorusNodeRenderer,
+    "phaser": PhaserNodeRenderer,
 
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
@@ -90,6 +93,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new ReverbNodeSerializer(),
     new DelayNodeSerializer(),
     new ChorusNodeSerializer(),
+    new PhaserNodeSerializer(),
 
     new LfoNodeSerializer(),
     new MixNodeSerializer(),
