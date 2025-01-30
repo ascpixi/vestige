@@ -21,6 +21,7 @@ import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./no
 import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./instrument/SynthNode";
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./instrument/SamplerNode";
 import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./instrument/StepSeqNode";
+import { KeyboardNode, KeyboardNodeRenderer, KeyboardNodeSerializer } from "./note/KeyboardNode";
 
 /** Represents any kind of node (module) provided by Vestige. */
 export type VestigeNode =
@@ -28,6 +29,7 @@ export type VestigeNode =
     PentatonicChordsNode |
     ArpeggiatorNode |
     PickNoteNode |
+    KeyboardNode |
 
     StepSeqNode |
     SamplerNode |
@@ -60,6 +62,7 @@ export const VESTIGE_NODE_TYPES = {
     "pentatonic-chords": PentatonicChordsNodeRenderer,
     "arpeggiator": ArpeggiatorNodeRenderer,
     "pick-note": PickNoteNodeRenderer,
+    "keyboard": KeyboardNodeRenderer,
     
     "synth": SynthNodeRenderer,
     "sampler": SamplerNodeRenderer,
@@ -84,6 +87,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new PentatonicChordsNodeSerializer(),
     new ArpeggiatorNodeSerializer(),
     new PickNoteNodeSerializer(),
+    new KeyboardNodeSerializer(),
 
     new SynthNodeSerializer(),
     new SamplerNodeSerializer(),

@@ -5,6 +5,7 @@ import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicMe
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicChordsNode";
 import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "../../nodes/note/ArpeggiatorNode";
 import { PICK_NOTE_DESCRIPTOR } from "../../nodes/note/PickNoteNode";
+import { KEYBOARD_NODE_DESCRIPTOR } from "../../nodes/note/KeyboardNode";
 
 import { SYNTH_NODE_DESCRIPTOR } from "../../nodes/instrument/SynthNode";
 import { SAMPLER_NODE_DESCRIPTOR } from "../../nodes/instrument/SamplerNode";
@@ -60,6 +61,7 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
               getEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
               getEntry(ARPEGGIATOR_NOTE_DESCRIPTOR),
               getEntry(PICK_NOTE_DESCRIPTOR),
+              getEntry(KEYBOARD_NODE_DESCRIPTOR)
             ]
           },
           {

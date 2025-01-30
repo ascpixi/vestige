@@ -313,3 +313,11 @@ export function allEqualUnordered(a: number[], b: number[]) {
 
     return true;
 }
+
+/**
+ * Creates a copy of the target array, and if it does not contain `item`,
+ * adds it to the copy. If `item` already was included in the array, it is only copied.
+ */
+export function includeUnique<T>(arr: T[], item: T) {
+    return arr.includes(item) ? [...arr] : [...arr, item];
+}
