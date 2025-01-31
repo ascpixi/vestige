@@ -1,5 +1,5 @@
 
-<img align="right" height="60" src="./etc/icon.svg" title="Vestige icon">
+<img align="left" height="60" src="./etc/icon.svg" title="Vestige icon">
 
 # Vestige
 Vestige is a generative music synthesizer, designed to create autonomous compositions. It works by providing the user with a few basic modules that may be connected together to form a wide variety of different sounds. It's designed to be approachable and easy to understand.
