@@ -14,8 +14,8 @@ import { NodePort } from "../../components/NodePort";
 import { PlainField } from "../../components/PlainField";
 import { SliderField } from "../../components/SliderField";
 import { VestigeNodeBase } from "../../components/VestigeNodeBase";
-
-// A Brian-Eno shimmer reverb has a DSP graph akin to this:
+import { useBoundState } from "../../hooks";
+import { NumberField } from "../../components/NumberField";
 
 const MIN_DECAY = 0.1;
 const MAX_DECAY = 10;
@@ -57,24 +57,24 @@ class ShimmerTap {
 
   reverb: tone.Reverb = new tone.Reverb({
     decay: 4.00,
-    preDelay: 20 / 1000,
+    preDelay: 60 / 1000,
     wet: 1.0
   });
 
-  pitchShift = new tone.PitchShift(12);
-  chainOut = new tone.Gain(0.75);
+  pitchShift = new tone.PitchShift(7);
+  chainOut = new tone.Gain(0.5);
 
   constructor(input: tone.ToneAudioNode, output: tone.ToneAudioNode) {
     this.input = input;
     this.output = output;
 
-    this.input.connect(this.reverb);
-    this.reverb.connect(this.pitchShift);
+    this.input.connect(this.pitchShift);
+    this.pitchShift.connect(this.reverb);
 
     // Affected signal flows in its entirety to the final output, and scaled by an "intensity" value
     // to the chain output, which flows to the next order, if one exists.
-    this.pitchShift.connect(this.output);
-    this.pitchShift.connect(this.chainOut);
+    this.reverb.connect(this.output);
+    this.reverb.connect(this.chainOut);
   }
 
   dispose() {
@@ -87,9 +87,13 @@ class ShimmerTap {
 export class ShimmerAudioEffect implements AudioEffect {
   taps: ShimmerTap[] = [];
   input = new tone.Gain();
+  masterReverb = new tone.JCReverb({
+    roomSize: 0.7,
+    wet: 0.9
+  });
 
-  wetOut = new tone.Gain();
-  dryOut = new tone.Gain();
+  wetOut = new tone.Gain(0.25);
+  dryOut = new tone.Gain(1.0 - 0.25);
   output = new tone.Gain();
 
   get order() { return this.taps.length; }
@@ -106,7 +110,7 @@ export class ShimmerAudioEffect implements AudioEffect {
       // We're increasing the order. Add more taps.
       for (let i = 0; i < value - prev; i++) {
         const input = this.taps.length > 0 ? last(this.taps).chainOut : this.input;
-        this.taps.push(new ShimmerTap(input, this.wetOut));
+        this.taps.push(new ShimmerTap(input, this.masterReverb));
       }
     } else {
       // We're decreasing the order. Remove the taps at the end.
@@ -155,6 +159,7 @@ export class ShimmerAudioEffect implements AudioEffect {
   
     this.input.connect(this.dryOut);
 
+    this.masterReverb.connect(this.wetOut);
     this.wetOut.connect(this.output);
     this.dryOut.connect(this.output);
   }
@@ -220,8 +225,8 @@ export const ShimmerNodeRenderer = memo(function ShimmerNodeRenderer(
 ) {
   const fx = data.effect;
 
-  const [order, setOrder] = useState(fx.order);
-  const [shift, setShift] = useState(fx.shift);
+  const [order, setOrder] = useBoundState(fx, "order");
+  const [shift, setShift] = useBoundState(fx, "shift");
   const [intensity, setIntensity] = useState(fx.intensity * 100);
   const [decay, setDecay] = useState(fx.decay);
   const [preDelay, setPreDelay] = useState(fx.preDelay);
@@ -261,6 +266,8 @@ export const ShimmerNodeRenderer = memo(function ShimmerNodeRenderer(
         the signal losing its gain each time it goes through the loop (controlled by the <b>intensity</b>)
         parameter.
 
+        <br/><br/>
+
         This kind of effect is also called the <b>Eno/Lanois shimmer reverb</b>, as it was first popularized
         by Brian Eno and Daniel Lanois in their ambient works. It works best for acoustic instruments and
         synthesizer pads, and creates great ambiances.
@@ -279,10 +286,10 @@ export const ShimmerNodeRenderer = memo(function ShimmerNodeRenderer(
             />
           </NodePort>
 
-          <SliderField
+          <NumberField
             name="order"
             description="the amount of loops/taps to make the signal go through, emulating a feedback loop"
-            min={4} max={64} value={order} onChange={setOrder}
+            value={order} onChange={setOrder}
           />
 
           <SliderField
