@@ -5,6 +5,7 @@ import { PENTATONIC_MELODY_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicMe
 import { PENTATONIC_CHORDS_NODE_DESCRIPTOR } from "../../nodes/note/PentatonicChordsNode";
 import { ARPEGGIATOR_NOTE_DESCRIPTOR } from "../../nodes/note/ArpeggiatorNode";
 import { PICK_NOTE_DESCRIPTOR } from "../../nodes/note/PickNoteNode";
+import { KEYBOARD_NODE_DESCRIPTOR } from "../../nodes/note/KeyboardNode";
 
 import { SYNTH_NODE_DESCRIPTOR } from "../../nodes/instrument/SynthNode";
 import { SAMPLER_NODE_DESCRIPTOR } from "../../nodes/instrument/SamplerNode";
@@ -12,8 +13,11 @@ import { STEP_SEQ_NODE_DESCRIPTOR } from "../../nodes/instrument/StepSeqNode";
 
 import { FILTER_NODE_DESCRIPTOR } from "../../nodes/effect/FilterNode";
 import { REVERB_NODE_DESCRIPTOR } from "../../nodes/effect/ReverbNode";
+import { SHIMMER_NODE_DESCRIPTOR } from "../../nodes/effect/ShimmerNode";
 import { DELAY_NODE_DESCRIPTOR } from "../../nodes/effect/DelayNode";
 import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
+import { PHASER_NODE_DESCRIPTOR } from "../../nodes/effect/PhaserNode";
+import { STEREO_WIDENER_NODE_DESCRIPTOR } from "../../nodes/effect/StereoWidenerNode";
 
 import { LFO_NODE_DESCRIPTOR } from "../../nodes/LfoNode";
 import { MIX_NODE_DESCRIPTOR } from "../../nodes/MixNode";
@@ -59,6 +63,7 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
               getEntry(PENTATONIC_CHORDS_NODE_DESCRIPTOR),
               getEntry(ARPEGGIATOR_NOTE_DESCRIPTOR),
               getEntry(PICK_NOTE_DESCRIPTOR),
+              getEntry(KEYBOARD_NODE_DESCRIPTOR)
             ]
           },
           {
@@ -72,8 +77,11 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
             type: "GROUP", content: "effects", entries: [
               getEntry(FILTER_NODE_DESCRIPTOR),
               getEntry(REVERB_NODE_DESCRIPTOR),
+              getEntry(SHIMMER_NODE_DESCRIPTOR),
               getEntry(DELAY_NODE_DESCRIPTOR),
-              getEntry(CHORUS_NODE_DESCRIPTOR)
+              getEntry(CHORUS_NODE_DESCRIPTOR),
+              getEntry(PHASER_NODE_DESCRIPTOR),
+              getEntry(STEREO_WIDENER_NODE_DESCRIPTOR)
             ]
           },
           getEntry(LFO_NODE_DESCRIPTOR),

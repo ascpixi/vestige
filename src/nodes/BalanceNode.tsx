@@ -6,7 +6,7 @@ import { RiEqualizer2Fill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { Automatable } from "../parameters";
+import { Automatable } from "../graph";
 import { assert, lerp } from "../util";
 import { FlatNodeDataSerializer } from "../serializer";
 

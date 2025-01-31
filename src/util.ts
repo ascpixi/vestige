@@ -63,13 +63,6 @@ export function hashify(x: number) {
 }
 
 /**
- * Checks if two numbers are nearly equal.
- */
-export function isApprox(a: number, b: number, epsilon = 0.001) {
-    return Math.abs(a - b) < epsilon;
-}
-
-/**
  * Linearly interpolates between `a` and `b` by `t`.
  */
 export function lerp(a: number, b: number, t: number) {
@@ -150,13 +143,6 @@ export interface Point {
 }
 
 /**
- * Gets the distance between two points.
- */
-export function distance(a: Point, b: Point) {
-    return Math.sqrt(distanceSqr(a, b));
-}
-
-/**
  * Gets the squared distance between two points. This is a faster operation
  * than `distance`, and should be preferred when comparing distances.
  */
@@ -208,41 +194,6 @@ export function sqr(x: number) {
 }
 
 /**
- * Represents an object that has a value that is computed in the background.
- */
-export class Deferred<T> {
-    private value: T | null = null;
-    private promise: Promise<T> | null;
-
-    /**
-     * @param fn A function that performs the asynchronous background task. It will be immidiately executed when the object is created.
-     */
-    constructor(fn: () => Promise<T>) {
-        this.promise = (async () => {
-            const startedAt = Date.now();
-            this.value = await fn();
-            console.debug(`(deferred task completed in ${(Date.now() - startedAt) / 1000})`, this.value);
-
-            this.promise = null;
-            return this.value;
-        })();
-    }
-
-    async get(): Promise<T> {
-        if (this.promise) {
-            await this.promise;
-        }
-
-        return this.value!; // if this is null, that means that the wrapping function explicitly returned null
-    }
-
-    getSync(): T {
-        assert(this.promise === null, "attempted to get a deferred value before it's finished");
-        return this.value!;
-    }
-}
-
-/**
  * Returns an array with all integers in the range of `[min, max]`, inclusive.
  * For example, for `range(0, 4)`, this function returns `[0, 1, 2, 3, 4]`.
  */
@@ -279,23 +230,6 @@ export function range(min: number, max?: number, step?: number): number[] {
 
 /**
  * Checks if all numbers from array `a` are equal to the numbers in array `b`,
- * with respect to order.
- */
-export function allEqual(a: number[], b: number[]) {
-    if (a.length != b.length)
-        return false;
-
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] != b[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-/**
- * Checks if all numbers from array `a` are equal to the numbers in array `b`,
  * regardless of order.
  */
 export function allEqualUnordered(a: number[], b: number[]) {
@@ -312,4 +246,19 @@ export function allEqualUnordered(a: number[], b: number[]) {
     }
 
     return true;
+}
+
+/**
+ * Creates a copy of the target array, and if it does not contain `item`,
+ * adds it to the copy. If `item` already was included in the array, it is only copied.
+ */
+export function includeUnique<T>(arr: T[], item: T) {
+    return arr.includes(item) ? [...arr] : [...arr, item];
+}
+
+/**
+ * Equivalent to `arr[arr.length - 1]`.
+ */
+export function last<T>(arr: T[]) {
+    return arr[arr.length - 1];
 }

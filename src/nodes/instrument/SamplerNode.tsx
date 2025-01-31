@@ -5,8 +5,7 @@ import { RiVoiceprintFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../../graph";
-import { Automatable } from "../../parameters";
+import { Automatable, AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination } from "../../graph";
 import { FlatNodeDataSerializer } from "../../serializer";
 import { useBoundState } from "../../hooks";
 

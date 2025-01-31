@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 
-import { Automatable } from "../parameters";
+import { Automatable } from "../graph";
 import { useUpdater } from "../hooks";
 
 export function NumberField({

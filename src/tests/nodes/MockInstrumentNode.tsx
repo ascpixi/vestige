@@ -1,7 +1,6 @@
 import * as flow from "@xyflow/react";
 
-import { AudioDestination, AudioGenerator, InstrumentNodeData, NoteEvent } from "../../graph";
-import { Automatable } from "../../parameters";
+import { Automatable, AudioDestination, AudioGenerator, InstrumentNodeData, NoteEvent } from "../../graph";
 import { makeNodeFactory } from "../../nodes/basis";
 
 export class MockInstrumentNodeData extends InstrumentNodeData {

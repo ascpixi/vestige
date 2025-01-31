@@ -5,9 +5,8 @@ import { RiVolumeVibrateFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { Automatable, AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
 import { octToCents } from "../../audioUtil";
-import { Automatable } from "../../parameters";
 import { FlatNodeDataSerializer } from "../../serializer";
 import { anyOf, lerp, match } from "../../util";
 import { useBoundState } from "../../hooks";
@@ -342,7 +341,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
 
           <SliderField
             name="unison voices"
-            description="values larger than 1 play multiple version of the synth in unison, slightly detuned. creates a 'fuller', more complex sound."
+            description="values larger than 1 play multiple versions of the synth in unison, slightly detuned. creates a 'fuller', more complex sound."
             min={1} max={16} value={unisonVoices}
             onChange={setUnisonVoices}
           />

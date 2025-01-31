@@ -13,7 +13,7 @@ import { PlainField } from "../components/PlainField";
 import { NumberField } from "../components/NumberField";
 import { SelectField } from "../components/SelectField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
-import { Automatable } from "../parameters";
+import { Automatable } from "../graph";
 import { useBoundState } from "../hooks";
 
 type Operation =
