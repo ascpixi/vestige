@@ -13,6 +13,7 @@ import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./effect/R
 import { ShimmerNode, ShimmerNodeRenderer, ShimmerNodeSerializer } from "./effect/ShimmerNode";
 import { PhaserNode, PhaserNodeRenderer, PhaserNodeSerializer } from "./effect/PhaserNode";
 import { DelayNode, DelayNodeRenderer, DelayNodeSerializer } from "./effect/DelayNode";
+import { StereoWidenerNode, StereoWidenerNodeRenderer, StereoWidenerNodeSerializer } from "./effect/StereoWidenerNode";
 
 import { PentatonicMelodyNodeRenderer, PentatonicMelodyNode, PentatonicMelodyNodeSerializer } from "./note/PentatonicMelodyNode";
 import { PentatonicChordsNode, PentatonicChordsNodeRenderer, PentatonicChordsNodeSerializer } from "./note/PentatonicChordsNode";
@@ -42,6 +43,7 @@ export type VestigeNode =
     ChorusNode |
     PhaserNode |
     ShimmerNode |
+    StereoWidenerNode |
     
     LfoNode |
     MixNode |
@@ -76,6 +78,7 @@ export const VESTIGE_NODE_TYPES = {
     "delay": DelayNodeRenderer,
     "chorus": ChorusNodeRenderer,
     "phaser": PhaserNodeRenderer,
+    "stereo-widener": StereoWidenerNodeRenderer,
 
     "lfo": LfoNodeRenderer,
     "mix": MixNodeRenderer,
@@ -102,6 +105,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new DelayNodeSerializer(),
     new ChorusNodeSerializer(),
     new PhaserNodeSerializer(),
+    new StereoWidenerNodeSerializer(),
 
     new LfoNodeSerializer(),
     new MixNodeSerializer(),

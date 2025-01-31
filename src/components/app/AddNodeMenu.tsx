@@ -17,6 +17,7 @@ import { SHIMMER_NODE_DESCRIPTOR } from "../../nodes/effect/ShimmerNode";
 import { DELAY_NODE_DESCRIPTOR } from "../../nodes/effect/DelayNode";
 import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
 import { PHASER_NODE_DESCRIPTOR } from "../../nodes/effect/PhaserNode";
+import { STEREO_WIDENER_NODE_DESCRIPTOR } from "../../nodes/effect/StereoWidenerNode";
 
 import { LFO_NODE_DESCRIPTOR } from "../../nodes/LfoNode";
 import { MIX_NODE_DESCRIPTOR } from "../../nodes/MixNode";
@@ -79,7 +80,8 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
               getEntry(SHIMMER_NODE_DESCRIPTOR),
               getEntry(DELAY_NODE_DESCRIPTOR),
               getEntry(CHORUS_NODE_DESCRIPTOR),
-              getEntry(PHASER_NODE_DESCRIPTOR)
+              getEntry(PHASER_NODE_DESCRIPTOR),
+              getEntry(STEREO_WIDENER_NODE_DESCRIPTOR)
             ]
           },
           getEntry(LFO_NODE_DESCRIPTOR),
