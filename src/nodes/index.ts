@@ -10,6 +10,7 @@ import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
 import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
 import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./effect/ReverbNode";
+import { ShimmerNode, ShimmerNodeRenderer, ShimmerNodeSerializer } from "./effect/ShimmerNode";
 import { PhaserNode, PhaserNodeRenderer, PhaserNodeSerializer } from "./effect/PhaserNode";
 import { DelayNode, DelayNodeRenderer, DelayNodeSerializer } from "./effect/DelayNode";
 
@@ -40,6 +41,7 @@ export type VestigeNode =
     DelayNode |
     ChorusNode |
     PhaserNode |
+    ShimmerNode |
     
     LfoNode |
     MixNode |
@@ -70,6 +72,7 @@ export const VESTIGE_NODE_TYPES = {
 
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
+    "shimmer": ShimmerNodeRenderer,
     "delay": DelayNodeRenderer,
     "chorus": ChorusNodeRenderer,
     "phaser": PhaserNodeRenderer,
@@ -95,6 +98,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
 
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),
+    new ShimmerNodeSerializer(),
     new DelayNodeSerializer(),
     new ChorusNodeSerializer(),
     new PhaserNodeSerializer(),

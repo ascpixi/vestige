@@ -13,6 +13,7 @@ import { STEP_SEQ_NODE_DESCRIPTOR } from "../../nodes/instrument/StepSeqNode";
 
 import { FILTER_NODE_DESCRIPTOR } from "../../nodes/effect/FilterNode";
 import { REVERB_NODE_DESCRIPTOR } from "../../nodes/effect/ReverbNode";
+import { SHIMMER_NODE_DESCRIPTOR } from "../../nodes/effect/ShimmerNode";
 import { DELAY_NODE_DESCRIPTOR } from "../../nodes/effect/DelayNode";
 import { CHORUS_NODE_DESCRIPTOR } from "../../nodes/effect/ChorusNode";
 import { PHASER_NODE_DESCRIPTOR } from "../../nodes/effect/PhaserNode";
@@ -75,6 +76,7 @@ export function AddNodeMenu({ x, y, show, onNodeChoose }: {
             type: "GROUP", content: "effects", entries: [
               getEntry(FILTER_NODE_DESCRIPTOR),
               getEntry(REVERB_NODE_DESCRIPTOR),
+              getEntry(SHIMMER_NODE_DESCRIPTOR),
               getEntry(DELAY_NODE_DESCRIPTOR),
               getEntry(CHORUS_NODE_DESCRIPTOR),
               getEntry(PHASER_NODE_DESCRIPTOR)
