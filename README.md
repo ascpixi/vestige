@@ -5,7 +5,7 @@
 Vestige is a generative music synthesizer, designed to create autonomous compositions. It works by providing the user with a few basic modules that may be connected together to form a wide variety of different sounds. It's designed to be approachable and easy to understand.
 
 <a href="https://www.youtube.com/watch?v=x5a5ZHItSDU">
-    <img src="./etc/screenshot.png" alt="Vestige screenshot"/>
+    <img src="https://raw.githubusercontent.com/ascpixi/vestige/refs/heads/development/etc/screenshot.png" alt="Vestige screenshot"/>
 </a>
 <h6 align="center">click on the screenshot above to watch a demo video!</h6>
 
