@@ -5,8 +5,7 @@ import { RiAddFill, RiDeleteBinFill, RiGridFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
-import { Automatable } from "../../parameters";
+import { Automatable, AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
 import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
 import { useBoundState } from "../../hooks";
 

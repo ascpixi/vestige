@@ -5,8 +5,7 @@ import { RiSparklingFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
-import { Automatable } from "../../parameters";
+import { Automatable, AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
 import { assert, clamp, last, lerp } from "../../util";
 import { FlatNodeDataSerializer } from "../../serializer";
 

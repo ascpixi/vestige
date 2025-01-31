@@ -5,9 +5,8 @@ import { RiVolumeVibrateFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { Automatable, AudioGenerator, NoteEvent, InstrumentNodeData, NOTE_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
 import { octToCents } from "../../audioUtil";
-import { Automatable } from "../../parameters";
 import { FlatNodeDataSerializer } from "../../serializer";
 import { anyOf, lerp, match } from "../../util";
 import { useBoundState } from "../../hooks";
