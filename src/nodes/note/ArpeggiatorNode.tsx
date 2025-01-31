@@ -19,8 +19,12 @@ import { MusicalKeyboard } from "../../components/MusicalKeyboard";
 const MIN_SPEED = 0.05;
 const MAX_SPEED = 2;
 
-type Style = "UP" | "DOWN";
+type Style = "UP" | "DOWN" | "RANDOM";
 type NoteInputHandle = typeof NOTE_INPUT_HID_MAIN; // we only accept one note input (the main one)
+
+function fract(x: number) {
+  return x - Math.floor(x);
+}
 
 export class ArpeggiatorGenerator implements ParametricNoteGenerator<NoteInputHandle> {
   inputs = 1 as const;
@@ -41,7 +45,14 @@ export class ArpeggiatorGenerator implements ParametricNoteGenerator<NoteInputHa
     // https://www.desmos.com/calculator/rgyhezrleq
     let idx = match(this.style, {
       "UP": Math.floor(((1 / this.speed) * time)) % n,
-      "DOWN": -Math.floor(((1 / this.speed) * time) % n) + (n - 1)
+      "DOWN": -Math.floor(((1 / this.speed) * time) % n) + (n - 1),
+      "RANDOM": Math.floor(
+        fract(
+          Math.sin(Math.floor(time / this.speed))
+          * (Math.sin((Math.floor(time / 64) + 1) * 456.341) * 456735.4352)
+        )
+        * n
+      )
     });
 
     return this.lastNotes = [input[idx]];
@@ -115,6 +126,7 @@ export const ArpeggiatorNodeRenderer = memo(function ArpeggiatorNodeRenderer(
         >
           <option value="UP">up (ascending)</option>
           <option value="DOWN">down (descending)</option>
+          <option value="RANDOM">random</option>
         </SelectField>
 
         <SliderField
