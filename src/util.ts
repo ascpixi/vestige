@@ -63,13 +63,6 @@ export function hashify(x: number) {
 }
 
 /**
- * Checks if two numbers are nearly equal.
- */
-export function isApprox(a: number, b: number, epsilon = 0.001) {
-    return Math.abs(a - b) < epsilon;
-}
-
-/**
  * Linearly interpolates between `a` and `b` by `t`.
  */
 export function lerp(a: number, b: number, t: number) {
@@ -147,13 +140,6 @@ export function pickRandom<T>(
 export interface Point {
     x: number;
     y: number;
-}
-
-/**
- * Gets the distance between two points.
- */
-export function distance(a: Point, b: Point) {
-    return Math.sqrt(distanceSqr(a, b));
 }
 
 /**
@@ -240,23 +226,6 @@ export function range(min: number, max?: number, step?: number): number[] {
     }
 
     return seq;
-}
-
-/**
- * Checks if all numbers from array `a` are equal to the numbers in array `b`,
- * with respect to order.
- */
-export function allEqual(a: number[], b: number[]) {
-    if (a.length != b.length)
-        return false;
-
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] != b[i]) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 /**
