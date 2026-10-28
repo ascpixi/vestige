@@ -28,7 +28,7 @@ export async function promptToSaveFile(
             await writeFile(filePath, data);
         }
     } else {
-        const blob = new Blob([data], { type: mimeType });
+        const blob = new Blob([data as BlobPart],{ type: mimeType });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");

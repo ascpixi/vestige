@@ -1,6 +1,7 @@
 import * as vite from "vite";
 import * as vitest from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { webdriverio } from "@vitest/browser-webdriverio";
 
 const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
   // https://v2.tauri.app/start/frontend/vite/
@@ -37,8 +38,8 @@ const vitestCfg = vitest.defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      name: "chrome",
-      provider: "webdriverio",
+      instances: [{ browser: "chrome" }],
+      provider: webdriverio(),
       screenshotFailures: false
     }
   }
