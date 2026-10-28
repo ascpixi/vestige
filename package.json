@@ -12,18 +12,17 @@
   },
   "dependencies": {
     "@remixicon/react": "^4.9.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/plugin-dialog": "^2.8.4",
     "@tauri-apps/plugin-fs": "^2.7.1",
     "@xyflow/react": "^12.12.0",
-    "autoprefixer": "^10.4.20",
     "byte-base64": "^1.1.0",
     "cbor2": "^2.4.1",
-    "daisyui": "^4.12.20",
-    "postcss": "^8.4.49",
+    "daisyui": "^5.7.50",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "tailwind-merge": "^2.6.0",
-    "tailwindcss": "^3.4.16",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.3.3",
     "tone": "^15.1.22"
   },
   "devDependencies": {

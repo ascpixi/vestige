@@ -1,6 +1,7 @@
 import * as vite from "vite";
 import * as vitest from "vitest/config";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { webdriverio } from "@vitest/browser-webdriverio";
 
 const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
@@ -28,7 +29,7 @@ const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
 } satisfies Partial<vite.UserConfig>;
 
 const viteCfg = vite.defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   base: "/",
   ...tauriCfg
 });
