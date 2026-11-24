@@ -1,6 +1,8 @@
 import * as vite from "vite";
 import * as vitest from "vitest/config";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { webdriverio } from "@vitest/browser-webdriverio";
 
 const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
   // https://v2.tauri.app/start/frontend/vite/
@@ -27,7 +29,7 @@ const tauriCfg = !process.env.TAURI_ENV_PLATFORM ? {} : {
 } satisfies Partial<vite.UserConfig>;
 
 const viteCfg = vite.defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   base: "/",
   ...tauriCfg
 });
@@ -37,8 +39,8 @@ const vitestCfg = vitest.defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      name: "chrome",
-      provider: "webdriverio",
+      instances: [{ browser: "chrome" }],
+      provider: webdriverio(),
       screenshotFailures: false
     }
   }

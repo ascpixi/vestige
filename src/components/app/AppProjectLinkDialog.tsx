@@ -28,7 +28,7 @@ export function AppProjectLinkDialog({ link }: {
         </p>
 
         <textarea ref={textAreaRef}
-          className="textarea textarea-bordered w-full h-full min-h-[200px]"
+          className="textarea w-full h-full min-h-[200px]"
           aria-label="Project link"
           value={link}
           readOnly

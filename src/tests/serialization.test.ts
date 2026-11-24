@@ -48,8 +48,8 @@ describe("serialization", async () => {
         expect(finalNode).toBeTruthy();
     
         expect(deserialized.edges)
-            .toSatisfy<flow.Edge[]>(
-                x => x.some(y => y.target == finalNode!.id),
+            .toSatisfy(
+                (x: flow.Edge[]) => x.some(y => y.target == finalNode!.id),
                 "no incoming connections to the final node"
             );
     });
@@ -84,8 +84,8 @@ describe("serialization", async () => {
     
         function expectConnection(from: string, to: string, display: string) {
             expect(edges)
-                .toSatisfy<flow.Edge[]>(
-                    x => x.some(y => y.source == from && y.target == to),
+                .toSatisfy(
+                    (x: flow.Edge[]) => x.some(y => y.source == from && y.target == to),
                     `no connection found: ${display}`
                 );
         }
