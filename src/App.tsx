@@ -332,7 +332,7 @@ export default function App() {
                 <RiSaveFill/>
               </button>
 
-              <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-[1] w-52 p-2 shadow">
+              <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-1 w-52 p-2 shadow-sm">
                 <li><a onClick={saveAsFile}><RiFileCheckFill className="w-4"/> Save as file</a></li>
                 <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
                 <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>

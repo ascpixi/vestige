@@ -78,7 +78,7 @@ export function MusicalKeyboard({ octaves, notes, interactable, onMouseDown, onM
                     onMouseUp={ev => mouseUpHandler(ev, note + 1 + (idx * 12), isSharp(note + 1))}
                     onMouseLeave={ev => mouseUpHandler(ev, note + 1 + (idx * 12), isSharp(note + 1))}
                     className={
-                      `h-full w-1/12 rounded-b-sm
+                      `h-full w-1/12 rounded-b-xs
                       ${o.includes(note + 1) ? "bg-primary" : `${interactable ? "hover:bg-gray-700" : ""} bg-black`}
                       ${isSharp(note + 1) ? "" : "invisible"}
                       ${interactable ? "cursor-pointer" : ""}

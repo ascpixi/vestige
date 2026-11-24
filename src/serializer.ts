@@ -278,11 +278,11 @@ const COMPRESS_ALGO: CompressionFormat = "deflate-raw";
 
 // Attribution: https://dev.to/lucasdamianjohnson/compress-decompress-an-arraybuffer-client-side-in-js-2nf6
 
-async function compress(input: ArrayBuffer) {
+async function compress(input: Uint8Array) {
     const cs = new CompressionStream(COMPRESS_ALGO);
     const writer = cs.writable.getWriter();
 
-    writer.write(input);
+    writer.write(input as BufferSource);
     writer.close();
 
     const output: Uint8Array[] = [];
@@ -307,11 +307,11 @@ async function compress(input: ArrayBuffer) {
     return concatenated;
 };
 
-async function decompress(input: ArrayBuffer): Promise<Uint8Array> {
+async function decompress(input: Uint8Array): Promise<Uint8Array> {
     const ds = new DecompressionStream(COMPRESS_ALGO);
     const writer = ds.writable.getWriter();
 
-    writer.write(input);
+    writer.write(input as BufferSource);
     writer.close();
 
     const output: Uint8Array[] = [];
