@@ -131,6 +131,11 @@ export interface NodeTypeDescriptor {
     icon: (className: string) => React.ReactNode;
 
     /**
+     * The documentation of the node, displayed in the help center.
+     */
+    help: React.ReactNode;
+
+    /**
      * Creates a new node object of the node type this `NodeTypeDescriptor`
      * describes at the given position.
      */

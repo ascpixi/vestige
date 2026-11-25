@@ -6,7 +6,7 @@ import { RiUserCommunityFill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
-import { Automatable } from "../../graph";
+import { Automatable, linearUnit } from "../../graph";
 import { assert, lerp } from "../../util";
 import { FlatNodeDataSerializer } from "../../serializer";
 
@@ -20,6 +20,14 @@ const MAX_FREQ = 5;
 
 const MIN_FEEDBACK = 0;
 const MAX_FEEDBACK = 0.9;
+
+const FEEDBACK_UNIT = linearUnit(
+  MIN_FEEDBACK * 100,
+  MAX_FEEDBACK * 100,
+  x => `${Math.round(x)}%`
+);
+const RATE_UNIT = linearUnit(MIN_FREQ, MAX_FREQ, x => `${x.toFixed(2)} Hz`);
+const SPREAD_UNIT = linearUnit(0, 180, x => `${Math.round(x)}°`);
 
 export class ChorusNodeData extends EffectNodeData {
   effect: ChorusAudioEffect;
@@ -38,10 +46,16 @@ export class ChorusNodeData extends EffectNodeData {
 
     const chorus = this.effect.chorus;
     this.parameters = {
-      "param-feedback": new Automatable(x => chorus.feedback.value = lerp(MIN_FEEDBACK, MAX_FEEDBACK, x)),
-      "param-frequency": new Automatable(x => chorus.frequency.value = lerp(MIN_FREQ, MAX_FREQ, x)),
+      "param-feedback": new Automatable(
+        x => chorus.feedback.value = lerp(MIN_FEEDBACK, MAX_FEEDBACK, x),
+        FEEDBACK_UNIT
+      ),
+      "param-frequency": new Automatable(
+        x => chorus.frequency.value = lerp(MIN_FREQ, MAX_FREQ, x),
+        RATE_UNIT
+      ),
       "param-depth": new Automatable(x => chorus.depth = x),
-      "param-spread": new Automatable(x => chorus.spread = lerp(0, 180, x)),
+      "param-spread": new Automatable(x => chorus.spread = lerp(0, 180, x), SPREAD_UNIT),
       "param-wet": new Automatable(x => chorus.wet.value = x)
     };
   }
@@ -105,8 +119,12 @@ export const createChorusNode = makeNodeFactory("chorus", () => new ChorusNodeDa
 
 /** Provides a `NodeTypeDescriptor` which describes chorus nodes. */
 export const CHORUS_NODE_DESCRIPTOR = {
-  displayName: "chorus",
+  displayName: "Chorus",
   icon: cls => <RiUserCommunityFill className={cls}/>,
+  help: <>
+    The <b>chorus</b> node simulates a "chorused" sound from a single signal. This is done by
+    mixing the signal with delayed copies of itself, modulated by an internal LFO.
+  </>,
   create: createChorusNode
 } satisfies NodeTypeDescriptor;
 
@@ -154,30 +172,26 @@ export const ChorusNodeRenderer = memo(function ChorusNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="chorus"
-      help={<>
-        The <b>chorus</b> module simulates a "chorused" sound from a single signal.
-        This is done by mixing the signal with delayed copies of itself, modulated
-        by an internal LFO (Low Frequency Oscillator).
-      </>}
+      name="Chorus"
+      help={CHORUS_NODE_DESCRIPTOR.help}
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
-            <PlainField name="main input" description="the audio to add chorus to" />
-          </NodePort>
+          <div className="flex justify-between gap-4">
+            <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+              <PlainField name="input" />
+            </NodePort>
 
-          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-            <PlainField align="right"
-              name="main output"
-              description="the chorused audio"
-            />
-          </NodePort>
+            <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+              <PlainField align="right"
+                name="output"
+              />
+            </NodePort>
+          </div>
 
           <NodePort nodeId={id} handleId={paramHandleId("feedback")} kind="input" type="value">
             <SliderField
               name="feedback"
-              description="amount of the signal going back to the chorus. more values = more chorus"
               min={MIN_FEEDBACK * 100} max={MAX_FEEDBACK * 100} value={feedback} isPercentage
               onChange={setFeedback}
               automatable={data.parameters["param-feedback"]}
@@ -187,8 +201,7 @@ export const ChorusNodeRenderer = memo(function ChorusNodeRenderer(
 
           <NodePort nodeId={id} handleId={paramHandleId("frequency")} kind="input" type="value">
             <SliderField
-              name="rate (frequency)"
-              description="the speed of pitch modulation"
+              name="rate"
               min={MIN_FREQ} max={MAX_FREQ} value={frequency} step={0.01}
               onChange={setFrequency}
               automatable={data.parameters["param-frequency"]}
@@ -200,7 +213,6 @@ export const ChorusNodeRenderer = memo(function ChorusNodeRenderer(
           <NodePort nodeId={id} handleId={paramHandleId("depth")} kind="input" type="value">
             <SliderField
               name="depth"
-              description="the frequency range of pitch modulation"
               min={0} max={100} value={depth} isPercentage
               onChange={setDepth}
               automatable={data.parameters["param-depth"]}
@@ -210,20 +222,18 @@ export const ChorusNodeRenderer = memo(function ChorusNodeRenderer(
 
           <NodePort nodeId={id} handleId={paramHandleId("spread")} kind="input" type="value">
             <SliderField
-              name="stereo spread"
-              description="also known as the width - a value of 180° = hard left/right pan"
+              name="spread"
               min={0} max={180} value={spread}
               onChange={setSpread}
               automatable={data.parameters["param-spread"]}
               automatableDisplay={() => chorus.spread}
-              valueStringifier={x => `${x}°`}
+              valueStringifier={x => `${Math.round(x)}°`}
             />
           </NodePort>
 
           <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
-              name="wetness (mix)"
-              description="the percentage of the resulting audio that is the chorus"
+              name="mix"
               min={0} max={100} value={wet} isPercentage
               onChange={setWet}
               automatable={data.parameters["param-wet"]}

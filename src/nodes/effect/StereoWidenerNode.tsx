@@ -71,8 +71,12 @@ export const createStereoWidenerNode = makeNodeFactory("stereo-widener", () => n
 
 /** Provides a `NodeTypeDescriptor` which describes stereo widener nodes. */
 export const STEREO_WIDENER_NODE_DESCRIPTOR = {
-  displayName: "stereo widener",
+  displayName: "Stereo Widener",
   icon: cls => <RiHeadphoneFill className={cls}/>,
+  help: <>
+    The <b>stereo widener</b> node changes the stereo width of a sound, either making it mono, or
+    more stereo. The higher the <b>width</b>, the "wider" the sound is.
+  </>,
   create: createStereoWidenerNode
 } satisfies NodeTypeDescriptor;
 
@@ -90,29 +94,26 @@ export const StereoWidenerNodeRenderer = memo(function StereoWidenerNodeRenderer
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="stereo widener"
-      help={<>
-        The <b>stereo widener</b> module changes the stereo width of a sound, either making
-        it mono, or more stereo. The higher the "width" parameter, the "wider" the sound is.
-      </>}
+      name="Stereo Widener"
+      help={STEREO_WIDENER_NODE_DESCRIPTOR.help}
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
-            <PlainField name="main input" description="the audio to modify" />
-          </NodePort>
+          <div className="flex justify-between gap-4">
+            <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+              <PlainField name="input" />
+            </NodePort>
 
-          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-            <PlainField align="right"
-              name="main output"
-              description="the audio, modified"
-            />
-          </NodePort>
+            <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+              <PlainField align="right"
+                name="output"
+              />
+            </NodePort>
+          </div>
 
           <NodePort nodeId={id} handleId={paramHandleId("width")} kind="input" type="value">
             <SliderField
               name="width"
-              description="the width of the sound - 0% means mono, 100% means fully stereo"
               min={0} max={100} isPercentage
               value={width} onChange={setWidth}
               automatable={data.parameters["param-width"]}

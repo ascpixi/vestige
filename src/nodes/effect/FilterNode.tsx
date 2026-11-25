@@ -89,8 +89,21 @@ export const createFilterNode = makeNodeFactory("filter", () => new FilterNodeDa
 
 /** Provides a `NodeTypeDescriptor` which describes filter nodes. */
 export const FILTER_NODE_DESCRIPTOR = {
-  displayName: "filter",
+  displayName: "Filter",
   icon: cls => <RiEqualizerFill className={cls}/>,
+  help: <>
+    <p>
+      The <b>filter</b> node removes certain frequencies, and attenuates others - for example,
+      the low-pass filter will muffle the sound, depending on the <b>cutoff</b>. Automating the
+      cutoff with an <b>LFO</b> or a <b>Noise</b> node can introduce some movement into
+      your composition!
+    </p>
+
+    <p>
+      The <b>slope</b> determines how steeply the frequencies past the cutoff are attenuated,
+      and the <b>resonance</b> emphasizes the frequencies around it.
+    </p>
+  </>,
   create: createFilterNode
 } satisfies NodeTypeDescriptor;
 
@@ -154,7 +167,7 @@ export const FilterNodeRenderer = memo(function FilterNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="filter"
+      name="Filter"
       help={<>
         A filter removes certain frequencies, an attenuates others - for example,
         the low-pass filter will muffle the sound, depending on the <b>cutoff</b>.

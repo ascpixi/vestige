@@ -98,8 +98,20 @@ export const createPentatonicMelodyNode = makeNodeFactory(
 
 /** Provides a `NodeTypeDescriptor` which describes pentatonic melody generator nodes. */
 export const PENTATONIC_MELODY_NODE_DESCRIPTOR = {
-  displayName: "melody (pentatonic)",
+  displayName: "Pentatonic Melody",
   icon: cls => <RiMusicFill className={cls}/>,
+  help: <>
+    <p>
+      The <b>pentatonic melody</b> node generates melodies in the pentatonic scale, which
+      has <b>5 intervals</b>. An interval is simply a note in a scale, and a scale is a set of notes
+      that sound good together.
+    </p>
+
+    <p>
+      The <b>density</b> determines how often notes are played, and the <b>range</b> determines how
+      high they can go.
+    </p>
+  </>,
   create: createPentatonicMelodyNode
 } satisfies NodeTypeDescriptor;
 
@@ -126,7 +138,7 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
   return (
     <VestigeNodeBase
       id={id} onRemove={() => {}}
-      name="melody (pentatonic)"
+      name="Pentatonic Melody"
       help={<>
         The <b>melody (pentatonic)</b> module generates melodies in the pentatonic
         scale, which has <b>5 intervals</b>. An interval is simply a note in a scale,

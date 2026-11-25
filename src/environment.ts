@@ -5,6 +5,9 @@ export function isTauri(): boolean {
     return "isTauri" in window && !!window.isTauri;
 }
 
+/** The name of the modifier key used by keyboard shortcuts on the current platform. */
+export const MOD_KEY = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
+
 export async function promptToSaveFile(
     data: Uint8Array,
     filename: string,

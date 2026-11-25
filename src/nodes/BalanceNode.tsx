@@ -6,14 +6,23 @@ import { RiEqualizer2Fill } from "@remixicon/react";
 import type { NodeTypeDescriptor } from ".";
 import { makeNodeFactory } from "./basis";
 import { AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../graph";
-import { Automatable } from "../graph";
+import { Automatable, GAIN_UNIT, ParameterUnit } from "../graph";
 import { assert, lerp } from "../util";
+import { formatGain } from "../audioUtil";
 import { FlatNodeDataSerializer } from "../serializer";
 
 import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+
+const PAN_UNIT: ParameterUnit = {
+  format: x => {
+    const pan = Math.round(lerp(-100, 100, x));
+    return pan == 0 ? "C" : `${Math.abs(pan)}${pan < 0 ? "L" : "R"}`;
+  },
+  parse: x => (x + 100) / 200
+};
 
 export class BalanceNodeData extends EffectNodeData {
   effect: BalanceAudioEffect;
@@ -29,8 +38,11 @@ export class BalanceNodeData extends EffectNodeData {
 
     const panvol = this.effect.panVol;
     this.parameters = {
-      "param-pan": new Automatable(x => panvol.pan.value = lerp(-1, 1, x)),
-      "param-volume": new Automatable(x => panvol.volume.value = tone.gainToDb(lerp(0, 2, x)))
+      "param-pan": new Automatable(x => panvol.pan.value = lerp(-1, 1, x), PAN_UNIT),
+      "param-volume": new Automatable(
+        x => panvol.volume.value = tone.gainToDb(lerp(0, 2, x)),
+        GAIN_UNIT
+      )
     };
   }
 };
@@ -80,8 +92,19 @@ export const createBalanceNode = makeNodeFactory("balance", () => new BalanceNod
 
 /** Provides a `NodeTypeDescriptor` which describes balance nodes. */
 export const BALANCE_NODE_DESCRIPTOR = {
-  displayName: "balance (pan/volume)",
+  displayName: "Balance",
   icon: cls => <RiEqualizer2Fill className={cls}/>,
+  help: <>
+    <p>
+      The <b>balance</b> node changes either the gain (loudness) of a signal, or the balance
+      between its left and right channels.
+    </p>
+
+    <p>
+      For example, when the pan is all the way to the left (<b>100L</b>), the sound will only come
+      out of the left speaker. When it's in the center (<b>C</b>), the signal won't be affected.
+    </p>
+  </>,
   create: createBalanceNode
 } satisfies NodeTypeDescriptor;
 
@@ -108,50 +131,43 @@ export const BalanceNodeRenderer = memo(function BalanceNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="balance (pan/volume)"
-      help={<>
-        The <b>balance (pan/volume)</b> module changes either the volume (loudness) or
-        the balance between the left and right speaker output. For example, a pan
-        value of -100% will make the sound come out only from the left speaker, and
-        a value of 100% will make it come out only from the right one. A value of 0%
-        means balance - the input signal won't be affected in any way.
-      </>}
+      name="Balance"
+      help={BALANCE_NODE_DESCRIPTOR.help}
     >
-      <div>
-        <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between gap-4">
           <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
-            <PlainField name="main input" description="the audio to adjust" />
+            <PlainField name="input" />
           </NodePort>
 
           <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-            <PlainField align="right"
-              name="main output"
-              description="the adjusted audio"
-            />
-          </NodePort>
-
-          <NodePort nodeId={id} handleId={paramHandleId("pan")} kind="input" type="value">
-            <SliderField
-              name="pan balance"
-              description="-100% = left, 0% = no change, and 100% = right."
-              min={-100} max={100} value={pan} isPercentage
-              onChange={setPan}
-              automatable={data.parameters["param-pan"]}
-              automatableDisplay={() => panVol.pan.value * 100}
-            />
-          </NodePort>
-
-          <NodePort nodeId={id} handleId={paramHandleId("volume")} kind="input" type="value">
-            <SliderField
-              name="volume"
-              description="how much of the original volume the signal should have"
-              min={0} max={200} value={volume} isPercentage
-              onChange={setVolume}
-              automatable={data.parameters["param-volume"]}
-              automatableDisplay={() => tone.dbToGain(panVol.volume.value) * 100}
-            />
+            <PlainField align="right" name="output" />
           </NodePort>
         </div>
+
+        <NodePort nodeId={id} handleId={paramHandleId("pan")} kind="input" type="value">
+          <SliderField
+            name="pan"
+            min={-100} max={100} value={pan}
+            valueStringifier={x => x == 0 ? "C" : `${Math.abs(Math.round(x))}${x < 0 ? "L" : "R"}`}
+            valueParser={x => x}
+            onChange={setPan}
+            automatable={data.parameters["param-pan"]}
+            automatableDisplay={() => panVol.pan.value * 100}
+          />
+        </NodePort>
+
+        <NodePort nodeId={id} handleId={paramHandleId("volume")} kind="input" type="value">
+          <SliderField
+            name="gain"
+            min={0} max={200} value={volume}
+            valueStringifier={x => formatGain(x / 100)}
+            valueParser={x => tone.dbToGain(x) * 100}
+            onChange={setVolume}
+            automatable={data.parameters["param-volume"]}
+            automatableDisplay={() => tone.dbToGain(panVol.volume.value) * 100}
+          />
+        </NodePort>
       </div>
     </VestigeNodeBase>
   );

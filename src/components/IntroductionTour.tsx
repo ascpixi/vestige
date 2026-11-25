@@ -69,8 +69,9 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      Right click anywhere on an empty spot on the grid to open
-      the <b>add node</b> menu. Try adding a <b>melody (pentatonic)</b> node!
+      Right click anywhere on an empty spot on the grid (or press <b>Shift+A</b>) to open
+      the <b>add</b> menu. Try adding a <b>Pentatonic Melody</b> node - you can find it
+      under <b>Notes</b>, or by typing its name.
     </>,
     continueWhen(data) {
       return data.nodes.some(x => x.type == "pentatonic-melody")
@@ -80,9 +81,9 @@ const STEPS: TourStepFactory[] = [
   (() => ({
     content: <>
       This is a <b>note generator</b> node. Think of it as a keyboard.
-      You can move it around - try it! We now have to feed the nodes to an
-      instrument. Just like you did with the <b>melody (pentatonic)</b> node,
-      now try creating a <b>synth</b> node by right-clicking.
+      You can move it around - try it! We now have to feed the notes to an
+      instrument. Just like you did with the <b>Pentatonic Melody</b> node,
+      now try creating a <b>Synth</b> node.
     </>,
     continueWhen(data) {
       return data.nodes.some(x => x.type == "synth")
@@ -91,8 +92,8 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      Nice! Now, connect the <b>main output</b> of the <b>melody (pentatonic)</b> node
-      with the <b>main input</b> of the <b>synth</b> node. You can do this by
+      Nice! Now, connect the <b>notes</b> output of the <b>Pentatonic Melody</b> node
+      with the <b>notes</b> input of the <b>Synth</b> node. You can do this by
       clicking on the <b className="text-green-600">green circle</b> of the melody node,
       and dragging it to the <b className="text-green-600">green circle</b> of
       the synth one.
@@ -109,8 +110,8 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      Great! We don't hear anything yet - connect the <span className="text-blue-600">blue</span> <b>main output</b> of
-      the <b>synth</b> to the <span className="text-blue-600">blue</span> <b>main input</b> of the <b>final output</b> node.
+      Great! We don't hear anything yet - connect the <span className="text-blue-600">blue</span> <b>output</b> of
+      the <b>Synth</b> to the <span className="text-blue-600">blue</span> <b>input</b> of the <b>Output</b> node.
       Anything that comes inside this node will be played through your speakers.
     </>,
     continueWhen(data) {
@@ -125,7 +126,7 @@ const STEPS: TourStepFactory[] = [
 
   (() => ({
     content: <>
-      Adjust your volume in the <b>final output</b> node to your liking, and
+      Adjust your volume in the <b>Output</b> node to your liking, and
       then click <b>Next</b> to continue.
     </>
   })),

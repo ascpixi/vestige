@@ -1,8 +1,14 @@
 import { Connection, Edge, Handle, Position, useUpdateNodeInternals } from "@xyflow/react";
-import { PropsWithChildren, useRef } from "react";
+import { PropsWithChildren, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { NOTE_INPUT_HID_PREFIX, SIGNAL_INPUT_HID_PREFIX, VALUE_INPUT_HID_PREFIX } from "../graph";
 import { match } from "../util";
+
+import { NODE_HEADER_HEIGHT, NodeCollapsedContext } from "./VestigeNodeBase";
+import { ParamGroupContext } from "./ParamGroup";
+
+/** The distance between the top of a port and the center of its handle, in pixels. */
+const HANDLE_OFFSET = 8;
 
 /**
  * Renders an input to or an output of a node, as represented by a React Flow handle.
@@ -16,10 +22,22 @@ export function NodePort({ nodeId, kind, type, handleId, children }: PropsWithCh
   const updateNodeInternals = useUpdateNodeInternals();
 
   const selfRef = useRef<HTMLDivElement>(null);
+  const collapsed = useContext(NodeCollapsedContext);
+  const group = useContext(ParamGroupContext);
+  const [offsetTop, setOffsetTop] = useState(0);
 
-  if (selfRef.current) {
+  useLayoutEffect(() => {
+    // When the parameter group we're in is folded, our handle sits next to the header of the group.
+    const anchor = group?.folded ? group.headerRef.current : selfRef.current;
+
+    if (anchor && anchor.offsetTop != offsetTop) {
+      setOffsetTop(anchor.offsetTop);
+    }
+  });
+
+  useEffect(() => {
     updateNodeInternals(nodeId);
-  }
+  }, [nodeId, offsetTop, collapsed, group?.folded, updateNodeInternals]);
 
   const handleClass = match(type, {
     "value": "handle-value",
@@ -47,7 +65,9 @@ export function NodePort({ nodeId, kind, type, handleId, children }: PropsWithCh
         type={kind === "input" ? "target" : "source"}
         position={kind === "input" ? Position.Left : Position.Right}
         className={handleClass}
-        style={{ top: selfRef.current ? selfRef.current.offsetTop + 8 : 8 }}
+        style={{
+          top: collapsed ? -NODE_HEADER_HEIGHT / 2 : offsetTop + HANDLE_OFFSET
+        }}
         isValidConnection={checkValidConnection}
       />
     </>

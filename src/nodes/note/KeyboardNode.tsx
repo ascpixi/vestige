@@ -42,8 +42,12 @@ export const createKeyboardNode = makeNodeFactory(
 
 /** Provides a `NodeTypeDescriptor` which describes keyboard (manual) nodes. */
 export const KEYBOARD_NODE_DESCRIPTOR = {
-  displayName: "keyboard (manual)",
+  displayName: "Keyboard",
   icon: cls => <RiCursorFill className={cls}/>,
+  help: <>
+    The <b>keyboard</b> node lets you play notes manually, by either clicking on the keys, or by
+    connecting a MIDI keyboard.
+  </>,
   create: createKeyboardNode
 } satisfies NodeTypeDescriptor;
 
@@ -111,23 +115,18 @@ export const KeyboardNodeRenderer = memo(function KeyboardNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={dispose}
-      name="keyboard (manual)"
-      help={<>
-        The <b>keyboard (manual)</b> module exposes the ability to manually input
-        notes, by either clicking on the keys manually, or by connecting a MIDI keyboard.
-      </>}
+      name="Keyboard"
+      help={KEYBOARD_NODE_DESCRIPTOR.help}
     >
       <div className="flex flex-col gap-6 w-full">
         <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
           <PlainField align="right"
-            name="main output"
-            description="the currently held down notes"
+            name="notes"
           />
         </NodePort>
 
         <SliderField
           name="octave"
-          description="the base octave of the keyboard"
           value={octave} onChange={setOctave}
           min={1} max={4}
         />

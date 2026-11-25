@@ -98,8 +98,21 @@ export const createReverbNode = makeNodeFactory("reverb", () => new ReverbNodeDa
 
 /** Provides a `NodeTypeDescriptor` which describes reverb nodes. */
 export const REVERB_NODE_DESCRIPTOR = {
-  displayName: "reverb",
+  displayName: "Reverb",
   icon: cls => <RiSchoolFill className={cls}/>,
+  help: <>
+    <p>
+      The <b>reverb</b> node provides a sense of depth to the sound, making it sound like it's
+      in an actual room. The <b>decay</b> determines how long the reverb takes to go away.
+      Higher <b>pre-delay</b> values help with preserving short and snappy attacks.
+    </p>
+
+    <p>
+      The <b>Vintage</b> algorithm is modeled after classic digital reverbs. Older
+      values of <b>color</b> sound darker and more modulated. If you want to automate the decay,
+      prefer this algorithm over <b>Tone.js</b>.
+    </p>
+  </>,
   create: createReverbNode
 } satisfies NodeTypeDescriptor;
 
@@ -133,7 +146,7 @@ export const ReverbNodeRenderer = memo(function ReverbNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="reverb"
+      name="Reverb"
       help={<>
         The <b>reverb</b> module provides a sense of depth to the sound, making it
         sound like it's in an actual room. The <b>decay</b> parameter determines how

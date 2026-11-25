@@ -14,8 +14,11 @@ import { getPersistentData } from "./persistent";
 import { isTauri, promptToSaveFile } from "./environment";
 
 import { IntroductionTour } from "./components/IntroductionTour";
+import { disposeNode } from "./components/VestigeNodeBase";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { AddNodeMenu } from "./components/app/AddNodeMenu";
+import { HelpPanel, NODE_PAGES } from "./components/app/HelpPanel";
+import { HelpContext, HelpPage } from "./components/app/HelpContext";
 import { AppRenderDialog } from "./components/app/AppRenderDialog";
 import { AppAboutDialog } from "./components/app/AppAboutDialog";
 import { ConfirmationDialog } from "./components/app/ConfirmationDialog";
@@ -23,6 +26,9 @@ import { AppProjectLinkDialog } from "./components/app/AppProjectLinkDialog";
 
 const shouldShowTour = !getPersistentData().tourComplete;
 const shouldLoadExisting = location.hash.startsWith("#p:");
+
+/** The distance between the top of a newly added node and the cursor, in pixels. */
+const NEW_NODE_OFFSET = 20;
 
 const DEFAULT_VIEWPORT = { x: 500, y: 210, zoom: 1 };
 
@@ -41,6 +47,17 @@ export default function App() {
 
   const [ctxMenuPos, setCtxMenuPos] = useState({ x: 0, y: 0 });
   const [showCtxMenu, setShowCtxMenu] = useState(false);
+
+  const [helpPage, setHelpPage] = useState<HelpPage | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const helpContext = useMemo(() => ({
+    show(page: HelpPage) {
+      // The article from the help center also has an icon and a category, so we prefer it.
+      setHelpPage(NODE_PAGES.find(x => x.title == page.title) ?? page);
+      setHelpOpen(true);
+    }
+  }), []);
 
   const tourDialogRef = useRef<HTMLDialogElement>(null);
   const aboutDialogRef = useRef<HTMLDialogElement>(null);
@@ -201,6 +218,12 @@ export default function App() {
 
   const onNodesChange = useCallback(
     (changes: flow.NodeChange<VestigeNode>[]) => {
+      for (const change of changes) {
+        if (change.type == "remove") {
+          disposeNode(change.id);
+        }
+      }
+
       graph = mutator.mutate(graph, { nodes: flow.applyNodeChanges(changes, graph.nodes) });
       setGraph(graph);
 
@@ -252,124 +275,139 @@ export default function App() {
     [graphVer, startTimeMs, playing]
   );
 
-
   return (
-    <main className="w-screen h-screen overflow-hidden" onContextMenu={handleContextMenuOpen}>
-      <AddNodeMenu
-        x={ctxMenuPos.x} y={ctxMenuPos.y}
-        show={showCtxMenu}
-        onNodeChoose={async (descriptor) => {
-          const { x, y } = thisFlow!.screenToFlowPosition({
-            x: window.innerWidth / 2,
-            y: window.innerHeight / 2
-          });
+    <HelpContext.Provider value={helpContext}>
+      <main
+        className="w-screen h-screen overflow-hidden"
+        onContextMenu={handleContextMenuOpen}
+      >
+        <AddNodeMenu
+          x={ctxMenuPos.x} y={ctxMenuPos.y}
+          show={showCtxMenu}
+          onClose={() => setShowCtxMenu(false)}
+          onNodeChoose={async (descriptor) => {
+            const isTouchFallback = ctxMenuPos.x == 1 && ctxMenuPos.y == 1;
+            const { x, y } = thisFlow!.screenToFlowPosition(
+              isTouchFallback
+                ? { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+                : ctxMenuPos
+            );
 
-          setGraph(mutator.addNode(graph, await descriptor.create(x - 200, y - 200)));
-          setShowCtxMenu(false);
-        }}
-      />
+            setGraph(mutator.addNode(graph, await descriptor.create(x, y - NEW_NODE_OFFSET)));
+            setShowCtxMenu(false);
+          }}
+        />
 
-      {
-        !thisFlow ? <></> :
-        <IntroductionTour
+        {
+          !thisFlow ? <></> :
+          <IntroductionTour
+            nodes={graph.nodes}
+            edges={graph.edges}
+            flowState={thisFlow}
+            viewport={viewport}
+            ref={tourDialogRef}
+            tourStateChange={setInTour}
+          />
+        }
+
+        <AppAboutDialog ref={aboutDialogRef} />
+        <AppProjectLinkDialog link={projLink}/>
+        <AppRenderDialog ref={renderDialogRef} graph={graph} />
+
+        <ConfirmationDialog
+          ref={resetDialogRef}
+          content={<>
+            Are you sure you want to create a new project? If you did not save
+            this one before, it will be lost forever!
+          </>}
+          confirm="Yes, create a new one"
+          onConfirm={reset}
+        />
+
+        <flow.ReactFlow
+          onMouseDownCapture={() => setShowCtxMenu(false)}
           nodes={graph.nodes}
           edges={graph.edges}
-          flowState={thisFlow}
-          viewport={viewport}
-          ref={tourDialogRef}
-          tourStateChange={setInTour}
-        />
-      }
+          nodeTypes={VESTIGE_NODE_TYPES}
+          edgeTypes={VESTIGE_EDGE_TYPES}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onViewportChange={setViewport}
+          defaultViewport={DEFAULT_VIEWPORT}
+          onInit={setThisFlow}
+          fitView={shouldLoadExisting}
+          translateExtent={inTour ? [[-1500, -500], [2000, 750]] : undefined}
+        >
+          <flow.Background variant={flow.BackgroundVariant.Dots}/>
+          <flow.Panel position="bottom-right" className="mb-8!">
+            <HelpPanel
+              page={helpPage}
+              open={helpOpen}
+              onPageChange={setHelpPage}
+              onOpenChange={setHelpOpen}
+            />
+          </flow.Panel>
+          <flow.Controls />
+          <flow.Panel position="top-left">
+            <nav className="flex gap-2">
+              <button onClick={togglePlay}
+                title={playing ? "Stop" : "Play"}
+                className="btn btn-square bg-white"
+              >
+                { playing ? <RiStopFill/> : <RiPlayFill/> }
+              </button>
 
-      <AppAboutDialog ref={aboutDialogRef} />
-      <AppProjectLinkDialog link={projLink}/>
-      <AppRenderDialog ref={renderDialogRef} graph={graph} />
+              <div className="dropdown">
+                <button
+                  title="Project"
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-square bg-white"
+                  disabled={inTour}
+                >
+                  <RiSaveFill/>
+                </button>
 
-      <ConfirmationDialog
-        ref={resetDialogRef}
-        content={<>
-          Are you sure you want to create a new project? If you did not save
-          this one before, it will be lost forever!
-        </>}
-        confirm="Yes, create a new one"
-        onConfirm={reset}
-      />
+                <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-1 w-52 p-2 shadow-sm">
+                  <li><a onClick={saveAsFile}><RiFileCheckFill className="w-4"/> Save as file</a></li>
+                  <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
+                  <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
+                  <li><a onClick={() => renderDialogRef.current!.showModal()}><RiFileMusicFill className="w-4"/>Render to audio file</a></li>
 
-      <flow.ReactFlow
-        onMouseDownCapture={() => setShowCtxMenu(false)}
-        nodes={graph.nodes}
-        edges={graph.edges}
-        nodeTypes={VESTIGE_NODE_TYPES}
-        edgeTypes={VESTIGE_EDGE_TYPES}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onViewportChange={setViewport}
-        defaultViewport={DEFAULT_VIEWPORT}
-        onInit={setThisFlow}
-        fitView={shouldLoadExisting}
-        translateExtent={inTour ? [[-1500, -500], [2000, 750]] : undefined}
-      >
-        <flow.Background variant={flow.BackgroundVariant.Dots}/>
-        <flow.Controls />
-        <flow.Panel position="top-left">
-          <nav className="flex gap-2">
-            <button onClick={togglePlay}
-              title={playing ? "stop" : "play"}
-              className="btn btn-square bg-white"
-            >
-              { playing ? <RiStopFill/> : <RiPlayFill/> }
-            </button>
+                  {
+                    !isTauri() ? <></> :
+                    <li><a onClick={loadFromLink}><RiLinkUnlinkM className="w-4"/>Load from link</a></li>
+                  }
+                </ul>
+              </div>
 
-            <div className="dropdown">
-              <button
-                title="save or load project"
-                tabIndex={0}
-                role="button"
+              <button onClick={() => resetDialogRef.current!.showModal()}
+                title="New project"
                 className="btn btn-square bg-white"
                 disabled={inTour}
               >
-                <RiSaveFill/>
+                <RiDeleteBinFill/>
               </button>
 
-              <ul tabIndex={0} className="dropdown-content menu bg-white mt-2 rounded-box z-1 w-52 p-2 shadow-sm">
-                <li><a onClick={saveAsFile}><RiFileCheckFill className="w-4"/> Save as file</a></li>
-                <li><a onClick={saveAsLink}><RiLinkM className="w-4"/>Save as link</a></li>
-                <li><a onClick={loadFromFile}><RiImportFill className="w-4"/>Load from file</a></li>
-                <li><a onClick={() => renderDialogRef.current!.showModal()}><RiFileMusicFill className="w-4"/>Render to audio file</a></li>
+              <button onClick={() => tourDialogRef.current!.showModal()}
+                title="Introduction tour"
+                className="btn btn-square bg-white"
+                disabled={inTour}
+              >
+                <RiGraduationCapFill/>
+              </button>
 
-                {
-                  !isTauri() ? <></> :
-                  <li><a onClick={loadFromLink}><RiLinkUnlinkM className="w-4"/>Load from link</a></li>
-                }
-              </ul>
-            </div>
-
-            <button onClick={() => resetDialogRef.current!.showModal()}
-              title="delete project" 
-              className="btn btn-square bg-white"
-              disabled={inTour}
-            >
-              <RiDeleteBinFill/>
-            </button>
-
-            <button onClick={() => tourDialogRef.current!.showModal()}
-              title="show introduction tour"
-              className="btn btn-square bg-white"
-              disabled={inTour}
-            >
-              <RiGraduationCapFill/>
-            </button>
-
-            <button onClick={() => aboutDialogRef.current!.showModal()}
-              title="about Vestige"
-              className="btn btn-square bg-white"
-            >
-              <RiInformation2Fill/>
-            </button>
-          </nav>
-        </flow.Panel>
-      </flow.ReactFlow>
-    </main>
+              <button onClick={() => aboutDialogRef.current!.showModal()}
+                title="About Vestige"
+                className="btn btn-square bg-white"
+              >
+                <RiInformation2Fill/>
+              </button>
+            </nav>
+          </flow.Panel>
+        </flow.ReactFlow>
+      </main>
+    </HelpContext.Provider>
   );
 }

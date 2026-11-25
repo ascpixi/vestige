@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { useEdges, useReactFlow } from "@xyflow/react";
+
 import { allEqualUnordered } from "./util";
+import { ParameterUnit, ParametricNodeData, VALUE_OUTPUT_HID } from "./graph";
 
 /**
  * Returns a stateful value, with a value to change it, bound to a
@@ -68,4 +71,26 @@ export function useUpdater(
 
         return () => clearInterval(id);
     }, [shouldUpdate]);
+}
+
+/**
+ * Gets the unit of the parameters that the value output of the given node is connected to.
+ * If the node is connected to multiple parameters with different units (or to parameters
+ * without a known unit), returns `null`.
+ */
+export function useTargetUnit(nodeId: string): ParameterUnit | null {
+    const edges = useEdges();
+    const { getNode } = useReactFlow();
+
+    const units = edges
+        .filter(x => x.source == nodeId && x.sourceHandle == VALUE_OUTPUT_HID)
+        .map(x => {
+            const data = getNode(x.target)?.data as ParametricNodeData | undefined;
+            return data?.parameters?.[x.targetHandle ?? ""]?.unit;
+        });
+
+    if (units.length == 0 || units.some(x => !x || x !== units[0]))
+        return null;
+
+    return units[0]!;
 }

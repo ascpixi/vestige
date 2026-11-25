@@ -56,8 +56,12 @@ export const createMixNode = makeNodeFactory("mix", () => new MixNodeData());
 
 /** Provides a `NodeTypeDescriptor` which describes mix nodes. */
 export const MIX_NODE_DESCRIPTOR = {
-  displayName: "mix (combine)",
+  displayName: "Mix",
   icon: cls => <RiGitMergeFill className={cls}/>,
+  help: <>
+    The <b>mix</b> node combines (or, mathematically speaking, adds) two different audio
+    signals together.
+  </>,
   create: createMixNode
 } satisfies NodeTypeDescriptor;
 
@@ -67,29 +71,24 @@ export const MixNodeRenderer = memo(function MixNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="mix (combine)"
-      help={<>
-        The <b>mix (combine)</b> module combines (or, mathematically speaking, adds)
-        two different audio signals together.
-      </>}
+      name="Mix"
+      help={MIX_NODE_DESCRIPTOR.help}
+      className="w-[200px]"
     >
-      <div className="w-full">
-        <div className="flex flex-col gap-6">
+      <div className="flex justify-between items-center gap-4 w-full">
+        <div className="flex flex-col gap-4">
           <NodePort nodeId={id} handleId={INPUT_A} kind="input" type="signal">
-            <PlainField name="input A" description="the first audio signal" />
+            <PlainField name="A" />
           </NodePort>
 
           <NodePort nodeId={id} handleId={INPUT_B} kind="input" type="signal">
-            <PlainField name="input B" description="the second audio signal" />
-          </NodePort>
-
-          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-            <PlainField align="right"
-              name="main output"
-              description="input A and B combined into one signal"
-            />
+            <PlainField name="B" />
           </NodePort>
         </div>
+
+        <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+          <PlainField align="right" name="A+B" />
+        </NodePort>
       </div>
     </VestigeNodeBase>
   );

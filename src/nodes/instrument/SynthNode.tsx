@@ -208,8 +208,21 @@ export const createSynthNode = makeNodeFactory("synth", () => new SynthNodeData(
 
 /** Provides a `NodeTypeDescriptor` which describes synth nodes. */
 export const SYNTH_NODE_DESCRIPTOR = {
-  displayName: "synth",
+  displayName: "Synth",
   icon: cls => <RiVolumeVibrateFill className={cls}/>,
+  help: <>
+    <p>
+      The <b>synth</b> node takes in notes, and outputs audio. The timbre of the synth is specified
+      by its <b>waveform</b>. The contour of the final audio (plucky, smooth, etc...) is controlled
+      by the <b>envelope</b>.
+    </p>
+
+    <p>
+      Try combining multiple synths for more interesting textures! It helps to change
+      the <b>fine</b> tune between multiple synths, or to add more <b>unison</b> voices, to keep it
+      from sounding bland.
+    </p>
+  </>,
   create: createSynthNode
 } satisfies NodeTypeDescriptor;
 
@@ -248,7 +261,7 @@ export const SynthNodeRenderer = memo(function SynthNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => gen.dispose()}
-      name="synth"
+      name="Synth"
       help={<>
         The <b>synth</b> module takes in notes, and outputs audio - more specifically,
         an <b>audio signal</b>. The timbre of the synth is specified by its <b>shape</b>
