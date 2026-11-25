@@ -19,7 +19,10 @@ import { PHASER_NODE_DESCRIPTOR } from "./effect/PhaserNode";
 import { STEREO_WIDENER_NODE_DESCRIPTOR } from "./effect/StereoWidenerNode";
 
 import { LFO_NODE_DESCRIPTOR } from "./LfoNode";
+import { NOISE_NODE_DESCRIPTOR } from "./value/NoiseNode";
+import { VALUE_NODE_DESCRIPTOR } from "./value/ValueNode";
 import { MATH_NODE_DESCRIPTOR } from "./MathNode";
+import { MAP_RANGE_NODE_DESCRIPTOR } from "./value/MapRangeNode";
 
 import { MIX_NODE_DESCRIPTOR } from "./MixNode";
 import { BALANCE_NODE_DESCRIPTOR } from "./BalanceNode";
@@ -67,7 +70,10 @@ export const NODE_CATEGORIES: NodeCategory[] = [
         name: "Modulation",
         entries: [
             LFO_NODE_DESCRIPTOR,
-            MATH_NODE_DESCRIPTOR
+            NOISE_NODE_DESCRIPTOR,
+            VALUE_NODE_DESCRIPTOR,
+            MATH_NODE_DESCRIPTOR,
+            MAP_RANGE_NODE_DESCRIPTOR
         ]
     },
     {
