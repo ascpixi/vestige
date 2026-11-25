@@ -23,6 +23,7 @@ import { MATH_NODE_DESCRIPTOR } from "./MathNode";
 
 import { MIX_NODE_DESCRIPTOR } from "./MixNode";
 import { BALANCE_NODE_DESCRIPTOR } from "./BalanceNode";
+import { SCOPE_NODE_DESCRIPTOR } from "./ScopeNode";
 
 /** Represents a category of nodes, as displayed in the add menu and help center. */
 export interface NodeCategory {
@@ -73,7 +74,8 @@ export const NODE_CATEGORIES: NodeCategory[] = [
         name: "Utility",
         entries: [
             MIX_NODE_DESCRIPTOR,
-            BALANCE_NODE_DESCRIPTOR
+            BALANCE_NODE_DESCRIPTOR,
+            SCOPE_NODE_DESCRIPTOR
         ]
     }
 ];

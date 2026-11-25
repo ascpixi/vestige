@@ -11,6 +11,7 @@ import { NodePort } from "../components/NodePort";
 import { PlainField } from "../components/PlainField";
 import { SliderField } from "../components/SliderField";
 import { VestigeNodeBase } from "../components/VestigeNodeBase";
+import { AudioScope } from "../components/viz/AudioScope";
 
 export class FinalNodeData extends NodeData {
   nodeType = "FINAL" as const;
@@ -62,15 +63,18 @@ export const FinalNodeRenderer = memo(function FinalNodeRenderer(
     <VestigeNodeBase
       id={id}
       name="Output"
+      resizable={{ minWidth: 300, minHeight: 220 }}
       help={<>
         The <b>output</b> node will output any audio you provide it to your speakers.
         The <b>volume</b> does not affect renders.
       </>}
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 flex-1 min-h-0">
         <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
           <PlainField name="input" />
         </NodePort>
+
+        <AudioScope source={data.final} mode="SPECTRUM" height={64} fill />
 
         <SliderField
           name="volume"
