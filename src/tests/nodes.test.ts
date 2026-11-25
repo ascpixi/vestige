@@ -11,6 +11,7 @@ import { createScopeNode } from "../nodes/ScopeNode";
 import { createNoiseNode } from "../nodes/value/NoiseNode";
 import { createValueNode } from "../nodes/value/ValueNode";
 import { createMapRangeNode } from "../nodes/value/MapRangeNode";
+import { SynthNodeData, SynthNodeSerializer } from "../nodes/instrument/SynthNode";
 
 function edge(
     src: flow.Node,
@@ -68,5 +69,28 @@ describe("nodes", () => {
         // We don't want to leave audio nodes running in the real-time context.
         scope.data.effect.dispose();
         result.nodes.forEach(x => (x.data as { effect?: { dispose(): void } }).effect?.dispose());
+    });
+
+    it("migrates legacy synth envelopes and round-trips ADSR values", async () => {
+        const serializer = new SynthNodeSerializer();
+
+        const legacy = serializer.serialize(new SynthNodeData()) as any;
+        delete legacy.e;
+        legacy.c = "smooth";
+        legacy.a = 0.5;
+
+        const migrated = await serializer.deserialize(legacy);
+        expect(migrated.envelope.attack).toBeCloseTo(2.1);
+        expect(migrated.envelope.sustain).toBe(1);
+        expect(migrated.envelope.release).toBeCloseTo(3.15);
+
+        const data = new SynthNodeData();
+        data.envelope = { attack: 0.2, decay: 0.4, sustain: 0.5, release: 1.5 };
+
+        const serialized = serializer.serialize(data);
+        expect(serialized).not.toHaveProperty("c");
+
+        const restored = await serializer.deserialize(serialized);
+        expect(restored.envelope).toEqual(data.envelope);
     });
 });
