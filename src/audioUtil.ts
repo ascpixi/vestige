@@ -1,4 +1,4 @@
-import { Frequency } from "tone";
+import { Frequency, gainToDb } from "tone";
 import { Frequency as FrequencyUnit }  from "tone/build/esm/core/type/Units";
 
 import { toAugmented } from "./collections";
@@ -110,4 +110,9 @@ export function toneFreq(x: FrequencyUnit): number {
         return x;
 
     return Frequency(x).toFrequency();
+}
+
+/** Formats a linear gain multiplier in decibels, e.g. `-6.0 dB` for 0.5. */
+export function formatGain(gain: number) {
+    return gain <= 0 ? "-inf dB" : `${gainToDb(gain).toFixed(1)} dB`;
 }

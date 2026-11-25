@@ -10,7 +10,7 @@ export function NumberField({
   name: string,
 
   /** A user-friendly description of the input field. */
-  description: string,
+  description?: string,
 
   /** The current value of the field. Ignored if `automatable?.isAutomated()` returns `true`. */
   value: number,
@@ -54,16 +54,16 @@ export function NumberField({
   return (
     <div className="flex flex-col gap-1 align-middle">
       <span className="font-semibold">{name}</span>
-      <span>{description}</span>
+      { !description ? <></> : <span className="text-gray-500">{description}</span> }
 
       <input
         type="number"
         value={value} step={step}
         onChange={ev => onChange(ev.target.valueAsNumber)}
         onMouseDownCapture={handleMouseDown}
-        className="input input-xs"
+        className="nodrag input input-sm w-full tabular-nums"
         disabled={automated || disabled}
-        aria-label={`${name}: ${description}`}
+        aria-label={name}
       />
     </div>
   );

@@ -80,8 +80,13 @@ export const createArpeggiatorNode = makeNodeFactory("arpeggiator", () => new Ar
 
 /** Provides a `NodeTypeDescriptor` which describes arpeggiator nodes. */
 export const ARPEGGIATOR_NOTE_DESCRIPTOR = {
-  displayName: "arpeggiator",
+  displayName: "Arpeggiator",
   icon: cls => <RiDice3Fill className={cls}/>,
+  help: <>
+    The <b>arpeggiator</b> node breaks down a chord into individual notes, creating what is commonly
+    called an <b>arpeggio</b>. The <b>order</b> determines which note is played next, and
+    the <b>step</b> is how long each note lasts.
+  </>,
   create: createArpeggiatorNode
 } satisfies NodeTypeDescriptor;
 
@@ -96,7 +101,7 @@ export const ArpeggiatorNodeRenderer = memo(function ArpeggiatorNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => {}}
-      name="arpeggiator"
+      name="Arpeggiator"
       help={<>
         The <b>arpeggiator</b> module breaks down a chord into individual notes, creating
         what is commonly called an <b>arpeggio</b>. With the <b>up</b> and <b>down</b>

@@ -75,8 +75,19 @@ export const createLfoNode = makeNodeFactory("lfo", () => new LfoNodeData());
 
 /** Provides a `NodeTypeDescriptor` which describes LFO nodes. */
 export const LFO_NODE_DESCRIPTOR = {
-  displayName: "LFO (time-changing value)",
+  displayName: "LFO",
   icon: cls => <RiPulseFill className={cls}/>,
+  help: <>
+    <p>
+      An LFO (Low Frequency Oscillator) provides a value that changes over time, always staying
+      between its <b>min</b> and <b>max</b>. You can use it to introduce some movement into
+      your composition!
+    </p>
+
+    <p>
+      With the <b>random</b> shape, the LFO picks a new value on every cycle.
+    </p>
+  </>,
   create: createLfoNode
 } satisfies NodeTypeDescriptor;
 
@@ -113,7 +124,7 @@ export const LfoNodeRenderer = memo(function LfoNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => {}}
-      name="LFO (time-changing value)"
+      name="LFO"
       help={<>
         An LFO (Low Frequency Oscillator) is a node that is designed to provide
         a value that slowly changes over time. You can use it to introduce

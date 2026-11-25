@@ -56,8 +56,12 @@ export const createPickNoteNode = makeNodeFactory("pick-note", () => new PickNot
 
 /** Provides a `NodeTypeDescriptor` which describes pick note nodes. */
 export const PICK_NOTE_DESCRIPTOR = {
-  displayName: "pick note",
+  displayName: "Pick Note",
   icon: cls => <RiDropperFill className={cls}/>,
+  help: <>
+    The <b>pick note</b> node picks a single note from a potentially infinite number of incoming
+    notes. It's useful for getting root (bass) notes of chords, for example.
+  </>,
   create: createPickNoteNode
 } satisfies NodeTypeDescriptor;
 
@@ -69,31 +73,26 @@ export const PickNoteNodeRenderer = memo(function PickNoteNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => {}}
-      name="pick note"
-      help={<>
-        The <b>pick note</b> module picks a single note from a potentially infinite
-        number of incoming notes. It's useful for getting root (bass) notes of chords,
-        for example.
-      </>}
+      name="Pick Note"
+      help={PICK_NOTE_DESCRIPTOR.help}
     >
       <div className="flex flex-col gap-6 w-full">
-        <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
-          <PlainField
-            name="main input"
-            description="the notes to pick from"
-          />
-        </NodePort>
+        <div className="flex justify-between gap-4">
+          <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
+            <PlainField
+              name="notes"
+            />
+          </NodePort>
 
-        <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
-          <PlainField align="right"
-            name="main output"
-            description="the single note that we picked"
-          />
-        </NodePort>
+          <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
+            <PlainField align="right"
+              name="note"
+            />
+          </NodePort>
+        </div>
 
         <SelectField
           name="mode"
-          description="which note should we pick? (in pitch)"
           value={mode} onChange={x => setMode(x as Mode)} 
         >
           <option value="LOWEST">lowest</option>

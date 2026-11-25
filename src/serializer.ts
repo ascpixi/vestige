@@ -34,7 +34,7 @@ export abstract class NullNodeDataSerializer<TIn> implements NodeDataSerializer<
     abstract make(): TIn;
 }
 
-interface SerializedNode {
+export interface SerializedNode {
     /** The unique ID of the node. */
     i: string;
 
@@ -52,9 +52,18 @@ interface SerializedNode {
      * `Serializer<TIn, TOut>` associated with `t`.
      */
     d: unknown;
+
+    /** If present and `true`, the node is collapsed. Since Vestige 0.6.0. */
+    c?: boolean;
+
+    /** If present, the names of the folded parameter groups of the node. Since Vestige 0.6.0. */
+    g?: string[];
+
+    /** If present, the size (width and height) the node was resized to. Since Vestige 0.6.0. */
+    s?: [number, number];
 }
 
-interface SerializedEdge {
+export interface SerializedEdge {
     /** The node the connection is coming from. */
     s: string;
 
@@ -88,7 +97,7 @@ interface SerializedProject {
     edges: SerializedEdge[];
 }
 
-function serializeNode(
+export function serializeNode(
     node: AbstractVestigeNode,
     serializers: NodeDataSerializer<any>[]
 ): SerializedNode {
@@ -102,22 +111,36 @@ function serializeNode(
         x: node.position.x,
         y: node.position.y,
         i: node.id,
-        d: serializer.serialize(node.data)
+        d: serializer.serialize(node.data),
+        ...(node.data.collapsed ? { c: true } : {}),
+        ...(node.data.foldedGroups?.length ? { g: [...node.data.foldedGroups] } : {}),
+        ...(node.width && node.height ? { s: [node.width, node.height] as [number, number] } : {})
     };
 }
 
-async function deserializeNode(
+export async function deserializeNode(
     node: SerializedNode,
     serializers: NodeDataSerializer<any>[]
 ): Promise<VestigeNode> {
     const deserializer = serializers.find(x => x.type == node.t);
     assert(deserializer, `No (de)serializer for node type ${node.t}`);
 
+    const data = await deserializer.deserialize(node.d);
+    if (node.c) {
+        data.collapsed = true;
+    }
+
+    if (node.g) {
+        data.foldedGroups = [...node.g];
+    }
+
     return {
         id: node.i,
         type: node.t as any,
         position: { x: node.x, y: node.y },
-        data: await deserializer.deserialize(node.d)
+        ...(node.t == "final" ? { deletable: false } : {}),
+        ...(node.s ? { width: node.s[0], height: node.s[1] } : {}),
+        data
     }
 }
 

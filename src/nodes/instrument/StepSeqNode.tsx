@@ -240,8 +240,12 @@ export const createStepSeqNode = makeNodeFactory("step-seq", () => new StepSeqNo
 
 /** Provides a `NodeTypeDescriptor` which describes step sequencer nodes. */
 export const STEP_SEQ_NODE_DESCRIPTOR = {
-  displayName: "step/drum sequencer",
+  displayName: "Step Sequencer",
   icon: cls => <RiGridFill className={cls}/>,
+  help: <>
+    The <b>step sequencer</b> (also called a <i>drum machine</i>) plays short audio clips (samples)
+    in a pre-determined rhythm. It can play any number of tracks, each with different samples.
+  </>,
   create: createStepSeqNode
 } satisfies NodeTypeDescriptor;
 
@@ -305,7 +309,7 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
     <VestigeNodeBase
       id={id} onRemove={() => gen.dispose()}
       className="w-[650px]"
-      name="step sequencer"
+      name="Step Sequencer"
       help={<>
         The <b>step sequencer</b> (also called a <i>drum machine</i>) plays short
         audio clips (samples) in a pre-determined rhythm. It can play any number of

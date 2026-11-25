@@ -2,7 +2,8 @@ import * as tone from "tone";
 import * as flow from "@xyflow/react";
 
 import { VestigeNode, VestigeNodeOfType } from "./nodes";
-import { assert, mapFromSingle } from "./util";
+import { assert, lerp, mapFromSingle } from "./util";
+import { formatGain } from "./audioUtil";
 import { FinalNodeData } from "./nodes/FinalNode";
 
 export type NoteEventType = "NOTE_ON" | "NOTE_OFF";
@@ -36,6 +37,16 @@ export abstract class NodeData implements Record<string, unknown> {
     abstract nodeType: NodeType;
 
     /**
+     * If `true`, the node is displayed in its collapsed form, with only its header visible.
+     */
+    collapsed?: boolean;
+
+    /**
+     * The names of the parameter groups of the node that are currently folded.
+     */
+    foldedGroups?: string[];
+
+    /**
      * Called before an offline render.
      */
     beforeRender?(): Promise<void> | void;
@@ -46,6 +57,11 @@ export abstract class NodeData implements Record<string, unknown> {
      * The `time` parameter represents the time, in seconds, since the start of playback.
      */
     onTick?(time: number): void;
+
+    /**
+     * Called when real-time playback is stopped by the user.
+     */
+    onPlaybackStop?(): void;
 }
 
 /**
@@ -500,6 +516,47 @@ export class GraphMutator {
 }
 
 /**
+ * Describes the real-world unit of an automatable parameter, allowing other nodes to
+ * display normalized values in that unit.
+ */
+export interface ParameterUnit {
+    /** Formats the normalized value `x` (0.0 to 1.0) in the unit of the parameter. */
+    format(x: number): string;
+
+    /** Converts a number, in the unit of the parameter, to a normalized value (0.0 to 1.0). */
+    parse(x: number): number;
+}
+
+/**
+ * Creates a `ParameterUnit` for parameters that map linearly to the range of `[min; max]`.
+ */
+export function linearUnit(min: number, max: number, format: (x: number) => string): ParameterUnit {
+    return {
+        format: x => format(lerp(min, max, x)),
+        parse: x => (x - min) / (max - min)
+    };
+}
+
+/** Converts a `ParameterUnit` to one that accepts percentages instead of normalized values. */
+export function percentageUnit(unit: ParameterUnit): ParameterUnit {
+    return {
+        format: x => unit.format(x / 100),
+        parse: x => unit.parse(x) * 100
+    };
+}
+
+/** A `ParameterUnit` for parameters which are linear gain multipliers in the range of [0; 2]. */
+export const GAIN_UNIT: ParameterUnit = {
+    format: x => formatGain(x * 2),
+    parse: x => tone.dbToGain(x) / 2
+};
+
+/** Represents the data of a node that may have automatable parameters. */
+export type ParametricNodeData = NodeData & {
+    parameters?: { [handleName: string]: Automatable }
+};
+
+/**
  * An **automatable** is a normalized numeric parameter in the range of 0.0 to 1.0,
  * which can be automated via *value nodes*, such as the `LfoNode`.
  */
@@ -524,8 +581,12 @@ export class Automatable {
         return this.controlledBy != undefined;
     }
 
-    constructor(change: (x: number) => void) {
+    /** If specified, the real-world unit of the parameter. */
+    unit?: ParameterUnit;
+
+    constructor(change: (x: number) => void, unit?: ParameterUnit) {
         this.change = change;
+        this.unit = unit;
     }
 }
 

@@ -34,8 +34,13 @@ export class FinalNodeData extends NodeData {
 
 export type FinalNode = flow.Node<FinalNodeData, "final">
 
-/** Creates a new `FinalNode` with a random ID. */
-export const createFinalNode = makeNodeFactory("final", () => new FinalNodeData());
+const makeFinalNode = makeNodeFactory("final", () => new FinalNodeData());
+
+/** Creates a new `FinalNode` with a random ID. The node cannot be deleted by the user. */
+export const createFinalNode = (x: number, y: number): FinalNode => ({
+  ...makeFinalNode(x, y),
+  deletable: false
+});
 
 export class FinalNodeSerializer extends NullNodeDataSerializer<FinalNodeData> {
   type = "final"
@@ -56,28 +61,22 @@ export const FinalNodeRenderer = memo(function FinalNodeRenderer(
   return (
     <VestigeNodeBase
       id={id}
-      name="final output"
+      name="Output"
       help={<>
-        The <b>final output</b> pseudo-module will output any audio you provide
-        it to your speakers.
+        The <b>output</b> node will output any audio you provide it to your speakers.
+        The <b>volume</b> does not affect renders.
       </>}
     >
       <div className="flex flex-col gap-6">
-        <h1>This node will forward all output to your speakers.</h1>
+        <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+          <PlainField name="input" />
+        </NodePort>
 
         <SliderField
           name="volume"
-          description="the volume (loudness) of the final output"
           min={1} max={100} value={finalVolumeDisp} step={1} isPercentage
           onChange={setFinalVolume}
         />
-
-        <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
-          <PlainField
-            name="main input"
-            description="the audio to forward to your output device"
-          />
-        </NodePort>
       </div>
     </VestigeNodeBase>
   );

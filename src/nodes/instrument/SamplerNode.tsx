@@ -171,8 +171,13 @@ export const createSamplerNode = makeNodeFactory("sampler", () => new SamplerNod
 
 /** Provides a `NodeTypeDescriptor` which describes sampler nodes. */
 export const SAMPLER_NODE_DESCRIPTOR = {
-  displayName: "sampler",
+  displayName: "Sampler",
   icon: cls => <RiVoiceprintFill className={cls}/>,
+  help: <>
+    The <b>sampler</b> node can emulate any kind of instrument - it takes in ready sets
+    of <b>samples</b> (audio recordings), and plays them with different pitches. Samplers are
+    usually used for non-synthesized instruments like pianos, guitars, or strings.
+  </>,
   create: createSamplerNode
 } satisfies NodeTypeDescriptor;
 
@@ -191,7 +196,7 @@ export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => gen.dispose()}
-      name="sampler"
+      name="Sampler"
       help={<>
         The <b>sampler</b> module can emulate any kind of instrument - it takes in
         ready sets of <b>samples</b> (audio recordings), and plays them with different

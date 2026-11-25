@@ -2,7 +2,7 @@ import { PropsWithChildren } from "react";
 
 export function PlainField({ name, description, align, children }: PropsWithChildren<{
   name: string,
-  description: string,
+  description?: string,
   align?: "left" | "right"
 }>) {
   align ??= "left";
@@ -13,7 +13,7 @@ export function PlainField({ name, description, align, children }: PropsWithChil
       ${align === "right" ? "text-right" : ""}
     `}>
       <span className="font-semibold">{name}</span>
-      <span>{description}</span>
+      { !description ? <></> : <span className="text-gray-500">{description}</span> }
 
       {children}
     </div>

@@ -134,8 +134,19 @@ export const createDelayNode = makeNodeFactory("delay", () => new DelayNodeData(
 
 /** Provides a `NodeTypeDescriptor` which describes delay nodes. */
 export const DELAY_NODE_DESCRIPTOR = {
-  displayName: "delay (echo)",
+  displayName: "Delay",
   icon: cls => <RiRepeatLine className={cls}/>,
+  help: <>
+    <p>
+      The <b>delay</b> node emulates an echo, continuously repeating the signal it's given.
+      Extremely small <b>time</b> values produce interesting effects! Be careful with
+      the <b>feedback</b> - too much, and you might just hurt your ears.
+    </p>
+
+    <p>
+      With <b>ping-pong</b> enabled, the repeats alternate between the left and right channels.
+    </p>
+  </>,
   create: createDelayNode
 } satisfies NodeTypeDescriptor;
 
@@ -174,7 +185,7 @@ export const DelayNodeRenderer = memo(function DelayNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="delay (echo)"
+      name="Delay"
       help={<>
         A <b>delay</b> (or, more precisely, a <i>feedback delay</i>) emulates
         an echo, continously repeating the signal it's given. Extremely small

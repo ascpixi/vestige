@@ -87,8 +87,13 @@ export const createPentatonicChordsNode = makeNodeFactory(
 
 /** Provides a `NodeTypeDescriptor` which describes pentatonic chord generator nodes. */
 export const PENTATONIC_CHORDS_NODE_DESCRIPTOR = {
-  displayName: "chords (pentatonic)",
+  displayName: "Pentatonic Chords",
   icon: cls => <RiMusic2Fill className={cls}/>,
+  help: <>
+    The <b>pentatonic chords</b> node generates chords in the pentatonic scale, similar to
+    the <b>pentatonic melody</b> node. A chord is a collection of notes played at the same time
+    for a prolonged period of time.
+  </>,
   create: createPentatonicChordsNode
 } satisfies NodeTypeDescriptor;
 
@@ -132,7 +137,7 @@ export const PentatonicChordsNodeRenderer = memo(function PentatonicChordsNodeRe
   return (
     <VestigeNodeBase
       id={id} onRemove={() => {}}
-      name="chords (pentatonic)"
+      name="Pentatonic Chords"
       help={<>
         The <b>chords (pentatonic)</b> module generates chords in the pentatonic
         scale, similar to the <b>melody (pentatonic)</b> module. A chord is a

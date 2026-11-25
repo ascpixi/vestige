@@ -214,8 +214,21 @@ export const createShimmerNode = makeNodeFactory("shimmer", () => new ShimmerNod
 
 /** Provides a `NodeTypeDescriptor` which describes shimmer nodes. */
 export const SHIMMER_NODE_DESCRIPTOR = {
-  displayName: "shimmer",
+  displayName: "Shimmer",
   icon: cls => <RiSparklingFill className={cls} />,
+  help: <>
+    <p>
+      The <b>shimmer</b> node is a type of reverb, which pitches the signal up a set amount of
+      semitones (the <b>shift</b>) each time it goes through a feedback loop.
+      The <b>shimmer</b> parameter determines how much of the signal goes back through the loop.
+    </p>
+
+    <p>
+      This kind of effect is also called the <b>Eno/Lanois shimmer reverb</b>, as it was first
+      popularized by Brian Eno and Daniel Lanois in their ambient works. It works best for acoustic
+      instruments and synthesizer pads, and creates great ambiances.
+    </p>
+  </>,
   create: createShimmerNode
 } satisfies NodeTypeDescriptor;
 
@@ -258,7 +271,7 @@ export const ShimmerNodeRenderer = memo(function ShimmerNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="shimmer"
+      name="Shimmer"
       help={<>
         The <b>shimmer</b> module is a type of reverb, which provides a complex, shimmery reverb,
         by simulating a feedback loop that pitches the signal up a set amount of semitones, with

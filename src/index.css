@@ -64,11 +64,45 @@ html, body, #root {
   --range-bg: color-mix(in oklab, var(--color-base-content) 10%, transparent);
 }
 
-.range:disabled { opacity: 1; }
+.checkbox { border-radius: 0.5rem; }
+
+.range:disabled {
+  opacity: 1;
+  color: var(--color-gray-400);
+  cursor: not-allowed;
+}
+
+.menu {
+  --menu-active-bg: var(--color-base-200);
+  --menu-active-fg: var(--color-base-content);
+}
 
 .select-sm {
   font-size: 0.875rem;
   padding-inline-end: 2rem;
+}
+
+.react-flow {
+  --xy-selection-background-color: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  --xy-selection-border: 1px solid color-mix(in oklab, var(--color-primary) 60%, transparent);
+}
+
+.react-flow .react-flow__pane.selection {
+  cursor: crosshair;
+}
+
+.react-flow .react-flow__pane.selection.dragging { cursor: grabbing; }
+
+.react-flow__node select:not(:disabled),
+.react-flow__node button:not(:disabled),
+.react-flow__node input[type="checkbox"]:not(:disabled),
+.react-flow__node input[type="range"]:not(:disabled) {
+  cursor: pointer;
+}
+
+.react-flow__node.selected .vestige-node {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .react-flow__handle {

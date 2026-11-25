@@ -5,7 +5,7 @@ import { RiAliensFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { Automatable, AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
+import { Automatable, linearUnit, AudioDestination, AudioEffect, EffectNodeData, paramHandleId, SIGNAL_INPUT_HID_MAIN, SIGNAL_OUTPUT_HID, unaryAudioDestination } from "../../graph";
 import { assert, lerp } from "../../util";
 import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
 
@@ -19,6 +19,9 @@ const MAX_BASE_FREQ = 10000;
 
 const MIN_RATE = 0.05;
 const MAX_RATE = 6;
+
+const BASE_FREQ_UNIT = linearUnit(MIN_BASE_FREQ, MAX_BASE_FREQ, x => `${Math.round(x)} Hz`);
+const RATE_UNIT = linearUnit(MIN_RATE, MAX_RATE, x => `${x.toFixed(2)} Hz`);
 
 export class PhaserNodeData extends EffectNodeData {
   effect: PhaserAudioEffect;
@@ -35,8 +38,14 @@ export class PhaserNodeData extends EffectNodeData {
 
     const phaser = this.effect.phaser;
     this.parameters = {
-      "param-base-freq": new Automatable(x => phaser.baseFrequency = lerp(MIN_BASE_FREQ, MAX_BASE_FREQ, x)),
-      "param-rate": new Automatable(x => phaser.frequency.value = lerp(MIN_RATE, MAX_RATE, x)),
+      "param-base-freq": new Automatable(
+        x => phaser.baseFrequency = lerp(MIN_BASE_FREQ, MAX_BASE_FREQ, x),
+        BASE_FREQ_UNIT
+      ),
+      "param-rate": new Automatable(
+        x => phaser.frequency.value = lerp(MIN_RATE, MAX_RATE, x),
+        RATE_UNIT
+      ),
       "param-wet": new Automatable(x => phaser.wet.value = x)
     };
   }
@@ -96,8 +105,13 @@ export const createPhaserNode = makeNodeFactory("phaser", () => new PhaserNodeDa
 
 /** Provides a `NodeTypeDescriptor` which describes phaser nodes. */
 export const PHASER_NODE_DESCRIPTOR = {
-  displayName: "phaser",
+  displayName: "Phaser",
   icon: cls => <RiAliensFill className={cls}/>,
+  help: <>
+    The <b>phaser</b> node creates a "synthesized", electronic, or "washy" effect by changing
+    the phase of different frequency components of the signal. The <b>octaves</b> determine how
+    far the effect sweeps above the base frequency.
+  </>,
   create: createPhaserNode
 } satisfies NodeTypeDescriptor;
 
@@ -136,41 +150,37 @@ export const PhaserNodeRenderer = memo(function PhaserNodeRenderer(
   return (
     <VestigeNodeBase
       id={id} onRemove={() => data.effect.dispose()}
-      name="phaser"
-      help={<>
-        The <b>phaser</b> module creates a "synthesized", electronic, or "washy" effect
-        by changing the phase of different frequency components of an incoming signal.
-      </>}
+      name="Phaser"
+      help={PHASER_NODE_DESCRIPTOR.help}
     >
       <div>
         <div className="flex flex-col gap-6">
-          <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
-            <PlainField name="main input" description="the audio to modify" />
-          </NodePort>
+          <div className="flex justify-between gap-4">
+            <NodePort nodeId={id} handleId={SIGNAL_INPUT_HID_MAIN} kind="input" type="signal">
+              <PlainField name="input" />
+            </NodePort>
 
-          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-            <PlainField align="right"
-              name="main output"
-              description="the audio, with the phaser"
-            />
-          </NodePort>
+            <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+              <PlainField align="right"
+                name="output"
+              />
+            </NodePort>
+          </div>
 
           <NodePort nodeId={id} handleId={paramHandleId("base-freq")} kind="input" type="value">
             <SliderField
-              name="frequency"
-              description="the base frequency of the phaser"
+              name="base frequency"
               min={MIN_BASE_FREQ} max={MAX_BASE_FREQ} value={baseFreq}
               onChange={setBaseFreq}
               automatable={data.parameters["param-base-freq"]}
               automatableDisplay={() => tone.Frequency(phaser.baseFrequency).toFrequency()}
-              valueStringifier={x => `${x.toFixed(2)} Hz`}
+              valueStringifier={x => `${Math.round(x)} Hz`}
             />
           </NodePort>
 
           <NodePort nodeId={id} handleId={paramHandleId("rate")} kind="input" type="value">
             <SliderField
               name="rate"
-              description="rate of modulation of the cutoff"
               min={MIN_RATE} max={MAX_RATE} value={rate} step={0.01}
               onChange={setRate}
               automatable={data.parameters["param-rate"]}
@@ -181,22 +191,19 @@ export const PhaserNodeRenderer = memo(function PhaserNodeRenderer(
 
           <SliderField
             name="octaves"
-            description="the depth of the modulation of the cutoff, in octaves"
             min={1} max={5} value={octaves}
             onChange={setOctaves}
           />
 
           <SliderField
             name="stages"
-            description="the amount of filters to use"
             min={1} max={15} value={stages}
             onChange={setStages}
           />
 
           <NodePort nodeId={id} handleId={paramHandleId("wet")} kind="input" type="value">
             <SliderField
-              name="wetness (mix)"
-              description="the percentage of the resulting audio that is the phaser"
+              name="mix"
               min={0} max={100} value={wet} isPercentage
               onChange={setWet}
               automatable={data.parameters["param-wet"]}
