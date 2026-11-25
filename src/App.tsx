@@ -1,7 +1,7 @@
 import * as flow from "@xyflow/react";
 import * as tone from "tone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RiDeleteBinFill, RiFileCheckFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiInformation2Fill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiStopFill } from "@remixicon/react";
+import { RiDeleteBinFill, RiFileCheckFill, RiFileMusicFill, RiGraduationCapFill, RiImportFill, RiLinkM, RiLinkUnlinkM, RiPlayFill, RiSaveFill, RiSettings3Fill, RiStopFill } from "@remixicon/react";
 
 import "@xyflow/react/dist/style.css";
 
@@ -10,17 +10,19 @@ import { createFinalNode } from "./nodes/FinalNode";
 
 import { VestigeGraph, GraphMutator, graphFromExisting } from "./graph";
 import { deserializeProject, deserializeBase64Project, serializeProject, serializeBase64Project } from "./serializer";
-import { getPersistentData } from "./persistent";
+import { getPersistentData, mutatePersistentData, PersistentData } from "./persistent";
 import { isTauri, promptToSaveFile } from "./environment";
 
 import { IntroductionTour } from "./components/IntroductionTour";
-import { disposeNode } from "./components/VestigeNodeBase";
+import { disposeNode, toggleNodeCollapsed } from "./components/VestigeNodeBase";
+import { SettingsDialog } from "./components/app/SettingsDialog";
+import { SelectionMenu } from "./components/app/SelectionMenu";
+import { copyNodes, getClipboard, instantiateSnapshot, NodeSnapshot, snapshotNodes } from "./clipboard";
 import { EDGE_TYPES as VESTIGE_EDGE_TYPES } from "./components/VestigeEdge";
 import { AddNodeMenu } from "./components/app/AddNodeMenu";
 import { HelpPanel, NODE_PAGES } from "./components/app/HelpPanel";
 import { HelpContext, HelpPage } from "./components/app/HelpContext";
 import { AppRenderDialog } from "./components/app/AppRenderDialog";
-import { AppAboutDialog } from "./components/app/AppAboutDialog";
 import { ConfirmationDialog } from "./components/app/ConfirmationDialog";
 import { AppProjectLinkDialog } from "./components/app/AppProjectLinkDialog";
 
@@ -31,6 +33,14 @@ const shouldLoadExisting = location.hash.startsWith("#p:");
 const NEW_NODE_OFFSET = 20;
 
 const DEFAULT_VIEWPORT = { x: 500, y: 210, zoom: 1 };
+
+/** Returns `true` if the given event target accepts keyboard input on its own. */
+function isTextInput(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement))
+    return false;
+
+  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+}
 
 export default function App() {
   const [thisFlow, setThisFlow] = useState<flow.ReactFlowInstance<VestigeNode, flow.Edge> | null>(null);
@@ -47,6 +57,16 @@ export default function App() {
 
   const [ctxMenuPos, setCtxMenuPos] = useState({ x: 0, y: 0 });
   const [showCtxMenu, setShowCtxMenu] = useState(false);
+  const [selectionMenuPos, setSelectionMenuPos] = useState<{ x: number, y: number } | null>(null);
+  const mousePos = useRef({ x: 0, y: 0 });
+
+  const [settings, setSettings] = useState(getPersistentData());
+  const settingsDialogRef = useRef<HTMLDialogElement>(null);
+
+  function changeSettings(changes: Partial<PersistentData>) {
+    mutatePersistentData(changes);
+    setSettings(getPersistentData());
+  }
 
   const [helpPage, setHelpPage] = useState<HelpPage | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -60,7 +80,6 @@ export default function App() {
   }), []);
 
   const tourDialogRef = useRef<HTMLDialogElement>(null);
-  const aboutDialogRef = useRef<HTMLDialogElement>(null);
   const resetDialogRef = useRef<HTMLDialogElement>(null);
   const renderDialogRef = useRef<HTMLDialogElement>(null);
 
@@ -145,6 +164,146 @@ export default function App() {
     setShowCtxMenu(true);
     ev.preventDefault();
   }
+
+  function handleMouseMove(ev: React.MouseEvent<HTMLElement>) {
+    mousePos.current = { x: ev.pageX, y: ev.pageY };
+  }
+
+  /**
+   * Adds the nodes of the given snapshot to the graph, selecting them, and deselecting
+   * all other nodes. If `atCursor` is `true`, the nodes are placed at the mouse cursor.
+   */
+  async function insertSnapshot(snapshot: NodeSnapshot, atCursor: boolean) {
+    const position = atCursor && thisFlow ? thisFlow.screenToFlowPosition(mousePos.current) : null;
+    const { nodes, edges } = await instantiateSnapshot(snapshot, position);
+
+    setGraph(mutator.mutate(graph, {
+      nodes: [...graph.nodes.map(x => ({ ...x, selected: false })), ...nodes],
+      edges: [...graph.edges, ...edges]
+    }));
+
+    setGraphVer(x => x + 1);
+  }
+
+  function getSelection() {
+    return graph.nodes.filter(x => x.selected && x.type != "final");
+  }
+
+  function duplicateSelected() {
+    const selected = getSelection();
+    if (selected.length != 0) {
+      insertSnapshot(snapshotNodes(selected, graph.edges), false);
+    }
+  }
+
+  function copySelected() {
+    copyNodes(getSelection(), graph.edges);
+  }
+
+  function cutSelected() {
+    const selected = getSelection();
+    copyNodes(selected, graph.edges);
+    thisFlow?.deleteElements({ nodes: selected });
+  }
+
+  function paste() {
+    const clipboard = getClipboard();
+    if (clipboard) {
+      insertSnapshot(clipboard, true);
+    }
+  }
+
+  function deleteSelected() {
+    thisFlow?.deleteElements({ nodes: getSelection() });
+  }
+
+  function toggleSelectedCollapsed() {
+    graph.nodes.filter(x => x.selected).forEach(x => toggleNodeCollapsed(x.id));
+  }
+
+  /**
+   * Opens the context menu of the selection. If `node` isn't selected, it becomes the
+   * only selected node.
+   */
+  function openSelectionMenu(ev: React.MouseEvent, node?: VestigeNode) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    if (node && !node.selected) {
+      setGraph(mutator.mutate(graph, {
+        nodes: graph.nodes.map(x => ({ ...x, selected: x.id == node.id }))
+      }));
+    }
+
+    setShowCtxMenu(false);
+    setSelectionMenuPos({ x: ev.pageX, y: ev.pageY });
+  }
+
+  function selectAll() {
+    setGraph(mutator.mutate(graph, { nodes: graph.nodes.map(x => ({ ...x, selected: true })) }));
+  }
+
+  useEffect(() => {
+    function handleKeyDown(ev: KeyboardEvent) {
+      if (isTextInput(ev.target))
+        return;
+
+      const key = ev.key.toLowerCase();
+      const isModifierHeld = ev.ctrlKey || ev.metaKey;
+
+      if (isModifierHeld && !ev.altKey) {
+        if (key == ",") {
+          settingsDialogRef.current?.showModal();
+          ev.preventDefault();
+          return;
+        }
+
+        // Editing shortcuts shouldn't affect the canvas while a dialog is open.
+        if (document.querySelector("dialog[open]") || inTour)
+          return;
+
+        const actions: Record<string, () => void> = {
+          "c": copySelected,
+          "x": cutSelected,
+          "v": paste,
+          "a": selectAll,
+          "d": duplicateSelected
+        };
+
+        const action = actions[key];
+        if (action && !ev.shiftKey) {
+          action();
+          ev.preventDefault();
+        }
+
+        return;
+      }
+
+      if (ev.altKey || document.querySelector("dialog[open]"))
+        return;
+
+      if (key == "a" && ev.shiftKey) {
+        // We add nodes with Shift+A, just like Blender does.
+        setCtxMenuPos(mousePos.current);
+        setShowCtxMenu(true);
+        ev.preventDefault();
+      }
+      else if (key == "d" && ev.shiftKey) {
+        duplicateSelected();
+        ev.preventDefault();
+      }
+      else if (key == "h" && !ev.shiftKey) {
+        toggleSelectedCollapsed();
+      }
+      else if (key == "escape") {
+        setShowCtxMenu(false);
+        setSelectionMenuPos(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   async function saveAsLink() {
     const data = await serializeBase64Project(graph.nodes, graph.edges, VESTIGE_NODE_SERIALIZERS);
@@ -275,11 +434,14 @@ export default function App() {
     [graphVer, startTimeMs, playing]
   );
 
+  const selectedCount = graph.nodes.filter(x => x.selected).length;
+
   return (
     <HelpContext.Provider value={helpContext}>
       <main
         className="w-screen h-screen overflow-hidden"
         onContextMenu={handleContextMenuOpen}
+        onMouseMove={handleMouseMove}
       >
         <AddNodeMenu
           x={ctxMenuPos.x} y={ctxMenuPos.y}
@@ -310,7 +472,25 @@ export default function App() {
           />
         }
 
-        <AppAboutDialog ref={aboutDialogRef} />
+        <SettingsDialog ref={settingsDialogRef} settings={settings} onChange={changeSettings} />
+
+        {
+          !selectionMenuPos ? <></> :
+          <SelectionMenu
+            x={selectionMenuPos.x} y={selectionMenuPos.y}
+            title={`${selectedCount} ${selectedCount == 1 ? "node" : "nodes"} selected`}
+            canEdit={getSelection().length != 0}
+            canPaste={getClipboard() != null}
+            onCopy={copySelected}
+            onCut={cutSelected}
+            onPaste={paste}
+            onDuplicate={duplicateSelected}
+            onToggleCollapse={toggleSelectedCollapsed}
+            onDelete={deleteSelected}
+            onClose={() => setSelectionMenuPos(null)}
+          />
+        }
+
         <AppProjectLinkDialog link={projLink}/>
         <AppRenderDialog ref={renderDialogRef} graph={graph} />
 
@@ -325,7 +505,12 @@ export default function App() {
         />
 
         <flow.ReactFlow
-          onMouseDownCapture={() => setShowCtxMenu(false)}
+          onMouseDownCapture={() => {
+            setShowCtxMenu(false);
+            setSelectionMenuPos(null);
+          }}
+          onNodeContextMenu={(ev, node) => openSelectionMenu(ev, node)}
+          onSelectionContextMenu={ev => openSelectionMenu(ev)}
           nodes={graph.nodes}
           edges={graph.edges}
           nodeTypes={VESTIGE_NODE_TYPES}
@@ -337,6 +522,13 @@ export default function App() {
           defaultViewport={DEFAULT_VIEWPORT}
           onInit={setThisFlow}
           fitView={shouldLoadExisting}
+          deleteKeyCode={["Backspace", "Delete"]}
+          multiSelectionKeyCode={["Meta", "Control", "Shift"]}
+          panOnDrag={settings.panMode == "LEFT" ? true : [1]}
+          selectionOnDrag={settings.panMode == "MIDDLE"}
+          selectionMode={flow.SelectionMode.Partial}
+          panOnScroll={settings.scrollMode == "PAN"}
+          zoomOnScroll={settings.scrollMode == "ZOOM"}
           translateExtent={inTour ? [[-1500, -500], [2000, 750]] : undefined}
         >
           <flow.Background variant={flow.BackgroundVariant.Dots}/>
@@ -398,11 +590,11 @@ export default function App() {
                 <RiGraduationCapFill/>
               </button>
 
-              <button onClick={() => aboutDialogRef.current!.showModal()}
-                title="About Vestige"
+              <button onClick={() => settingsDialogRef.current!.showModal()}
+                title="Settings"
                 className="btn btn-square bg-white"
               >
-                <RiInformation2Fill/>
+                <RiSettings3Fill/>
               </button>
             </nav>
           </flow.Panel>

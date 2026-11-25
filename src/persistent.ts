@@ -1,12 +1,25 @@
+/**
+ * Determines which mouse button pans the canvas. With `"LEFT"`, nodes are selected by
+ * dragging while holding Shift. With `"MIDDLE"`, dragging with the left mouse button selects.
+ */
+export type PanMode = "LEFT" | "MIDDLE";
+
+/** Determines whether the scroll wheel zooms (`"ZOOM"`), or pans (`"PAN"`) the canvas. */
+export type ScrollMode = "ZOOM" | "PAN";
+
 export interface PersistentData {
     tourComplete: boolean;
     volume: number;
+    panMode: PanMode;
+    scrollMode: ScrollMode;
 }
 
 function defaults(): PersistentData {
     return {
         tourComplete: false,
-        volume: 0.5
+        volume: 0.5,
+        panMode: "LEFT",
+        scrollMode: "ZOOM"
     };
 }
 
