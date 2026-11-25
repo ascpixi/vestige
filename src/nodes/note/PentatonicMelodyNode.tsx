@@ -16,11 +16,19 @@ import { SliderField } from "../../components/SliderField";
 import { SelectField } from "../../components/SelectField";
 import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 import { MusicalKeyboard } from "../../components/MusicalKeyboard";
+import { DEFAULT_BPM, divisionLength } from "../../transport";
+import { DivisionField } from "../../components/TempoSync";
+import { CheckboxField } from "../../components/CheckboxField";
 
 export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   inputs = 0 as const;
   offset: number;
   lastNotes: number[] = [];
+
+  /** If `true`, notes only change on the grid specified by `division`. */
+  sync = false;
+  division = "1/8";
+  bpm = DEFAULT_BPM;
 
   constructor (
     public density: number = 50,
@@ -34,6 +42,11 @@ export class PentatonicMelodyGenerator implements PlainNoteGenerator {
   }
 
   generate(time: number): number[] {
+    if (this.sync) {
+      const step = divisionLength(this.division, this.bpm);
+      time = Math.floor(time / step) * step;
+    }
+
     time = time + this.offset;
 
     // "available" contains all the notes we can play.
@@ -85,6 +98,9 @@ export class PentatonicMelodyNodeSerializer extends FlatNodeDataSerializer<Penta
     n: this.prop(self => self.generator).with("rootNote"),
     m: this.prop(self => self.generator).with("mode"),
     p: this.prop(self => self.generator).with("polyphony", 1), // since Vestige 0.3.0
+    y: this.prop(self => self.generator).with("sync", false), // since Vestige 0.6.0
+    v: this.prop(self => self.generator).with("division", "1/8"), // since Vestige 0.6.0
+    t: this.prop(self => self.generator).with("bpm", DEFAULT_BPM), // since Vestige 0.6.0
   }
 }
 
@@ -127,6 +143,9 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
   const [octave, setOctave] = useBoundState(gen, "octave");
   const [pitchRange, setPitchRange] = useBoundState(gen, "pitchRange");
   const [polyphony, setPolyphony] = useBoundState(gen, "polyphony");
+  const [sync, setSync] = useBoundState(gen, "sync");
+  const [division, setDivision] = useBoundState(gen, "division");
+  const [bpm, setBpm] = useBoundState(gen, "bpm");
 
   const notes = useNoteGeneratorSync(() => gen.lastNotes);
 
@@ -139,73 +158,77 @@ export const PentatonicMelodyNodeRenderer = memo(function PentatonicMelodyNodeRe
     <VestigeNodeBase
       id={id} onRemove={() => {}}
       name="Pentatonic Melody"
-      help={<>
-        The <b>melody (pentatonic)</b> module generates melodies in the pentatonic
-        scale, which has <b>5 intervals</b>. An interval is simply a note in a scale,
-        and a scale is a set of notes that sound good together.
-      </>}
+      help={PENTATONIC_MELODY_NODE_DESCRIPTOR.help}
     >
       <div>
         <div className="flex flex-col gap-6">
           <NodePort nodeId={id} handleId={NOTE_OUTPUT_HID} kind="output" type="notes">
             <PlainField align="right"
-              name="main output"
-              description="the currently held down notes"
+              name="notes"
             />
           </NodePort>
 
-          <SelectField
-            name="root note"
-            description="the root of the scale to play in"
-            value={rootNote} onChange={x => setRootNote(parseInt(x))} 
-          >
-            <option value={MIDI_NOTES.C}>C</option>
-            <option value={MIDI_NOTES.Cs}>C#</option>
-            <option value={MIDI_NOTES.D}>D</option>
-            <option value={MIDI_NOTES.Ds}>D#</option>
-            <option value={MIDI_NOTES.E}>E</option>
-            <option value={MIDI_NOTES.F}>F</option>
-            <option value={MIDI_NOTES.Fs}>F#</option>
-            <option value={MIDI_NOTES.G}>G</option>
-            <option value={MIDI_NOTES.Gs}>G#</option>
-            <option value={MIDI_NOTES.A}>A</option>
-            <option value={MIDI_NOTES.As}>A#</option>
-            <option value={MIDI_NOTES.B}>B</option>
-          </SelectField>
+          <div className="grid grid-cols-2 gap-4">
+            <SelectField
+              name="key"
+              value={rootNote} onChange={x => setRootNote(parseInt(x))}
+            >
+              <option value={MIDI_NOTES.C}>C</option>
+              <option value={MIDI_NOTES.Cs}>C#</option>
+              <option value={MIDI_NOTES.D}>D</option>
+              <option value={MIDI_NOTES.Ds}>D#</option>
+              <option value={MIDI_NOTES.E}>E</option>
+              <option value={MIDI_NOTES.F}>F</option>
+              <option value={MIDI_NOTES.Fs}>F#</option>
+              <option value={MIDI_NOTES.G}>G</option>
+              <option value={MIDI_NOTES.Gs}>G#</option>
+              <option value={MIDI_NOTES.A}>A</option>
+              <option value={MIDI_NOTES.As}>A#</option>
+              <option value={MIDI_NOTES.B}>B</option>
+            </SelectField>
 
-          <SelectField
-            name="scale mode"
-            description="minor usually sounds more mellow than major - in western music theory"
-            value={mode} onChange={x => setMode(x as ScaleMode)}
-          >
-            <option value="MAJOR">major</option>
-            <option value="MINOR">minor</option>
-          </SelectField>
+            <SelectField
+              name="scale"
+              value={mode} onChange={x => setMode(x as ScaleMode)}
+            >
+              <option value="MAJOR">major</option>
+              <option value="MINOR">minor</option>
+            </SelectField>
+          </div>
+
+          <CheckboxField name="snap to grid" value={sync} onChange={setSync} />
+
+          {
+            !sync ? <></> : (
+              <DivisionField
+                name="grid"
+                value={division} onChange={setDivision}
+                bpm={bpm} onBpmChange={setBpm}
+                maxBeats={4}
+              />
+            )
+          }
 
           <SliderField
             name="density"
-            description="amount of notes to play at any given time"
             min={0} max={100} value={density} isPercentage
             onChange={setDensity}
           />
 
           <SliderField
             name="octave"
-            description="the octave (pitch) center - all notes will be above this pitch"
             min={1} max={6} value={octave}
             onChange={setOctave}
           />
 
           <SliderField
-            name="pitch range"
-            description="amount of intervals we can go beyond the pitch center - basically, how high in pitch we can go."
+            name="range"
             min={1} max={10} value={pitchRange}
             onChange={setPitchRange}
           />
 
           <SliderField
             name="polyphony"
-            description="amount of notes that can be played at the same time"
             min={1} max={4} value={polyphony}
             onChange={setPolyphony}
           />

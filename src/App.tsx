@@ -46,7 +46,8 @@ export default function App() {
   const [thisFlow, setThisFlow] = useState<flow.ReactFlowInstance<VestigeNode, flow.Edge> | null>(null);
   const [viewport, setViewport] = useState<flow.Viewport>(DEFAULT_VIEWPORT);
 
-  const [startTimeMs, setStartTimeMs] = useState(performance.now());
+  // The time of the audio context at which playback has started. We synchronize all nodes to it.
+  const [startCtxTime, setStartCtxTime] = useState(0);
   const [playing, setPlaying] = useState(false);
 
   const [wasStarted, setWasStarted] = useState(false);
@@ -90,8 +91,6 @@ export default function App() {
 
   const togglePlay = useCallback(async () => {
     if (!playing) {
-      setStartTimeMs(performance.now());
-
       if (!wasStarted) {
         console.log("▶️ Playing (performing first time initialization)");
         await tone.start();
@@ -100,13 +99,16 @@ export default function App() {
         console.log("▶️ Playing");
         tone.getDestination().volume.rampTo(tone.gainToDb(1), 0.25);
       }
+
+      setStartCtxTime(realtimeCtx.now());
     } else {
       console.log("⏹️ Stopping");
       tone.getDestination().volume.rampTo(-Infinity, 0.25);
+      graph.nodes.forEach(x => x.data.onPlaybackStop?.());
     }
 
     setPlaying(!playing);
-  }, [playing, wasStarted]);
+  }, [playing, wasStarted, graph, realtimeCtx]);
 
   const mutator = useMemo(() => new GraphMutator({
     onSignalConnect(_src, dst) {
@@ -136,13 +138,13 @@ export default function App() {
       return;
 
     const handler = () => {
-      const now = realtimeCtx.now();
+      const now = realtimeCtx.now() - startCtxTime;
       graph.nodes.forEach(x => x.data.onTick?.(now));
     };
 
     realtimeCtx.on("tick", handler);
     return () => { realtimeCtx.off("tick", handler); }
-  }, [realtimeCtx, graphVer, playing]);
+  }, [realtimeCtx, graphVer, playing, startCtxTime]);
 
   useEffect(() => {
     if (!shouldLoadExisting) 
@@ -420,7 +422,7 @@ export default function App() {
   useEffect(() => {
     if (playing) {
       const id = setInterval(() => {
-        graph.traceGraph((performance.now() - startTimeMs) / 1000);
+        graph.traceGraph(realtimeCtx.now() - startCtxTime);
       }, (1 / 96) * 1000);
 
       return () => clearInterval(id);
@@ -431,7 +433,7 @@ export default function App() {
     // the interval just for that (we don't care about node positions!) - we instead keep
     // a "graph version" counter, which we increment every time the graph changes in a way
     // that concerns us. We provide it as a dependency.
-    [graphVer, startTimeMs, playing]
+    [graphVer, startCtxTime, playing, realtimeCtx]
   );
 
   const selectedCount = graph.nodes.filter(x => x.selected).length;

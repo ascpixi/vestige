@@ -3,6 +3,7 @@ import { useEdges, useReactFlow } from "@xyflow/react";
 
 import { allEqualUnordered } from "./util";
 import { ParameterUnit, ParametricNodeData, VALUE_OUTPUT_HID } from "./graph";
+import { closestDivision, TempoSynced } from "./transport";
 
 /**
  * Returns a stateful value, with a value to change it, bound to a
@@ -93,4 +94,24 @@ export function useTargetUnit(nodeId: string): ParameterUnit | null {
         return null;
 
     return units[0]!;
+}
+
+/**
+ * Returns the tempo sync properties of `parent` as stateful values. When sync is enabled,
+ * the division is set to the one closest to the length (in seconds) returned by `getLength`.
+ */
+export function useTempoSync(parent: TempoSynced, getLength: () => number) {
+    const [sync, setSync] = useBoundState(parent, "sync");
+    const [division, setDivision] = useBoundState(parent, "division");
+    const [bpm, setBpm] = useBoundState(parent, "bpm");
+
+    function onSyncChange(value: boolean) {
+        if (value) {
+            setDivision(closestDivision(getLength(), bpm));
+        }
+
+        setSync(value);
+    }
+
+    return { sync, onSyncChange, division, setDivision, bpm, setBpm };
 }

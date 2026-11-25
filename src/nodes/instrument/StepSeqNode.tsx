@@ -5,9 +5,10 @@ import { RiAddFill, RiDeleteBinFill, RiGridFill } from "@remixicon/react";
 
 import type { NodeTypeDescriptor } from "..";
 import { makeNodeFactory } from "../basis";
-import { Automatable, AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
+import { Automatable, linearUnit, ParameterUnit, AudioGenerator, NoteEvent, InstrumentNodeData, SIGNAL_OUTPUT_HID, AudioDestination, paramHandleId } from "../../graph";
 import { FlatNodeDataSerializer, FlatSerializerSpec } from "../../serializer";
 import { useBoundState } from "../../hooks";
+import { formatGain } from "../../audioUtil";
 
 import { NodePort } from "../../components/NodePort";
 import { PlainField } from "../../components/PlainField";
@@ -16,10 +17,22 @@ import { VestigeNodeBase } from "../../components/VestigeNodeBase";
 
 import { ONE_SHOT_BASE_URL, ONE_SHOT_SAMPLE_IDS, ONE_SHOT_SAMPLES, OneShotSampleId } from "../../assets/oneshots";
 import { assert, changeOne, lerp, range, removeOne } from "../../util";
-import { CheckboxField } from "../../components/CheckboxField";
 
 const MIN_BPM = 40;
 const MAX_BPM = 220;
+
+/** How far ahead of the current time steps are scheduled, in seconds. */
+const SCHEDULE_LOOKAHEAD = 0.05;
+
+/** Steps this close (in seconds) to the current time are still considered to be on time. */
+const STEP_TOLERANCE = 0.005;
+
+const BPM_UNIT = linearUnit(MIN_BPM, MAX_BPM, x => `${Math.round(x)} BPM`);
+
+const VOLUME_UNIT: ParameterUnit = {
+  format: formatGain,
+  parse: x => tone.dbToGain(x)
+};
 
 interface StepSeqTrack {
   steps: boolean[];
@@ -29,8 +42,11 @@ interface StepSeqTrack {
 export class StepSeqNodeData extends InstrumentNodeData {
   generator: StepSeqAudioGenerator = new StepSeqAudioGenerator();
   parameters = {
-    "param-bpm": new Automatable(x => this.generator.bpm = lerp(MIN_BPM, MAX_BPM, x)),
-    "param-volume": new Automatable(x => this.generator.players.volume.value = x)
+    "param-bpm": new Automatable(x => this.generator.bpm = lerp(MIN_BPM, MAX_BPM, x), BPM_UNIT),
+    "param-volume": new Automatable(
+      x => this.generator.players.volume.value = tone.gainToDb(x),
+      VOLUME_UNIT
+    )
   };
 
   async beforeRender() {
@@ -43,6 +59,10 @@ export class StepSeqNodeData extends InstrumentNodeData {
   onTick(time: number) {
     this.generator.onTick(time);
   }
+
+  onPlaybackStop() {
+    this.generator.resetSchedule();
+  }
 };
 
 export class StepSeqAudioGenerator implements AudioGenerator {
@@ -52,8 +72,15 @@ export class StepSeqAudioGenerator implements AudioGenerator {
   awaiting: NoteEvent[] = [];
   loadPromise?: Promise<void>;
   lastStepIdx: number = 0;
-  lastStepTime: number = 0;
-  shouldSync: boolean = false;
+
+  /**
+   * The time of the next step that has not been scheduled yet, relative to the start
+   * of playback.
+   */
+  private nextStepTime: number | null = null;
+
+  /** The duration of a single step, as of the last scheduled step. */
+  private lastStepDuration = 0;
 
   private _tracks: StepSeqTrack[] = [];
 
@@ -91,45 +118,46 @@ export class StepSeqAudioGenerator implements AudioGenerator {
     });
   }
 
+  /** Forgets all scheduled steps. Should be called when playback stops. */
+  resetSchedule() {
+    this.nextStepTime = null;
+  }
+
   onTick(time: number) {
     if (!this.players.loaded)
       return;
 
-    const stepDuration = ((60 / this.bpm) / 4);
+    const stepDuration = (60 / this.bpm) / 4; // 16th notes
 
-    let stepIdx: number;
-    if (this.shouldSync) {
-      // If we should synchronize with the global timer, we calculate the step index
-      // based on the provided time, and assume a step change once `lastStepIdx` is different.
-      //
-      // I tried a time-based approach like in the non-sync case, but we often dropped certain
-      // steps because of lag (either forwards or backwards in time).
-      stepIdx = Math.round(time / stepDuration) % 16;
+    // We align steps to the beginning of playback, so that all sequencers (and every other
+    // tempo-synced node) stay in phase, even at different tempos. If we're not scheduling yet,
+    // or the tempo changed and our next step isn't on the grid anymore, we snap to the next
+    // step on the grid.
+    const fellBehind = this.nextStepTime != null && this.nextStepTime < time - stepDuration;
+    const tempoChanged = stepDuration != this.lastStepDuration;
 
-      if (this.lastStepIdx == stepIdx) {
-        return;
+    if (this.nextStepTime == null || fellBehind || tempoChanged) {
+      this.nextStepTime = Math.ceil((time - STEP_TOLERANCE) / stepDuration) * stepDuration;
+      this.lastStepDuration = stepDuration;
+    }
+
+    this.lastStepIdx = Math.floor(time / stepDuration) % 16;
+
+    // Ticks are irregular, so we schedule all steps of the lookahead window ahead of time, with
+    // sample-accurate timing.
+    const now = this.players.context.now();
+    while (this.nextStepTime < time + SCHEDULE_LOOKAHEAD) {
+      const stepIdx = Math.round(this.nextStepTime / stepDuration) % 16;
+      const when = Math.max(now, now + (this.nextStepTime - time));
+
+      for (const track of this.tracks) {
+        if (track.steps[stepIdx]) {
+          this.players.player(track.sample).start(when);
+        }
       }
-    } else {
-      if (stepDuration > time - this.lastStepTime)
-        return;
 
-      stepIdx = this.lastStepIdx;
+      this.nextStepTime += stepDuration;
     }
-
-    for (const track of this.tracks) {
-      if (!track.steps[stepIdx])
-        continue;
-
-      this.players.player(track.sample).start();
-    }
-
-    if (this.shouldSync) {
-      this.lastStepIdx = stepIdx;
-    } else {
-      this.lastStepIdx = (stepIdx + 1) % 16;
-    }
-
-    this.lastStepTime = time;
   }
 
   /** Adds a track with a random, unique sample. */
@@ -196,7 +224,6 @@ export class StepSeqNodeSerializer extends FlatNodeDataSerializer<StepSeqNodeDat
     pv: this.prop(self => self.parameters["param-volume"]).with("controlledBy"),
     v: this.prop(self => self.generator.players.volume).with("value"),
     b: this.prop(self => self.generator).with("bpm"),
-    s: this.prop(self => self.generator).with("shouldSync"),
     t: {
       // We serialize the track steps into a bit-field.
       get(self) {
@@ -256,7 +283,6 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
 
   const [bpm, setBpm] = useBoundState(gen, "bpm");
   const [volume, setVolume] = useState(tone.dbToGain(gen.players.volume.value) * 100);
-  const [shouldSync, setShouldSync] = useBoundState(gen, "shouldSync");
 
   const [trackSteps, setTrackSteps] = useState(gen.tracks.map(x => x.steps));
   const [trackSamples, setTrackSamples] = useState(gen.tracks.map(x => x.sample));
@@ -271,7 +297,7 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
   useEffect(() => {
     const id = setInterval(() => {
       setActiveStepIdx(data.generator.lastStepIdx);
-    }, 100);
+    }, 50);
 
     return () => clearInterval(id);
   }, []);
@@ -310,25 +336,20 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
       id={id} onRemove={() => gen.dispose()}
       className="w-[650px]"
       name="Step Sequencer"
-      help={<>
-        The <b>step sequencer</b> (also called a <i>drum machine</i>) plays short
-        audio clips (samples) in a pre-determined rhythm. It can play any number of
-        tracks, each with different samples.
-      </>}
+      help={STEP_SEQ_NODE_DESCRIPTOR.help}
     >
       <div className="flex flex-col gap-6 w-full">
         <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
           <PlainField align="right"
-            name="main output"
-            description="the audio coming out of the step sequencer"
+            name="output"
           />
         </NodePort>
 
         <NodePort nodeId={id} handleId={paramHandleId("bpm")} kind="input" type="value">
           <SliderField
-            name="tempo (BPM)"
-            description="the tempo of the sequencer, in beats per minute"
-            min={MIN_BPM} max={MAX_BPM} value={bpm}
+            name="tempo"
+            min={MIN_BPM} max={MAX_BPM} value={bpm} step={0.01}
+            valueStringifier={x => `${Math.round(x * 100) / 100} BPM`}
             onChange={setBpm}
             automatable={data.parameters["param-bpm"]}
             automatableDisplay={() => data.generator.bpm}
@@ -338,22 +359,14 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
         <NodePort nodeId={id} handleId={paramHandleId("volume")} kind="input" type="value">
           <SliderField
             name="volume"
-            description="the volume (gain) of all samples played by the sequencer"
             min={0} max={100} value={volume} isPercentage
             onChange={setVolume}
             automatable={data.parameters["param-volume"]}
-            automatableDisplay={() => data.generator.players.volume.value}
+            automatableDisplay={() => tone.dbToGain(data.generator.players.volume.value) * 100}
           />
         </NodePort>
 
-        <CheckboxField
-          name="synchronize"
-          description="select if using multiple sequencers, deselect if dynamically changing the BPM"
-          value={shouldSync}
-          onChange={setShouldSync}
-        />
-
-        <PlainField name="tracks" description="individual tracks of the sequencer">
+        <PlainField name="tracks">
           <div className="flex flex-col gap-2">
             {
               range(trackCount).map(trackIdx => {
@@ -363,7 +376,7 @@ export const StepSeqNodeRenderer = memo(function StepSeqNodeRenderer(
                 return (
                   <div className="flex flex-row gap-2 items-center" key={`track-${trackIdx}`}>
                     <select
-                      className="select select-sm w-48"
+                      className="nodrag select select-sm w-48"
                       value={sample}
                       onChange={ev => onTrackSampleChange(trackIdx, ev.target.value as OneShotSampleId)}
                     >
