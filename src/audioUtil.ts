@@ -117,6 +117,19 @@ export function formatGain(gain: number) {
     return gain <= 0 ? "-inf dB" : `${gainToDb(gain).toFixed(1)} dB`;
 }
 
+/** Formats a frequency in either Hz or kHz, e.g. `440 Hz` or `1.5 kHz`. */
+export function formatFrequency(hz: number) {
+    return hz >= 1000 ? `${(hz / 1000).toFixed(1)} kHz` : `${Math.round(hz)} Hz`;
+}
+
+/**
+ * Converts a frequency typed in by the user to Hz. Frequencies lower than `minHz` are
+ * assumed to be in kHz.
+ */
+export function parseFrequency(value: number, minHz: number) {
+    return value < minHz ? value * 1000 : value;
+}
+
 /** Formats an amount of seconds in milliseconds, e.g. `1.5 ms` or `250 ms`. */
 export function formatMilliseconds(seconds: number) {
     const milliseconds = seconds * 1000;
