@@ -7,7 +7,9 @@ test("stores persistent data", async () => {
 
     setPersistentData({
         tourComplete: true,
-        volume: 0.727
+        volume: 0.727,
+        panMode: "MIDDLE",
+        scrollMode: "ZOOM"
     });
 
     expect(getPersistentData().volume).toBe(0.727);
@@ -16,4 +18,5 @@ test("stores persistent data", async () => {
     mutatePersistentData({ volume: 0.42 });
 
     expect(getPersistentData().volume).toBe(0.42);
+    expect(getPersistentData().panMode).toBe("MIDDLE");
 });
