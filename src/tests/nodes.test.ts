@@ -11,6 +11,7 @@ import { createScopeNode } from "../nodes/ScopeNode";
 import { createNoiseNode } from "../nodes/value/NoiseNode";
 import { createValueNode } from "../nodes/value/ValueNode";
 import { createMapRangeNode } from "../nodes/value/MapRangeNode";
+import { createShimmerNode } from "../nodes/effect/ShimmerNode";
 import { SynthNodeData, SynthNodeSerializer } from "../nodes/instrument/SynthNode";
 
 function edge(
@@ -34,17 +35,21 @@ describe("nodes", () => {
         const noise = createNoiseNode(0, 0);
         const value = createValueNode(0, 0);
         const mapRange = createMapRangeNode(0, 0);
+        const shimmer = createShimmerNode(0, 0);
         const scope = createScopeNode(0, 0);
 
         noise.data.generator.rate = 3;
         value.data.generator.value = 0.25;
         mapRange.data.generator.interpolation = "STEPPED";
+        shimmer.data.effect.size = 0.2;
+        shimmer.data.effect.shift = 7;
         scope.data.mode = "SPECTROGRAM";
-        scope.data.collapsed = true;
+        shimmer.data.collapsed = true;
 
-        const nodes = [final, noise, value, mapRange, scope];
+        const nodes = [final, noise, value, mapRange, shimmer, scope];
         const edges = [
             edge(noise, VALUE_OUTPUT_HID, mapRange, "param-value"),
+            edge(shimmer, SIGNAL_OUTPUT_HID, scope, SIGNAL_INPUT_HID_MAIN),
             edge(scope, SIGNAL_OUTPUT_HID, final, SIGNAL_INPUT_HID_MAIN)
         ];
 
@@ -62,11 +67,14 @@ describe("nodes", () => {
         expect(find("value").data.generator.value).toBe(0.25);
         expect(find("map-range").data.generator.interpolation).toBe("STEPPED");
         expect(find("map-range").data.parameters["param-value"].controlledBy).toBe(noise.id);
-        expect(find("scope").data.collapsed).toBe(true);
+        expect(find("shimmer").data.effect.size).toBeCloseTo(0.2);
+        expect(find("shimmer").data.effect.shift).toBe(7);
+        expect(find("shimmer").data.collapsed).toBe(true);
         expect(find("scope").data.mode).toBe("SPECTROGRAM");
         expect(find("noise").data.collapsed).toBeFalsy();
 
         // We don't want to leave audio nodes running in the real-time context.
+        shimmer.data.effect.dispose();
         scope.data.effect.dispose();
         result.nodes.forEach(x => (x.data as { effect?: { dispose(): void } }).effect?.dispose());
     });
