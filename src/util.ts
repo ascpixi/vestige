@@ -70,6 +70,14 @@ export function lerp(a: number, b: number, t: number) {
 }
 
 /**
+ * Eases `t` (0.0 to 1.0), so that it changes slowly near both ends of the range.
+ */
+// Attribution: https://en.wikipedia.org/wiki/Smoothstep#Variations
+export function smootherstep(t: number) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+/**
  * Clamps `x`, so that it is always in range of `min` and `max`. If the
  * bound is not specified, the number is clamped to a range of [0.0; 1.0].
  */

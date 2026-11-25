@@ -8,6 +8,10 @@ import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./Balan
 import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
 import { ScopeNode, ScopeNodeRenderer, ScopeNodeSerializer } from "./ScopeNode";
 
+import { ValueNode, ValueNodeRenderer, ValueNodeSerializer } from "./value/ValueNode";
+import { NoiseNode, NoiseNodeRenderer, NoiseNodeSerializer } from "./value/NoiseNode";
+import { MapRangeNode, MapRangeNodeRenderer, MapRangeNodeSerializer } from "./value/MapRangeNode";
+
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
 import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
 import { ReverbNode, ReverbNodeRenderer, ReverbNodeSerializer } from "./effect/ReverbNode";
@@ -51,6 +55,9 @@ export type VestigeNode =
     BalanceNode |
     MathNode |
     ScopeNode |
+    ValueNode |
+    NoiseNode |
+    MapRangeNode |
     
     FinalNode;
 
@@ -87,6 +94,9 @@ export const VESTIGE_NODE_TYPES = {
     "balance": BalanceNodeRenderer,
     "math": MathNodeRenderer,
     "scope": ScopeNodeRenderer,
+    "value": ValueNodeRenderer,
+    "noise": NoiseNodeRenderer,
+    "map-range": MapRangeNodeRenderer,
 
     "final": FinalNodeRenderer
 };
@@ -115,6 +125,9 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new BalanceNodeSerializer(),
     new MathNodeSerializer(),
     new ScopeNodeSerializer(),
+    new ValueNodeSerializer(),
+    new NoiseNodeSerializer(),
+    new MapRangeNodeSerializer(),
 
     new FinalNodeSerializer()
 ];
