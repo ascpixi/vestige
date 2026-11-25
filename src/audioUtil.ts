@@ -116,3 +116,9 @@ export function toneFreq(x: FrequencyUnit): number {
 export function formatGain(gain: number) {
     return gain <= 0 ? "-inf dB" : `${gainToDb(gain).toFixed(1)} dB`;
 }
+
+/** Formats an amount of seconds in milliseconds, e.g. `1.5 ms` or `250 ms`. */
+export function formatMilliseconds(seconds: number) {
+    const milliseconds = seconds * 1000;
+    return `${milliseconds < 10 ? milliseconds.toFixed(1) : Math.round(milliseconds)} ms`;
+}

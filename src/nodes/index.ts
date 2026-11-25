@@ -6,6 +6,7 @@ import { LfoNode, LfoNodeRenderer, LfoNodeSerializer } from "./LfoNode";
 import { MixNode, MixNodeRenderer, MixNodeSerializer } from "./MixNode";
 import { BalanceNode, BalanceNodeRenderer, BalanceNodeSerializer } from "./BalanceNode";
 import { MathNode, MathNodeRenderer, MathNodeSerializer } from "./MathNode";
+import { ScopeNode, ScopeNodeRenderer, ScopeNodeSerializer } from "./ScopeNode";
 
 import { ChorusNode, ChorusNodeRenderer, ChorusNodeSerializer } from "./effect/ChorusNode";
 import { FilterNode, FilterNodeRenderer, FilterNodeSerializer } from "./effect/FilterNode";
@@ -49,6 +50,7 @@ export type VestigeNode =
     MixNode |
     BalanceNode |
     MathNode |
+    ScopeNode |
     
     FinalNode;
 
@@ -84,6 +86,7 @@ export const VESTIGE_NODE_TYPES = {
     "mix": MixNodeRenderer,
     "balance": BalanceNodeRenderer,
     "math": MathNodeRenderer,
+    "scope": ScopeNodeRenderer,
 
     "final": FinalNodeRenderer
 };
@@ -111,6 +114,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new MixNodeSerializer(),
     new BalanceNodeSerializer(),
     new MathNodeSerializer(),
+    new ScopeNodeSerializer(),
 
     new FinalNodeSerializer()
 ];

@@ -14,6 +14,7 @@ import { PlainField } from "../../components/PlainField";
 import { SelectField } from "../../components/SelectField";
 import { SliderField } from "../../components/SliderField";
 import { VestigeNodeBase } from "../../components/VestigeNodeBase";
+import { AudioScope } from "../../components/viz/AudioScope";
 
 import HARP_DATA from "../../assets/sample-sets/harp.json";
 import PIANO_DATA from "../../assets/sample-sets/piano.json";
@@ -197,31 +198,23 @@ export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
     <VestigeNodeBase
       id={id} onRemove={() => gen.dispose()}
       name="Sampler"
-      help={<>
-        The <b>sampler</b> module can emulate any kind of instrument - it takes in
-        ready sets of <b>samples</b> (audio recordings), and plays them with different
-        pitches. Samplers are usually used for non-synthesized instruments like pianos,
-        guitars, or strings.
-      </>}
+      help={SAMPLER_NODE_DESCRIPTOR.help}
     >
       <div className="flex flex-col gap-6 w-full">
-        <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
-          <PlainField
-            name="main input"
-            description="the notes to play with the sampler"
-          />
-        </NodePort>
+        <div className="flex justify-between gap-4">
+          <NodePort nodeId={id} handleId={NOTE_INPUT_HID_MAIN} kind="input" type="notes">
+            <PlainField name="notes" />
+          </NodePort>
 
-        <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
-          <PlainField align="right"
-            name="main output"
-            description="the audio coming out of the sampler"
-          />
-        </NodePort>
+          <NodePort nodeId={id} handleId={SIGNAL_OUTPUT_HID} kind="output" type="signal">
+            <PlainField align="right" name="output" />
+          </NodePort>
+        </div>
+
+        <AudioScope source={gen.out} />
 
         <SelectField
-          name="preset"
-          description="the samples the sampler should play"
+          name="instrument"
           value={sampleSet}
           onChange={x => setSampleSet(x as KnownSampleSet)}
         >
@@ -230,21 +223,21 @@ export const SamplerNodeRenderer = memo(function SamplerNodeRenderer(
           <option value="VIOLIN_SUS">violin (sustained)</option>
         </SelectField>
 
-        <SliderField
-          name="attack duration"
-          description="for how long notes should fade in"
-          min={0} max={6} value={attack} step={0.01}
-          onChange={setAttack}
-          valueStringifier={x => `${x.toFixed(2)} s`}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <SliderField
+            name="attack"
+            min={0} max={6} value={attack} step={0.01}
+            onChange={setAttack}
+            valueStringifier={x => `${x.toFixed(2)} s`}
+          />
 
-        <SliderField
-          name="release duration"
-          description="for how long notes should fade out"
-          min={0} max={6} value={release} step={0.01}
-          onChange={setRelease}
-          valueStringifier={x => `${x.toFixed(2)} s`}
-        />
+          <SliderField
+            name="release"
+            min={0} max={6} value={release} step={0.01}
+            onChange={setRelease}
+            valueStringifier={x => `${x.toFixed(2)} s`}
+          />
+        </div>
       </div>
     </VestigeNodeBase>
   );
