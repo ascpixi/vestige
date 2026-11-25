@@ -28,6 +28,7 @@ import { PickNoteNode, PickNoteNodeRenderer, PickNoteNodeSerializer } from "./no
 import { SynthNodeRenderer, SynthNode, SynthNodeSerializer } from "./instrument/SynthNode";
 import { SamplerNode, SamplerNodeRenderer, SamplerNodeSerializer } from "./instrument/SamplerNode";
 import { StepSeqNode, StepSeqNodeRenderer, StepSeqNodeSerializer } from "./instrument/StepSeqNode";
+import { AudioPlayerNode, AudioPlayerNodeRenderer, AudioPlayerNodeSerializer } from "./instrument/AudioPlayerNode";
 import { KeyboardNode, KeyboardNodeRenderer, KeyboardNodeSerializer } from "./note/KeyboardNode";
 
 /** Represents any kind of node (module) provided by Vestige. */
@@ -41,6 +42,7 @@ export type VestigeNode =
     StepSeqNode |
     SamplerNode |
     SynthNode |
+    AudioPlayerNode |
 
     FilterNode |
     ReverbNode |
@@ -80,6 +82,7 @@ export const VESTIGE_NODE_TYPES = {
     "synth": SynthNodeRenderer,
     "sampler": SamplerNodeRenderer,
     "step-seq": StepSeqNodeRenderer,
+    "audio-player": AudioPlayerNodeRenderer,
 
     "filter": FilterNodeRenderer,
     "reverb": ReverbNodeRenderer,
@@ -111,6 +114,7 @@ export const VESTIGE_NODE_SERIALIZERS: NodeDataSerializer<any>[] = [
     new SynthNodeSerializer(),
     new SamplerNodeSerializer(),
     new StepSeqNodeSerializer(),
+    new AudioPlayerNodeSerializer(),
 
     new FilterNodeSerializer(),
     new ReverbNodeSerializer(),

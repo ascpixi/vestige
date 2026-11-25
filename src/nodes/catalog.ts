@@ -9,6 +9,7 @@ import { KEYBOARD_NODE_DESCRIPTOR } from "./note/KeyboardNode";
 import { SYNTH_NODE_DESCRIPTOR } from "./instrument/SynthNode";
 import { SAMPLER_NODE_DESCRIPTOR } from "./instrument/SamplerNode";
 import { STEP_SEQ_NODE_DESCRIPTOR } from "./instrument/StepSeqNode";
+import { AUDIO_PLAYER_NODE_DESCRIPTOR } from "./instrument/AudioPlayerNode";
 
 import { FILTER_NODE_DESCRIPTOR } from "./effect/FilterNode";
 import { REVERB_NODE_DESCRIPTOR } from "./effect/ReverbNode";
@@ -51,7 +52,8 @@ export const NODE_CATEGORIES: NodeCategory[] = [
         entries: [
             SYNTH_NODE_DESCRIPTOR,
             SAMPLER_NODE_DESCRIPTOR,
-            STEP_SEQ_NODE_DESCRIPTOR
+            STEP_SEQ_NODE_DESCRIPTOR,
+            AUDIO_PLAYER_NODE_DESCRIPTOR
         ]
     },
     {
